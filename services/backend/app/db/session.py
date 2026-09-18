@@ -2,11 +2,10 @@
 Database connection setup.
 
 This wires up SQLAlchemy's engine and session machinery so the rest of
-the app *can* talk to PostgreSQL. It intentionally does NOT define any
-tables or run any queries yet — that starts in Phase 2, once the first
-models (Photographer, Event, Photo, ...) are designed.
+the app can talk to PostgreSQL (or SQLite for local development).
+It intentionally does NOT define any tables or run any queries yet — that starts in Phase 2.
 
-Status: IMPLEMENTED (connection architecture only)
+Status: IMPLEMENTED (connection architecture)
         PLANNED (actual tables / models — Phase 2)
 """
 
@@ -19,7 +18,16 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
-engine = create_engine(settings.DATABASE_URL, pool_pre_ping=True)
+# Normalize URL for modern psycopg 3 driver if standard postgresql:// prefix is used
+db_url = settings.DATABASE_URL
+if db_url.startswith("postgresql://"):
+    db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+
+connect_args = {}
+if db_url.startswith("sqlite"):
+    connect_args["check_same_thread"] = False
+
+engine = create_engine(db_url, pool_pre_ping=True, connect_args=connect_args)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
