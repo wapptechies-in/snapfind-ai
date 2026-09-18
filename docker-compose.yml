@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: snapfind-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: snapfind_ai
+      POSTGRES_USER: snapfind_user
+      POSTGRES_PASSWORD: snapfind_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - snapfind_pgdata:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./services/backend
+      dockerfile: Dockerfile
+    container_name: snapfind-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://snapfind_user:snapfind_password@postgres:5432/snapfind_ai
+      ENVIRONMENT: development
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+      CORS_ORIGINS: http://localhost:5173,http://localhost:5174
+    depends_on:
+      - postgres
+    profiles:
+      - full-stack
+
+volumes:
+  snapfind_pgdata:
+

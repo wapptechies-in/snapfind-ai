@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  ::selection {
+    background-color: #2563EB;
+    color: #FFFFFF;
+  }
+
+  :focus-visible {
+    outline: 2px solid #3B82F6;
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-6xl px-6 md:px-10;
+  }
+}

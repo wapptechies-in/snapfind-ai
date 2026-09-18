@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: snapfind-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: snapfind_ai
+      POSTGRES_USER: snapfind_user
+      POSTGRES_PASSWORD: snapfind_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - snapfind_pgdata:/var/lib/postgresql/data
+
+volumes:
+  snapfind_pgdata:
