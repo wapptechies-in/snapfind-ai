@@ -135,3 +135,4 @@ async def search_faces_endpoint(
         strongMatches=result["strong_matches"],
         possibleMatches=result["possible_matches"],
     )
+

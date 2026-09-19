@@ -97,3 +97,4 @@ def run_evaluation() -> dict[str, float]:
 
 if __name__ == "__main__":
     run_evaluation()
+

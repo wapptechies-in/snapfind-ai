@@ -57,3 +57,4 @@ class FaceEngine(ABC):
     def get_model_info(self) -> ModelInfo:
         """Return model metadata, license, and commercial clearance status."""
         pass
+

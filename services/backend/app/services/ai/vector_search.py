@@ -98,3 +98,4 @@ def search_event_faces(
             break
 
     return ranked_matches
+

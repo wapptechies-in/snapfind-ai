@@ -19,3 +19,4 @@ __all__ = [
     "search_faces_by_selfie",
     "search_event_faces",
 ]
+

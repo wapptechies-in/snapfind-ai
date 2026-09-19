@@ -1,4 +1,6 @@
 """
+Face model — architectural placeholder for future facial detection and vector embeddings.
+Status: IMPLEMENTED (Phase 4 Database Architecture)
 Face model — facial detection metadata and pgvector embeddings.
 Status: IMPLEMENTED (Phase 5)
 """
@@ -6,6 +8,7 @@ Status: IMPLEMENTED (Phase 5)
 from datetime import datetime, timezone
 from typing import Any
 import uuid
+from sqlalchemy import DateTime, ForeignKey, Integer, String
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import DateTime, Float, ForeignKey, Integer, JSON, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -36,6 +39,8 @@ class Face(Base):
         index=True,
     )
     face_index: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    embedding_reference: Mapped[str | None] = mapped_column(
+        String(255), nullable=True
 
     # 512-dimensional face embedding vector using pgvector
     embedding = mapped_column(Vector(512), nullable=True)
@@ -62,4 +67,5 @@ class Face(Base):
 
     # Relationships
     photo = relationship("Photo", back_populates="faces")
+
     event = relationship("Event", back_populates="faces")

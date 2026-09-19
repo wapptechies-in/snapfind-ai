@@ -82,3 +82,4 @@ def evaluate_face_quality(
     ))
 
     return True, round(composite_score, 3), None
+

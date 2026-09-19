@@ -52,3 +52,4 @@ class ModelInfoOut(BaseModel):
     license: str
     commercial_cleared: bool = Field(..., alias="commercialCleared")
     status: str
+

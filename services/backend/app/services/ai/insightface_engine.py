@@ -106,3 +106,4 @@ def get_face_engine() -> FaceEngine:
     if _engine_instance is None:
         _engine_instance = InsightFaceEngine(model_name=settings.AI_MODEL_VERSION)
     return _engine_instance
+

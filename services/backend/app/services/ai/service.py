@@ -267,3 +267,4 @@ def search_faces_by_selfie(
         "strong_matches": strong_matches,
         "possible_matches": possible_matches,
     }
+

@@ -223,3 +223,4 @@ def test_selfie_validation_errors():
         )
     assert resp_none.status_code == 400
     assert "no face detected" in resp_none.json()["detail"].lower()
+

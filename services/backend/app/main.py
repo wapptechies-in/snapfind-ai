@@ -14,6 +14,7 @@ from contextlib import asynccontextmanager
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.routes import auth, bookings, dashboard, events, health, photos
 from app.api.routes import ai, auth, bookings, dashboard, events, health, photos
 from app.core.config import get_settings
 from app.db.session import init_db
@@ -24,6 +25,7 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """Lifespan event to automatically initialize database schema and seed fixtures."""
     """Lifespan event to automatically initialize database schema, seed fixtures, and warm up AI face model."""
     init_db()
     # Warm up face engine singleton so it is ready for instant inference
