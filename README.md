@@ -208,29 +208,25 @@ Never commit `.env` — it's already in `.gitignore`. Only `.env.example`
 
 ## 12. Current limitations (Phase 1)
 
-The following are **not implemented yet** — they're placeholders,
-mock data, or simply absent:
+The following are **implemented in Phase 2**:
+- ✅ JWT authentication & bcrypt password hashing (`/api/v1/auth`)
+- ✅ PostgreSQL database schema and models for photographers, events, photos
+- ✅ Events CRUD API (`/api/v1/events`) with status filtering
+- ✅ Dashboard summary API (`/api/v1/dashboard/summary`) with real database metrics
+- ✅ Connected SnapFind Web with live authentication, session persistence, event creation
+- ✅ Completed Photographer Website with portfolio, lightbox, and booking form
 
-- No authentication (login/register are mock — any input "works")
-- No real event/photo database tables (Postgres connection exists,
-  but no schema)
-- No AI, face recognition, or selfie search
-- No photo upload or QR code generation
-- No desktop app processing
-- No cloud storage integration
-- No payments
-- Dashboard numbers and event lists are mock data, clearly labeled
+The following remain for **future phases**:
+- No AI, face recognition, or selfie search (Phase 3)
+- No desktop app processing (Phase 4)
+- No cloud storage / payments / production hardening (Phase 5)
 
-## 13. Future development phases
+## 13. Development phases
 
-1. **Phase 1 — Project foundation** ✅ *(this phase)*
-2. **Phase 2 — Auth + real data** — user accounts, Postgres schema,
-   real event/photo CRUD APIs
-3. **Phase 3 — AI face recognition** — face embeddings, vector search,
-   selfie-search API
-4. **Phase 4 — Desktop processor** — Electron app that generates and
-   uploads derivatives while keeping originals local
-5. **Phase 5 — Production hardening** — payments, cloud deployment, QR
-   code generation, advanced analytics
+1. **Phase 1 — Project foundation** ✅ *(completed)*
+2. **Phase 2 — Auth + real data** ✅ *(completed)* — user accounts, Postgres schema, real event/photo CRUD APIs, photographer website
+3. **Phase 3 — AI face recognition** — face embeddings, vector search, selfie-search API
+4. **Phase 4 — Desktop processor** — Electron app that generates and uploads derivatives while keeping originals local
+5. **Phase 5 — Production hardening** — payments, cloud deployment, QR code generation, advanced analytics
 
 Each phase begins only when explicitly requested.

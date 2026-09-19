@@ -50,44 +50,42 @@ only those go to the cloud.
 
 ## Phase plan
 
-- **Phase 1 — Project foundation** *(current phase)*
-  Monorepo structure, both frontend apps scaffolded with real pages and
-  mock data, FastAPI backend with a single health-check route, database
-  connection architecture (no schema yet), a working frontend↔backend
-  connectivity check, README, Git initialized.
+- **Phase 1 — Project foundation** ✅ *(completed)*
+  Monorepo structure, both frontend apps scaffolded, FastAPI backend skeleton.
 
-- **Phase 2 — Auth + real data** *(not started)*
-  Real user registration/login, PostgreSQL schema for photographers,
-  events, and photos, real (non-mock) dashboard data, event CRUD APIs.
+- **Phase 2 — Auth + real data** ✅ *(completed)*
+  Real user registration/login with JWT and bcrypt, PostgreSQL schema for
+  photographers, events, and photos, real dashboard data aggregation, event CRUD APIs,
+  and completed photographer website (portfolio, lightbox, booking, SEO).
 
-- **Phase 3 — AI face recognition** *(not started)*
+- **Phase 3 — AI face recognition** *(planned)*
   Face embedding generation, vector search, selfie-search API.
 
-- **Phase 4 — Desktop processor** *(not started)*
+- **Phase 4 — Desktop processor** *(planned)*
   Electron app that watches a local folder, generates web images/thumbnails/
   embeddings, and uploads only those derivatives.
 
-- **Phase 5 — Production hardening** *(not started)*
+- **Phase 5 — Production hardening** *(planned)*
   Payments, cloud deployment, advanced analytics, QR code generation for
   event galleries.
 
-## Phase 1 data flow (what actually works today)
+## Phase 2 data flow
 
 ```
 SnapFind Web (React)
       │
-      │  GET /  (via src/services/api.ts)
-      ▼
-FastAPI backend  →  responds { "name": "SnapFind AI API", "status": "running" }
+      ├── POST /api/v1/auth/login  →  JWT Bearer Token stored in localStorage
       │
-      ▼
-Dashboard shows "Backend Status: Connected" or "Backend Status: Offline"
+      ├── GET /api/v1/dashboard/summary  →  Aggregated metrics from PostgreSQL
+      │
+      └── GET, POST, DELETE /api/v1/events  →  CRUD for photographer's events
+            │
+            ▼
+      FastAPI Backend (app.main)
+            │
+            ▼
+      PostgreSQL Database (Docker port 54320 or SQLite fallback)
 ```
-
-Everything else in the SnapFind Web dashboard (event counts, photo counts,
-etc.) is clearly labeled **MOCK** in the code and the UI — it is not read
-from the database yet. PostgreSQL is configured (connection module,
-`.env.example`) but no tables exist yet; that begins in Phase 2.
 
 ## Status legend used throughout the codebase
 

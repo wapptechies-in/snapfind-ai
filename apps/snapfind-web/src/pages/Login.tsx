@@ -1,25 +1,45 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AuthLayout from "../layouts/AuthLayout";
+import { useAuth } from "../context/AuthContext";
+import { ApiError } from "../services/api";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
+  const [email, setEmail] = useState("photographer@example.com");
+  const [password, setPassword] = useState("password123");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    // MOCK: no authentication endpoint yet (Phase 2). We simulate a
-    // successful login and go straight to the dashboard so the rest of
-    // the app is reachable in Phase 1.
+    setError(null);
     setLoading(true);
-    setTimeout(() => {
+
+    try {
+      await login(email, password);
       navigate("/dashboard");
-    }, 500);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.detail || err.message);
+      } else {
+        setError("Failed to sign in. Please verify your credentials.");
+      }
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <AuthLayout title="Welcome back" subtitle="Log in to your SnapFind AI dashboard">
       <form onSubmit={handleSubmit} className="space-y-4">
+        {error && (
+          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-400">
+            {error}
+          </div>
+        )}
+
         <div>
           <label className="block text-xs text-dim" htmlFor="email">
             Email
@@ -28,7 +48,8 @@ export default function Login() {
             id="email"
             type="email"
             required
-            defaultValue="photographer@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="mt-1.5 w-full rounded-lg border border-hairline bg-base px-3.5 py-2.5 text-sm outline-none focus:border-violet"
           />
         </div>
@@ -40,7 +61,8 @@ export default function Login() {
             id="password"
             type="password"
             required
-            defaultValue="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             className="mt-1.5 w-full rounded-lg border border-hairline bg-base px-3.5 py-2.5 text-sm outline-none focus:border-violet"
           />
         </div>
@@ -51,9 +73,11 @@ export default function Login() {
         >
           {loading ? "Logging in…" : "Log in"}
         </button>
-        <p className="text-center text-[11px] text-dim">
-          MOCK login — any credentials work in Phase 1. Real auth is planned.
-        </p>
+
+        <div className="rounded-lg border border-hairline bg-panel2 p-3 text-center text-[11px] text-dim">
+          <p className="font-medium text-cloud">Default Demo Credentials:</p>
+          <p className="mt-0.5 font-mono">photographer@example.com / password123</p>
+        </div>
       </form>
 
       <p className="mt-6 text-center text-sm text-dim">

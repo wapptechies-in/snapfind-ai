@@ -22,16 +22,29 @@ class Settings(BaseSettings):
     API_HOST: str = "0.0.0.0"
     API_PORT: int = 8000
 
-    # --- Database (PLANNED — connection is configured, no tables yet) ---
-    DATABASE_URL: str = "postgresql://snapfind_user:snapfind_password@localhost:5432/snapfind_ai"
+    # --- Database ---
+    DATABASE_URL: str = "postgresql://snapfind_user:snapfind_password@localhost:54320/snapfind_ai"
 
-    # --- Security (PLANNED — auth is not implemented in Phase 1) ---
-    SECRET_KEY: str = "dev-only-placeholder-change-me"
+    # --- Security & Auth (Phase 2) ---
+    SECRET_KEY: str = "snapfind-secret-jwt-key-for-dev-only-change-in-prod-2026"
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
     # --- CORS ---
     # Comma-separated list of allowed origins, e.g.
     # "http://localhost:5173,http://localhost:5174"
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:5174"
+
+    # --- Phase 5 AI & Vector Search Configuration ---
+    AI_MODEL_NAME: str = "insightface"
+    AI_MODEL_VERSION: str = "buffalo_s"
+    FACE_EMBEDDING_DIMENSION: int = 512
+    FACE_DETECTION_THRESHOLD: float = 0.60
+    MIN_FACE_SIZE: int = 30
+    MAX_BLUR_THRESHOLD: float = 15.0
+    STRONG_MATCH_THRESHOLD: float = 0.55
+    POSSIBLE_MATCH_THRESHOLD: float = 0.38
+    TOP_K: int = 50
 
     model_config = SettingsConfigDict(
         env_file=".env",

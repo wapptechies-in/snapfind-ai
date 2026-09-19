@@ -4,25 +4,38 @@ SnapFind AI API — FastAPI entrypoint.
 Run locally with:
     uvicorn app.main:app --reload --port 8000
 
-Interactive API docs then live at:
+Interactive API docs live at:
     http://localhost:8000/docs
 
-Status: IMPLEMENTED (health check only)
-        PLANNED (auth, events, photos, AI routes — later phases)
+Status: IMPLEMENTED (Health, Auth, Events CRUD, Dashboard metrics — Phase 2)
 """
 
-from fastapi import FastAPI
+from contextlib import asynccontextmanager
+from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import health
+from app.api.routes import ai, auth, bookings, dashboard, events, health, photos
 from app.core.config import get_settings
+from app.db.session import init_db
+from app.services.ai.insightface_engine import get_face_engine
 
 settings = get_settings()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan event to automatically initialize database schema, seed fixtures, and warm up AI face model."""
+    init_db()
+    # Warm up face engine singleton so it is ready for instant inference
+    get_face_engine()
+    yield
+
 
 app = FastAPI(
     title=settings.APP_NAME,
     description="Backend API for SnapFind AI — Scan. Find. Relive.",
-    version="0.1.0",
+    version="0.2.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -33,4 +46,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Root health router
 app.include_router(health.router, tags=["health"])
+
+# API v1 subrouter
+api_v1 = APIRouter(prefix="/api/v1")
+api_v1.include_router(auth.router)
+api_v1.include_router(events.router)
+api_v1.include_router(dashboard.router)
+api_v1.include_router(bookings.router)
+api_v1.include_router(photos.router)
+api_v1.include_router(ai.router)
+
+app.include_router(api_v1)

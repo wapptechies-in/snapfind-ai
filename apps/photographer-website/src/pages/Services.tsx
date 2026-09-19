@@ -1,102 +1,44 @@
 import { Link } from "react-router-dom";
-
-const packages = [
-  {
-    name: "Portrait session",
-    price: "$450",
-    unit: "per session",
-    description: "Individuals, couples, or families. One location, natural light.",
-    features: [
-      "60-minute session",
-      "One location",
-      "30+ edited images",
-      "Private online gallery via SnapFind AI",
-      "Delivery within 5 days",
-    ],
-  },
-  {
-    name: "Event coverage",
-    price: "$1,200",
-    unit: "per event",
-    description: "Launches, galas, conferences — up to 4 hours on site.",
-    features: [
-      "Up to 4 hours coverage",
-      "150+ edited images",
-      "QR-code gallery for all guests",
-      "Selfie search via SnapFind AI",
-      "Delivery within 48 hours",
-    ],
-    featured: true,
-  },
-  {
-    name: "Wedding day",
-    price: "From $3,200",
-    unit: "full day",
-    description: "Getting-ready through last dance, second shooter available.",
-    features: [
-      "Up to 10 hours coverage",
-      "400+ edited images",
-      "Guest gallery with selfie search",
-      "Optional second shooter",
-      "Delivery within 3 weeks",
-    ],
-  },
-];
+import SEO from "../components/common/SEO";
+import ServiceCard from "../components/services/ServiceCard";
+import { services } from "../data/services";
 
 export default function Services() {
   return (
     <div className="container-page py-20 md:py-28">
-      <p className="text-sm font-medium tracking-wide text-blue-light uppercase">Services &amp; pricing</p>
-      <h1 className="mt-4 max-w-2xl font-display text-4xl leading-tight text-white md:text-5xl">
-        Straightforward packages. Every gallery ships on SnapFind AI.
+      <SEO
+        title="Services"
+        description="Wedding, event, sports, birthday, candid, family, corporate, and portrait photography services."
+      />
+
+      <p className="text-sm tracking-wide text-brass-light">Services</p>
+      <h1 className="mt-4 max-w-2xl font-display text-4xl leading-tight text-ivory md:text-5xl">
+        Photography for every kind of moment.
       </h1>
       <p className="mt-6 max-w-xl text-sm leading-relaxed text-muted">
-        Need something custom — multi-day coverage, a brand shoot, a
-        recurring event series? Get in touch and we'll put together a
-        package that fits.
+        Every package is tailored to the event — get in touch with your
+        date and details, and we'll put together pricing that fits.
+        There's no fixed price list here; enquire and we'll follow up
+        directly.
       </p>
 
-      <div className="mt-16 grid gap-6 lg:grid-cols-3">
-        {packages.map((pkg) => (
-          <div
-            key={pkg.name}
-            className={`flex flex-col rounded-xl border p-8 transition-all ${
-              pkg.featured
-                ? "border-blue bg-panel shadow-xl shadow-blue/10"
-                : "border-hairline bg-panel/60 hover:border-hairline-light"
-            }`}
-          >
-            {pkg.featured && (
-              <span className="mb-4 inline-block w-fit rounded-full bg-blue px-3 py-1 text-[11px] font-semibold text-white">
-                Most booked
-              </span>
-            )}
-            <h2 className="font-display text-2xl text-white">{pkg.name}</h2>
-            <p className="mt-2 text-sm text-muted">{pkg.description}</p>
-            <div className="mt-6 flex items-baseline gap-2">
-              <span className="font-display text-3xl text-white">{pkg.price}</span>
-              <span className="text-xs text-muted">{pkg.unit}</span>
-            </div>
-            <ul className="mt-6 flex-1 space-y-3 text-sm text-muted">
-              {pkg.features.map((f) => (
-                <li key={f} className="flex gap-2">
-                  <span className="text-blue-light font-bold">·</span>
-                  {f}
-                </li>
-              ))}
-            </ul>
-            <Link
-              to="/booking"
-              className={`mt-8 rounded-full px-6 py-3 text-center text-sm font-medium transition-all ${
-                pkg.featured
-                  ? "bg-blue text-white shadow-md shadow-blue/20 hover:bg-blue-hover"
-                  : "border border-hairline bg-black text-white hover:border-blue hover:text-blue-light"
-              }`}
-            >
-              Book this package
-            </Link>
-          </div>
+      <div className="mt-16 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {services.map((service) => (
+          <ServiceCard key={service.slug} service={service} />
         ))}
+      </div>
+
+      <div className="mt-16 flex flex-col items-center gap-4 rounded-xl border border-hairline bg-panel p-10 text-center">
+        <p className="max-w-md text-sm text-muted">
+          Not sure which service fits your event? Send an enquiry with a
+          few details and we'll recommend the right coverage.
+        </p>
+        <Link
+          to="/booking"
+          className="rounded-full bg-brass px-7 py-3 text-sm font-medium text-ink transition-colors hover:bg-brass-light"
+        >
+          Send an enquiry
+        </Link>
       </div>
     </div>
   );

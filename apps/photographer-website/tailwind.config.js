@@ -4,23 +4,13 @@ export default {
   theme: {
     extend: {
       colors: {
-        black: "#000000",
-        ink: "#0A0A0C",
-        panel: "#111319",
-        "panel-light": "#181B24",
-        hairline: "#1E2230",
-        "hairline-light": "#2E3547",
-        white: "#FFFFFF",
-        ivory: "#FFFFFF",
-        muted: "#94A3B8",
-        blue: {
-          DEFAULT: "#2563EB",
-          light: "#60A5FA",
-          dark: "#1D4ED8",
-          hover: "#3B82F6",
-        },
-        brass: "#2563EB",
-        "brass-light": "#60A5FA",
+        ink: "#0B0C0E",
+        panel: "#15171A",
+        hairline: "#26282C",
+        ivory: "#EDEAE3",
+        muted: "#9A968C",
+        brass: "#B08D57",
+        "brass-light": "#D4B483",
       },
       fontFamily: {
         display: ["Fraunces", "Georgia", "serif"],
@@ -28,6 +18,20 @@ export default {
       },
       letterSpacing: {
         widest2: "0.2em",
+      },
+      keyframes: {
+        fadeIn: {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+        fadeInUp: {
+          "0%": { opacity: "0", transform: "translateY(12px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+      },
+      animation: {
+        fadeIn: "fadeIn 0.2s ease-out",
+        fadeInUp: "fadeInUp 0.5s ease-out both",
       },
     },
   },
