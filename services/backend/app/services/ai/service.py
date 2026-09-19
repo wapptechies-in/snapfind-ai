@@ -29,13 +29,27 @@ def _load_image_array(
     image_bytes: bytes | None = None,
     image_path: str | None = None,
     url: str | None = None,
+    storage_key: str | None = None,
 ) -> np.ndarray:
-    """Safely decode image into BGR numpy array from bytes, local path, or URL."""
+    """Safely decode image into BGR numpy array from bytes, storage key, local path, or URL."""
     if image_bytes:
         nparr = np.frombuffer(image_bytes, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         if img is not None:
             return img
+
+    if storage_key:
+        try:
+            from app.services.storage import StorageService
+            storage = StorageService()
+            if storage.provider.object_exists(storage_key):
+                data = storage.provider.get_object_bytes(storage_key)
+                nparr = np.frombuffer(data, np.uint8)
+                img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                if img is not None:
+                    return img
+        except Exception as err:
+            logger.debug(f"Could not load image from storage key '{storage_key}': {err}")
 
     if image_path and os.path.isfile(image_path):
         img = cv2.imread(image_path)
@@ -43,6 +57,20 @@ def _load_image_array(
             return img
 
     if url:
+        # Check if URL is actually a storage key
+        if not url.startswith("http://") and not url.startswith("https://") and not os.path.isfile(url):
+            try:
+                from app.services.storage import StorageService
+                storage = StorageService()
+                if storage.provider.object_exists(url):
+                    data = storage.provider.get_object_bytes(url)
+                    nparr = np.frombuffer(data, np.uint8)
+                    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                    if img is not None:
+                        return img
+            except Exception:
+                pass
+
         # Check local file path in URL
         if os.path.isfile(url):
             img = cv2.imread(url)
@@ -71,7 +99,7 @@ def process_photo_for_faces(
 ) -> dict[str, Any]:
     """
     Process an event photo:
-    1. Load image
+    1. Load image (from storage, bytes, path, or URL)
     2. Detect all faces
     3. Evaluate face quality
     4. Generate 512-d normalized embeddings
@@ -85,11 +113,18 @@ def process_photo_for_faces(
         )
 
     # 1. Load image
+    storage_key = (
+        photo.web_storage_key
+        or photo.original_storage_key
+        or photo.storage_key
+        or photo.original_key
+    )
     try:
         image = _load_image_array(
             image_bytes=image_bytes,
             image_path=image_path,
-            url=photo.url or photo.storage_key,
+            url=photo.url,
+            storage_key=storage_key,
         )
     except Exception as err:
         raise HTTPException(

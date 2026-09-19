@@ -47,10 +47,15 @@ export interface Photo {
   id: string;
   eventId: string;
   filename: string;
+  originalFilename?: string;
   url: string;
   thumbnailUrl: string;
   width?: number;
   height?: number;
+  fileSize?: number;
+  mimeType?: string;
+  uploadStatus?: "pending" | "uploading" | "uploaded" | "failed";
+  processingStatus?: "pending" | "processing" | "completed" | "failed";
   uploadedAt: string;
   matchConfidence?: number; // 0 to 100 percentage for selfie search
 }

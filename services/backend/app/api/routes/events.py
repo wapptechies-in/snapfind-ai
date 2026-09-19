@@ -3,7 +3,7 @@ Events API routes: CRUD, filtering, pagination, and token resolution.
 Status: IMPLEMENTED (Phase 4)
 """
 
-from typing import Annotated
+from typing import Annotated, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
@@ -14,6 +14,7 @@ from app.models.event import Event, generate_public_token
 from app.models.photo import Photo
 from app.models.photographer import Photographer
 from app.schemas.event import EventCreate, EventOut, EventSettingsSchema, EventUpdate
+from app.services.storage import StorageService
 
 router = APIRouter(prefix="/events", tags=["events"])
 
@@ -262,3 +263,85 @@ def delete_event(
     db.delete(event)
     db.commit()
     return {"ok": True}
+
+
+@router.get("/{id_or_token}/public-photos")
+def get_public_event_photos(
+    id_or_token: str,
+    db: Annotated[Session, Depends(get_db)],
+    page: Annotated[int, Query(ge=1)] = 1,
+    limit: Annotated[int, Query(ge=1, le=200)] = 50,
+) -> dict[str, Any]:
+    """
+    Public guest gallery endpoint:
+    - Resolves event by ID or public token.
+    - Validates event status and expiry.
+    - Increments gallery views counter.
+    - Returns photos with presigned web & thumbnail URLs plus event download policies.
+    """
+    event = db.scalar(
+        select(Event).where(
+            or_(
+                Event.id == id_or_token,
+                Event.public_token == id_or_token,
+            )
+        )
+    )
+    if not event:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Event '{id_or_token}' not found",
+        )
+
+    if event.status.lower() == "archived":
+        raise HTTPException(
+            status_code=status.HTTP_410_GONE,
+            detail="This event gallery has been archived",
+        )
+
+    # Increment gallery views
+    event.gallery_views += 1
+    db.commit()
+
+    storage = StorageService()
+    total = db.scalar(
+        select(func.count(Photo.id))
+        .where(Photo.event_id == event.id)
+        .where(Photo.upload_status == "uploaded")
+    ) or 0
+
+    offset = (page - 1) * limit
+    photos = db.scalars(
+        select(Photo)
+        .where(Photo.event_id == event.id)
+        .where(Photo.upload_status == "uploaded")
+        .order_by(Photo.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+    ).all()
+
+    items = []
+    for p in photos:
+        web_url = storage.get_photo_url(p, variant="web", download=False)
+        thumb_url = storage.get_photo_url(p, variant="thumbnail", download=False)
+        items.append({
+            "id": p.id,
+            "eventId": p.event_id,
+            "filename": p.original_filename or p.filename,
+            "url": web_url,
+            "thumbnailUrl": thumb_url,
+            "width": p.width,
+            "height": p.height,
+            "fileSize": p.file_size,
+            "uploadedAt": p.created_at.isoformat(),
+        })
+
+    return {
+        "eventId": event.id,
+        "eventName": event.name,
+        "token": event.public_token,
+        "downloadsEnabled": event.downloads_enabled,
+        "originalDownloadsEnabled": event.original_downloads_enabled,
+        "total": total,
+        "items": items,
+    }

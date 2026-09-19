@@ -28,7 +28,11 @@ class Photo(Base):
         index=True,
     )
     filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    original_filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
     storage_key: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    original_storage_key: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    web_storage_key: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    thumbnail_storage_key: Mapped[str | None] = mapped_column(String(512), nullable=True)
     thumbnail_key: Mapped[str | None] = mapped_column(String(512), nullable=True)
     web_image_key: Mapped[str | None] = mapped_column(String(512), nullable=True)
     original_key: Mapped[str | None] = mapped_column(String(512), nullable=True)
@@ -36,6 +40,10 @@ class Photo(Base):
     height: Mapped[int | None] = mapped_column(Integer, nullable=True)
     file_size: Mapped[int | None] = mapped_column(Integer, nullable=True)
     mime_type: Mapped[str | None] = mapped_column(String(64), default="image/jpeg", nullable=True)
+    checksum: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    upload_status: Mapped[str] = mapped_column(
+        String(32), default="uploaded", nullable=False, index=True
+    )  # pending, uploading, uploaded, failed
     processing_status: Mapped[str] = mapped_column(
         String(32), default="completed", nullable=False, index=True
     )  # pending, processing, completed, failed

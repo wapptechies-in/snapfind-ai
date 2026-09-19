@@ -19,4 +19,5 @@ scikit-image>=0.22.0
 onnxruntime>=1.18.0
 insightface>=0.7.3
 python-multipart>=0.0.9
+boto3>=1.34.0
 

@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import { EventHeader } from "../../components/events/EventHeader";
 import { Alert, Button, Card, Input, LoadingSpinner } from "../../components/common";
 import { PhotoGrid } from "../../components/events/PhotoGrid";
+import { PhotoUploadModal } from "../../components/events/PhotoUploadModal";
 import { PhotoViewer } from "../../components/viewer/PhotoViewer";
 import { eventsApi, photosApi } from "../../services/api";
 import type { Photo, SnapEvent } from "../../types";
@@ -16,24 +17,25 @@ export default function EventPhotos() {
   const [search, setSearch] = useState("");
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+
+  const loadData = useCallback(async () => {
+    if (!id) return;
+    try {
+      const [eventData, photosData] = await Promise.all([
+        eventsApi.getById(id),
+        photosApi.getByEventId(id),
+      ]);
+      setEvent(eventData);
+      setPhotos(photosData);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
 
   useEffect(() => {
-    async function loadData() {
-      if (!id) return;
-      setLoading(true);
-      try {
-        const [eventData, photosData] = await Promise.all([
-          eventsApi.getById(id),
-          photosApi.getByEventId(id),
-        ]);
-        setEvent(eventData);
-        setPhotos(photosData);
-      } finally {
-        setLoading(false);
-      }
-    }
     loadData();
-  }, [id]);
+  }, [loadData]);
 
   if (loading) {
     return (
@@ -64,14 +66,14 @@ export default function EventPhotos() {
     <DashboardLayout title={`${event.name} — Photos`}>
       <EventHeader event={event} />
 
-      {/* Mock Notice */}
+      {/* Storage Status Info */}
       <div className="mb-6 flex items-center justify-between rounded-lg border border-hairline bg-panel2/50 p-3 text-xs text-dim">
         <div className="flex items-center gap-2">
-          <span className="rounded bg-violet/20 px-1.5 py-0.5 text-[10px] font-semibold text-violet-light">
-            MOCK GALLERY
+          <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-400">
+            OBJECT STORAGE
           </span>
           <span>
-            Photos shown here are sample previews. In Phase 4, the Desktop Processor will sync optimized derivatives from your local storage.
+            Photos are stored securely in S3/MinIO with automatic 1920px web derivatives, thumbnails, and real-time AI face recognition indexing.
           </span>
         </div>
       </div>
@@ -102,12 +104,8 @@ export default function EventPhotos() {
           </span>
           <Button
             size="sm"
-            variant="secondary"
-            onClick={() =>
-              setNotice(
-                "Photo ingest and upload will be handled by the SnapFind Desktop Processor in Phase 4."
-              )
-            }
+            variant="primary"
+            onClick={() => setIsUploadModalOpen(true)}
           >
             <span>+</span> Upload Photos
           </Button>
@@ -134,6 +132,15 @@ export default function EventPhotos() {
           onNavigate={(newIdx) => setSelectedPhotoIndex(newIdx)}
         />
       )}
+
+      {/* Phase 6 Direct-to-Storage Uploader Modal */}
+      <PhotoUploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        eventId={event.id}
+        eventName={event.name}
+        onUploadSuccess={loadData}
+      />
     </DashboardLayout>
   );
 }

@@ -1,6 +1,5 @@
 services:
   postgres:
-    image: postgres:16-alpine
     image: pgvector/pgvector:pg16
     container_name: snapfind-postgres
     restart: unless-stopped
@@ -13,5 +12,21 @@ services:
     volumes:
       - snapfind_pgdata:/var/lib/postgresql/data
 
+  minio:
+    image: quay.io/minio/minio:latest
+    container_name: snapfind-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_API_CORS_ALLOW_ORIGIN: "*"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - snapfind_miniodata:/data
+    command: server /data --console-address ":9001"
+
 volumes:
   snapfind_pgdata:
+  snapfind_miniodata:

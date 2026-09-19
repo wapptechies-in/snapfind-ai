@@ -46,6 +46,17 @@ class Settings(BaseSettings):
     POSSIBLE_MATCH_THRESHOLD: float = 0.38
     TOP_K: int = 50
 
+    # --- Phase 6 Cloud Photo Storage Configuration ---
+    STORAGE_PROVIDER: str = "minio"  # minio, s3, r2, local
+    STORAGE_ENDPOINT_URL: str = "http://localhost:9000"
+    STORAGE_PUBLIC_ENDPOINT_URL: str = "http://localhost:9000"
+    STORAGE_ACCESS_KEY: str = "minioadmin"
+    STORAGE_SECRET_KEY: str = "minioadmin"
+    STORAGE_BUCKET_NAME: str = "snapfind-photos"
+    STORAGE_REGION: str = "us-east-1"
+    MAX_UPLOAD_SIZE_MB: int = 50
+    PRESIGNED_URL_EXPIRE_SECONDS: int = 3600
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

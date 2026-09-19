@@ -41,6 +41,7 @@ class Face(Base):
     face_index: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     embedding_reference: Mapped[str | None] = mapped_column(
         String(255), nullable=True
+    )
 
     # 512-dimensional face embedding vector using pgvector
     embedding = mapped_column(Vector(512), nullable=True)
