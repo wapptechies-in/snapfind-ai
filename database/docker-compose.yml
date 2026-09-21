@@ -27,6 +27,17 @@ services:
       - snapfind_miniodata:/data
     command: server /data --console-address ":9001"
 
+  redis:
+    image: redis:7-alpine
+    container_name: snapfind-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - snapfind_redisdata:/data
+    command: redis-server --appendonly yes
+
 volumes:
   snapfind_pgdata:
   snapfind_miniodata:
+  snapfind_redisdata:

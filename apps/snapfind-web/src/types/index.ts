@@ -87,13 +87,17 @@ export interface ProcessingStage {
 
 export interface ProcessingJob {
   eventId: string;
+  status?: string;
   totalPhotos: number;
   processed: number;
   remaining: number;
+  failed?: number;
   progressPercent: number;
   currentStage: string;
   stages: ProcessingStage[];
+  currentJobId?: string | null;
 }
+
 
 export interface DashboardStats {
   totalEvents: number;

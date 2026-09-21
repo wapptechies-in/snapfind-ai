@@ -14,7 +14,7 @@ from contextlib import asynccontextmanager
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import ai, auth, bookings, dashboard, events, health, photos
+from app.api.routes import ai, auth, bookings, dashboard, events, health, photos, processing
 from app.core.config import get_settings
 from app.db.session import init_db
 from app.services.ai.insightface_engine import get_face_engine
@@ -56,6 +56,8 @@ api_v1.include_router(events.router)
 api_v1.include_router(dashboard.router)
 api_v1.include_router(bookings.router)
 api_v1.include_router(photos.router)
+api_v1.include_router(processing.router)
 api_v1.include_router(ai.router)
 
 app.include_router(api_v1)
+

@@ -17,6 +17,7 @@ from app.models.download_log import DownloadLog
 from app.models.event import Event
 from app.models.photo import Photo, generate_photo_id
 from app.models.photographer import Photographer
+from app.models.processing_job import ProcessingJob
 from app.schemas.photo import (
     PhotoCreate,
     PhotoListOut,
@@ -28,6 +29,8 @@ from app.schemas.photo import (
 )
 from app.services.ai.service import process_photo_for_faces
 from app.services.storage import StorageService
+from app.workers.tasks.photo_tasks import process_single_photo_task
+
 
 logger = logging.getLogger("snapfind.photos")
 settings = get_settings()
@@ -176,8 +179,9 @@ def upload_complete(
     """
     Step 2 of binary upload pipeline:
     Signals that client finished uploading the binary to storage.
-    Verifies object existence, generates web and thumbnail derivatives,
-    updates upload_status to 'uploaded', and triggers AI face indexing.
+    Verifies object existence, transitions photo to 'uploaded' and 'queued',
+    creates a ProcessingJob, and dispatches asynchronous background Celery task.
+    Returns immediately (< 50ms) without blocking the HTTP client.
     """
     photo = db.get(Photo, photo_id)
     if not photo:
@@ -190,6 +194,7 @@ def upload_complete(
     storage_key = photo.original_storage_key or photo.storage_key
     if not storage_key or not storage.provider.object_exists(storage_key):
         photo.upload_status = "failed"
+        photo.processing_status = "failed"
         db.commit()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -197,42 +202,47 @@ def upload_complete(
         )
 
     try:
-        # 1. Fetch original bytes from storage
-        original_bytes = storage.provider.get_object_bytes(storage_key)
+        photo.upload_status = "uploaded"
+        photo.processing_status = "queued"
 
-        # 2. Create web (1920px) and thumbnail (400px) derivatives
-        derivs = storage.create_and_store_derivatives(
+        # Create processing job record
+        job = ProcessingJob(
             event_id=photo.event_id,
             photo_id=photo.id,
-            original_bytes=original_bytes,
+            job_type="photo_processing",
+            status="queued",
+            total_items=1,
+            processed_items=0,
+            failed_items=0,
         )
+        db.add(job)
+        db.flush()
 
-        photo.web_storage_key = derivs["web_storage_key"]
-        photo.web_image_key = derivs["web_storage_key"]
-        photo.thumbnail_storage_key = derivs["thumbnail_storage_key"]
-        photo.thumbnail_key = derivs["thumbnail_storage_key"]
-        photo.width = derivs["width"]
-        photo.height = derivs["height"]
-        photo.file_size = derivs["file_size"]
-        photo.checksum = derivs["checksum"]
-        photo.upload_status = "uploaded"
-
-        # 3. Synchronous AI face detection & embedding (Phase 5 integration)
+        # Dispatch async Celery background task
         try:
-            process_photo_for_faces(photo.id, db, image_bytes=original_bytes)
-            photo.processing_status = "completed"
-        except Exception as ai_err:
-            logger.warning(f"Face processing warning for {photo_id}: {ai_err}")
-            photo.processing_status = "completed"
+            task = process_single_photo_task.delay(photo_id=photo.id, job_id=job.id)
+            job.celery_task_id = task.id
+        except Exception as celery_err:
+            logger.warning(
+                f"Could not enqueue Celery task for photo {photo.id}: {celery_err}. Falling back to sync processing."
+            )
+            try:
+                # Direct task execution fallback if broker unreachable
+                process_single_photo_task(photo_id=photo.id, job_id=job.id)
+            except Exception as sync_err:
+                logger.error(f"Fallback processing failed for {photo.id}: {sync_err}")
 
         db.commit()
         db.refresh(photo)
 
         return _enrich_photo_urls(photo, storage)
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error completing upload for photo {photo_id}: {e}", exc_info=True)
         photo.upload_status = "failed"
+        photo.processing_status = "failed"
         db.commit()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

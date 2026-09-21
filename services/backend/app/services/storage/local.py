@@ -87,3 +87,4 @@ class LocalStorageProvider(StorageProvider):
         for k in keys:
             self.delete_object(k)
         return True
+

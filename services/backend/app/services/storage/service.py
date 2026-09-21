@@ -184,3 +184,4 @@ class StorageService:
         unique_keys = list(set(keys_to_delete))
         if unique_keys:
             self.provider.delete_objects(unique_keys)
+

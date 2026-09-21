@@ -73,3 +73,8 @@ class Photo(Base):
         back_populates="photo",
         cascade="all, delete-orphan",
     )
+    processing_jobs = relationship(
+        "ProcessingJob",
+        back_populates="photo",
+        cascade="all, delete-orphan",
+    )

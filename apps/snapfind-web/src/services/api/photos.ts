@@ -131,9 +131,18 @@ export const photosApi = {
   },
 
   /**
-   * Fetch processing job status for an event.
+   * Fetch live processing job status for an event from Celery/Redis backend.
    */
   async getProcessingJob(eventId: string): Promise<ProcessingJob> {
+    try {
+      const res = await request<ProcessingJob>(`/api/v1/events/${eventId}/processing`);
+      if (res && typeof res.progressPercent === "number") {
+        return res;
+      }
+    } catch (err) {
+      console.warn("Could not load live processing status from API, falling back to mock fixtures:", err);
+    }
+
     await delay(100);
     return (
       mockProcessingJobs[eventId] || {
@@ -142,4 +151,45 @@ export const photosApi = {
       }
     );
   },
+
+  /**
+   * Start processing for all pending photos in an event.
+   */
+  async startProcessing(eventId: string): Promise<{ success: boolean; message: string; jobId?: string }> {
+    return request<{ success: boolean; message: string; jobId?: string }>(
+      `/api/v1/events/${eventId}/processing/start`,
+      { method: "POST" }
+    );
+  },
+
+  /**
+   * Re-process all photos in an event from scratch.
+   */
+  async reprocessEvent(eventId: string): Promise<{ success: boolean; message: string; jobId?: string }> {
+    return request<{ success: boolean; message: string; jobId?: string }>(
+      `/api/v1/events/${eventId}/processing/reprocess`,
+      { method: "POST" }
+    );
+  },
+
+  /**
+   * Retry failed photos in an event.
+   */
+  async retryFailedPhotos(eventId: string): Promise<{ success: boolean; message: string; jobId?: string }> {
+    return request<{ success: boolean; message: string; jobId?: string }>(
+      `/api/v1/events/${eventId}/processing/retry-failed`,
+      { method: "POST" }
+    );
+  },
+
+  /**
+   * Cancel active processing jobs in an event.
+   */
+  async cancelProcessing(eventId: string): Promise<{ success: boolean; message: string }> {
+    return request<{ success: boolean; message: string }>(
+      `/api/v1/events/${eventId}/processing/cancel`,
+      { method: "POST" }
+    );
+  },
 };
+

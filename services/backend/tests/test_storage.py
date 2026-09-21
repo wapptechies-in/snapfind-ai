@@ -130,7 +130,7 @@ def test_upload_pipeline_lifecycle():
     )
     assert put_resp.status_code in (200, 204)
 
-    # 4. Upload Complete
+    # 4. Upload Complete (non-blocking in Phase 7)
     complete_resp = client.post(
         f"/api/v1/photos/{photo_id}/upload-complete",
         json={"photoId": photo_id},
@@ -139,10 +139,13 @@ def test_upload_pipeline_lifecycle():
     photo_data = complete_resp.json()
     assert photo_data["id"] == photo_id
     assert photo_data["uploadStatus"] == "uploaded"
-    assert photo_data["width"] == 1600
-    assert photo_data["height"] == 1200
-    assert photo_data["url"] is not None
-    assert photo_data["thumbnailUrl"] is not None
+    assert photo_data["processingStatus"] in ("queued", "completed")
+
+    # Background worker processes derivatives and AI face indexing
+    from app.workers.tasks.photo_tasks import process_single_photo_task
+    task_res = process_single_photo_task(photo_id)
+    assert task_res["status"] == "completed"
+
 
     # 5. Presigned URL generation with download tracking
     url_resp = client.get(f"/api/v1/photos/{photo_id}/url?variant=web&download=true")
@@ -190,3 +193,4 @@ def test_upload_init_validation_errors():
     }
     resp_mime = client.post(f"/api/v1/events/{event_id}/photos/upload-init", json=invalid_mime)
     assert resp_mime.status_code == 400
+

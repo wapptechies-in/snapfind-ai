@@ -27,15 +27,25 @@ class ProcessingJob(Base):
         nullable=False,
         index=True,
     )
+    photo_id: Mapped[str | None] = mapped_column(
+        String(64),
+        ForeignKey("photos.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
     job_type: Mapped[str] = mapped_column(
-        String(64), default="full_pipeline", nullable=False
+        String(64), default="photo_processing", nullable=False
     )
     status: Mapped[str] = mapped_column(
         String(32), default="pending", nullable=False, index=True
-    )  # pending, processing, completed, failed, cancelled
+    )  # pending, queued, processing, completed, failed, cancelled, retrying
+    celery_task_id: Mapped[str | None] = mapped_column(
+        String(128), nullable=True, index=True
+    )
     total_items: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     processed_items: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     failed_items: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    attempt_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     started_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
@@ -48,7 +58,14 @@ class ProcessingJob(Base):
         default=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
 
     # Relationships
     event = relationship("Event", back_populates="processing_jobs")
+    photo = relationship("Photo", back_populates="processing_jobs")
 

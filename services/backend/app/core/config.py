@@ -57,6 +57,18 @@ class Settings(BaseSettings):
     MAX_UPLOAD_SIZE_MB: int = 50
     PRESIGNED_URL_EXPIRE_SECONDS: int = 3600
 
+    # --- Phase 7 Redis & Celery Background Processing ---
+    REDIS_URL: str = "redis://localhost:6379/0"
+    CELERY_BROKER_URL: str = "redis://localhost:6379/0"
+    CELERY_RESULT_BACKEND: str = "redis://localhost:6379/1"
+    CELERY_WORKER_CONCURRENCY: int = 4
+    JOB_STALE_TIMEOUT_MINUTES: int = 30
+    THUMBNAIL_MAX_WIDTH: int = 400
+    THUMBNAIL_MAX_HEIGHT: int = 400
+    WEB_IMAGE_MAX_WIDTH: int = 1920
+    WEB_IMAGE_MAX_HEIGHT: int = 1920
+    WEB_IMAGE_QUALITY: int = 85
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

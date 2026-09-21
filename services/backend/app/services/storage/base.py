@@ -78,3 +78,4 @@ class StorageProvider(ABC):
     def delete_objects(self, keys: list[str]) -> bool:
         """Batch delete multiple objects from storage."""
         pass
+

@@ -15,6 +15,12 @@ from app.schemas.common import MessageResponse, PaginatedResponse
 from app.schemas.event import EventCreate, EventOut, EventSettingsSchema, EventUpdate
 from app.schemas.health import HealthOut
 from app.schemas.photo import PhotoCreate, PhotoListOut, PhotoOut
+from app.schemas.processing import (
+    ProcessingActionResponse,
+    ProcessingJobOut,
+    ProcessingStageOut,
+    ProcessingStatusResponse,
+)
 
 __all__ = [
     "LoginRequest",
@@ -38,4 +44,9 @@ __all__ = [
     "FaceSearchResponse",
     "ModelInfoOut",
     "PhotoProcessResponse",
+    "ProcessingActionResponse",
+    "ProcessingJobOut",
+    "ProcessingStageOut",
+    "ProcessingStatusResponse",
 ]
+

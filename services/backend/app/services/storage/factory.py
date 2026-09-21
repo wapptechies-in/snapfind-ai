@@ -38,3 +38,4 @@ def get_storage_provider() -> StorageProvider:
             secret_key=settings.STORAGE_SECRET_KEY,
             region_name=settings.STORAGE_REGION,
         )
+

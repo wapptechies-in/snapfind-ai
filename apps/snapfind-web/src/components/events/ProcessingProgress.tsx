@@ -24,7 +24,7 @@ export const ProcessingProgress: React.FC<ProcessingProgressProps> = ({ job }) =
         </div>
 
         {/* Counts Grid */}
-        <div className="grid grid-cols-3 gap-4 my-6">
+        <div className={`grid ${typeof job.failed === 'number' && job.failed > 0 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'} gap-4 my-6`}>
           <div className="p-4 rounded-xl border border-hairline bg-panel2/40 text-center">
             <p className="text-xs text-dim font-medium">Total Photos</p>
             <p className="mt-1 text-2xl font-bold text-cloud font-mono">
@@ -43,6 +43,14 @@ export const ProcessingProgress: React.FC<ProcessingProgressProps> = ({ job }) =
               {job.remaining.toLocaleString()}
             </p>
           </div>
+          {typeof job.failed === "number" && job.failed > 0 && (
+            <div className="p-4 rounded-xl border border-bad/30 bg-bad/5 text-center">
+              <p className="text-xs text-bad font-medium">Failed</p>
+              <p className="mt-1 text-2xl font-bold text-bad font-mono">
+                {job.failed.toLocaleString()}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Progress Bar */}
