@@ -52,3 +52,4 @@ def on_worker_process_init(**kwargs):
         logger.info(f"Worker AI FaceEngine pre-warmed successfully: {info.name} ({info.version})")
     except Exception as e:
         logger.warning(f"Could not pre-warm FaceEngine in worker process: {e}")
+

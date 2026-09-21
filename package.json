@@ -5,15 +5,20 @@
   "description": "SnapFind AI — Scan. Find. Relive. Monorepo for the photographer website, SnapFind web app, and (later) the desktop app and AI service.",
   "workspaces": [
     "apps/photographer-website",
-    "apps/snapfind-web"
+    "apps/snapfind-web",
+    "desktop"
   ],
+
   "scripts": {
     "dev:website": "npm run dev --workspace=apps/photographer-website",
     "dev:web": "npm run dev --workspace=apps/snapfind-web",
+    "dev:desktop": "npm run dev --workspace=desktop",
     "build:website": "npm run build --workspace=apps/photographer-website",
     "build:web": "npm run build --workspace=apps/snapfind-web",
+    "build:desktop": "npm run build --workspace=desktop",
     "install:all": "npm install"
   },
+
   "engines": {
     "node": ">=18.18.0"
   }

@@ -39,6 +39,9 @@ build/
 # Desktop app build artifacts
 desktop/out/
 desktop/dist/
+desktop/dist-electron/
+desktop/release/
+
 
 # Logs
 *.log

@@ -22,6 +22,16 @@ from app.schemas.processing import (
     ProcessingStatusResponse,
 )
 
+from app.schemas.upload_session import (
+    BatchUploadInitItem,
+    BatchUploadInitItemResponse,
+    BatchUploadInitRequest,
+    BatchUploadInitResponse,
+    UploadSessionCreate,
+    UploadSessionItemOut,
+    UploadSessionOut,
+)
+
 __all__ = [
     "LoginRequest",
     "RegisterRequest",
@@ -48,5 +58,13 @@ __all__ = [
     "ProcessingJobOut",
     "ProcessingStageOut",
     "ProcessingStatusResponse",
+    "UploadSessionCreate",
+    "UploadSessionItemOut",
+    "UploadSessionOut",
+    "BatchUploadInitItem",
+    "BatchUploadInitRequest",
+    "BatchUploadInitItemResponse",
+    "BatchUploadInitResponse",
 ]
+
 

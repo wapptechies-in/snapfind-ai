@@ -245,3 +245,4 @@ def retry_failed_photos_task(
         process_single_photo_task.delay(photo_id=pid, job_id=job_id)
 
     return {"event_id": event_id, "dispatched": len(photo_ids)}
+

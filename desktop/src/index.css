@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :focus-visible {
+    outline: 2px solid #7C6CF6;
+    outline-offset: 2px;
+  }
+
+  /* Custom dark scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #12151B;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #22262E;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #8A90A0;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-xl border border-hairline bg-panel;
+  }
+}

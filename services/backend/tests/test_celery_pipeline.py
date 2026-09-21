@@ -198,3 +198,4 @@ def test_event_processing_action_controls():
     cancel_resp = client.post(f"/api/v1/events/{event_id}/processing/cancel")
     assert cancel_resp.status_code == 200
     assert cancel_resp.json()["success"] is True
+

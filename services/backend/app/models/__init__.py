@@ -14,6 +14,8 @@ from app.models.download_log import DownloadLog
 from app.models.audit_log import AuditLog
 from app.models.booking import Booking
 
+from app.models.upload_session import UploadSession, UploadSessionItem
+
 __all__ = [
     "User",
     "Photographer",
@@ -25,4 +27,7 @@ __all__ = [
     "DownloadLog",
     "AuditLog",
     "Booking",
+    "UploadSession",
+    "UploadSessionItem",
 ]
+
