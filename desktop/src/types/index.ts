@@ -40,6 +40,16 @@ export interface LocalScannedFile {
   isDuplicate?: boolean;
 }
 
+export interface ScanProgress {
+  scanned: number;
+  supported: number;
+  unsupported: number;
+  duplicates: number;
+  ready: number;
+  totalBytes: number;
+  currentFile?: string;
+}
+
 export interface ScanResult {
   folderPath: string;
   folderName: string;
@@ -50,6 +60,31 @@ export interface ScanResult {
   readyCount: number;
   totalBytes: number;
   files: LocalScannedFile[];
+}
+
+export interface DesktopAPI {
+  openFolderDialog: () => Promise<string | null>;
+  scanFolder: (
+    folderPath: string,
+    onProgress?: (progress: ScanProgress) => void
+  ) => Promise<ScanResult>;
+  cancelScan: () => Promise<void>;
+  uploadBinaryStream: (
+    filePath: string,
+    uploadUrl: string,
+    contentType: string,
+    headers?: Record<string, string>,
+    onProgress?: (sent: number, total: number) => void
+  ) => Promise<{ success: boolean; error?: string }>;
+  saveUploadSession: (sessionData: Record<string, unknown>) => Promise<boolean>;
+  loadUploadSession: (sessionId: string) => Promise<Record<string, unknown> | null>;
+  listUploadSessions: () => Promise<Record<string, unknown>[]>;
+  deleteUploadSession: (sessionId: string) => Promise<boolean>;
+  openExternal: (url: string) => Promise<void>;
+  log: (level: string, message: string) => Promise<void>;
+  getLogs: () => Promise<string[]>;
+  getPlatform: () => Promise<string>;
+  getVersion: () => Promise<string>;
 }
 
 export interface UploadQueueItem {

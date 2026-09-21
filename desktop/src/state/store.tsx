@@ -41,13 +41,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const raw = localStorage.getItem("snapfind_desktop_settings");
     if (raw) {
       try {
-        return JSON.parse(raw);
+        const parsed = JSON.parse(raw);
+        if (parsed.apiBaseUrl === "http://localhost:8000") {
+          parsed.apiBaseUrl = "http://127.0.0.1:8000";
+        }
+        return parsed;
       } catch {
         // fallback
       }
     }
+    const savedUrl = localStorage.getItem("snapfind_desktop_api_url");
+    const activeUrl = (!savedUrl || savedUrl === "http://localhost:8000") ? "http://127.0.0.1:8000" : savedUrl;
     return {
-      apiBaseUrl: localStorage.getItem("snapfind_desktop_api_url") || "http://localhost:8000",
+      apiBaseUrl: activeUrl,
       concurrency: 4,
       autoStartProcessing: true,
     };

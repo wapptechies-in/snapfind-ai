@@ -10,10 +10,12 @@ export const EventSelect: React.FC = () => {
   const [search, setSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
-  const filtered = events.filter(
+  const safeEvents = Array.isArray(events) ? events : [];
+
+  const filtered = safeEvents.filter(
     (e) =>
-      e.name.toLowerCase().includes(search.toLowerCase()) ||
-      e.location?.toLowerCase().includes(search.toLowerCase())
+      (e.name || "").toLowerCase().includes(search.toLowerCase()) ||
+      (e.location || "").toLowerCase().includes(search.toLowerCase())
   );
 
   const handleSelect = (event: SnapEvent) => {

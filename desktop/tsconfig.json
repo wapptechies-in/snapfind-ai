@@ -15,5 +15,5 @@
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "electron/preload.ts"]
+  "include": ["src"]
 }

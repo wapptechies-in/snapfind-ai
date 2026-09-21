@@ -1,4 +1,4 @@
-import type { ScanProgress, ScanResult } from "../../electron/preload";
+import type { ScanProgress, ScanResult } from "../types";
 
 export const fileScanner = {
   async selectFolder(): Promise<string | null> {

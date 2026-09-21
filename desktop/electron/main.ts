@@ -60,7 +60,7 @@ function createWindow() {
     backgroundColor: "#0B0D12",
     title: "SnapFind Desktop",
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
@@ -75,6 +75,10 @@ function createWindow() {
   }
 
   appendLog("INFO", `SnapFind Desktop started on platform ${process.platform} (${process.arch})`);
+
+  mainWindow.webContents.on("console-message", (_event, level, message, line, sourceId) => {
+    appendLog("RENDERER", `[Level ${level}] ${message} (${sourceId}:${line})`);
+  });
 
   mainWindow.on("closed", () => {
     mainWindow = null;

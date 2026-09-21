@@ -1,6 +1,8 @@
-import { contextBridge, ipcRenderer } from "electron";
+type IpcRendererEvent = Electron.IpcRendererEvent;
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { contextBridge, ipcRenderer } = require("electron");
 
-export interface LocalScannedFile {
+interface LocalScannedFile {
   filename: string;
   path: string;
   size: number;
@@ -11,7 +13,7 @@ export interface LocalScannedFile {
   isDuplicate?: boolean;
 }
 
-export interface ScanProgress {
+interface ScanProgress {
   scanned: number;
   supported: number;
   unsupported: number;
@@ -21,7 +23,7 @@ export interface ScanProgress {
   currentFile?: string;
 }
 
-export interface ScanResult {
+interface ScanResult {
   folderPath: string;
   folderName: string;
   totalFiles: number;
@@ -33,7 +35,7 @@ export interface ScanResult {
   files: LocalScannedFile[];
 }
 
-export interface DesktopAPI {
+interface DesktopAPI {
   openFolderDialog: () => Promise<string | null>;
   scanFolder: (
     folderPath: string,

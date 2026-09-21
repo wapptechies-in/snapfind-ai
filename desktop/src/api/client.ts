@@ -5,7 +5,8 @@
  */
 
 let authToken: string | null = localStorage.getItem("snapfind_desktop_token");
-let apiBaseUrl: string = localStorage.getItem("snapfind_desktop_api_url") || "http://localhost:8000";
+const savedUrl = localStorage.getItem("snapfind_desktop_api_url");
+let apiBaseUrl: string = (!savedUrl || savedUrl === "http://localhost:8000") ? "http://127.0.0.1:8000" : savedUrl;
 
 export function getAuthToken(): string | null {
   return authToken;

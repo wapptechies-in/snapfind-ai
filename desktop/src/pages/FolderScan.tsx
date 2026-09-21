@@ -4,7 +4,7 @@ import { Badge, Button, Card, ProgressBar } from "../components/common";
 import { fileScanner } from "../scanner/fileScanner";
 import { useApp } from "../state/store";
 import { UploadConfirmModal } from "./UploadConfirmModal";
-import type { ScanProgress } from "../../electron/preload";
+import type { ScanProgress } from "../types";
 
 export const FolderScan: React.FC = () => {
   const navigate = useNavigate();

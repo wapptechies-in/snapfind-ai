@@ -8,11 +8,19 @@ export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, events, recentSessions, setSelectedEvent, setUploadManager } = useApp();
 
-  const totalCloudPhotos = events.reduce((sum, e) => sum + (e.photo_count || 0), 0);
-  const activeEventsCount = events.filter((e) => e.status === "Active").length;
+  const safeEvents = Array.isArray(events) ? events : [];
+  const safeSessions = Array.isArray(recentSessions) ? recentSessions : [];
 
-  const handleResumeSession = (session: typeof recentSessions[0]) => {
-    const matchingEvent = events.find((e) => e.id === session.eventId);
+  const totalCloudPhotos = safeEvents.reduce(
+    (sum, e) => sum + (e.photo_count || (e as unknown as { photoCount?: number }).photoCount || (e as unknown as { photos?: number }).photos || 0),
+    0
+  );
+  const activeEventsCount = safeEvents.filter(
+    (e) => (e.status || "").toLowerCase() === "active"
+  ).length;
+
+  const handleResumeSession = (session: typeof safeSessions[0]) => {
+    const matchingEvent = safeEvents.find((e) => e.id === session.eventId);
     if (matchingEvent) {
       setSelectedEvent(matchingEvent);
     }
@@ -58,7 +66,7 @@ export const Dashboard: React.FC = () => {
         <Card className="p-5">
           <p className="text-xs text-dim font-medium">Total Events</p>
           <p className="text-2xl font-bold text-cloud font-mono mt-1">
-            {events.length.toLocaleString()}
+            {safeEvents.length.toLocaleString()}
           </p>
           <p className="text-[11px] text-good mt-1 font-medium">{activeEventsCount} active in cloud</p>
         </Card>
@@ -74,7 +82,7 @@ export const Dashboard: React.FC = () => {
         <Card className="p-5">
           <p className="text-xs text-dim font-medium">Recent Sessions</p>
           <p className="text-2xl font-bold text-violet-light font-mono mt-1">
-            {recentSessions.length.toLocaleString()}
+            {safeSessions.length.toLocaleString()}
           </p>
           <p className="text-[11px] text-dim mt-1">Saved locally</p>
         </Card>
@@ -100,7 +108,7 @@ export const Dashboard: React.FC = () => {
           </Link>
         </div>
 
-        {recentSessions.length === 0 ? (
+        {safeSessions.length === 0 ? (
           <div className="py-12 text-center">
             <p className="text-xs text-dim">No recent desktop upload sessions found.</p>
             <Link to="/events" className="mt-3 inline-block">
@@ -111,7 +119,7 @@ export const Dashboard: React.FC = () => {
           </div>
         ) : (
           <div className="divide-y divide-hairline mt-2">
-            {recentSessions.map((session) => {
+            {safeSessions.map((session) => {
               const isDone = session.status === "completed";
               const percent = session.totalFiles > 0
                 ? Math.round((session.uploadedFiles / session.totalFiles) * 100)

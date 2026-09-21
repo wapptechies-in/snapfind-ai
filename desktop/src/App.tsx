@@ -1,7 +1,8 @@
 import React from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { LoadingSpinner } from "./components/common";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { Dashboard } from "./pages/Dashboard";
 import { EventSelect } from "./pages/EventSelect";
 import { FolderScan } from "./pages/FolderScan";
@@ -76,17 +77,20 @@ const AppRoutes: React.FC = () => {
           </Layout>
         }
       />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 };
 
 export const App: React.FC = () => {
   return (
-    <BrowserRouter>
-      <AppProvider>
-        <AppRoutes />
-      </AppProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <HashRouter>
+        <AppProvider>
+          <AppRoutes />
+        </AppProvider>
+      </HashRouter>
+    </ErrorBoundary>
   );
 };
 
