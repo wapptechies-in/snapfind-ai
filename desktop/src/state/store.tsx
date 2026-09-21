@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { authApi } from "../api/auth";
 import { eventsApi } from "../api/events";
-import { getAuthToken } from "../api/client";
+import { getAuthToken, setApiBaseUrl } from "../api/client";
 import { sessionStorage } from "../storage/sessionStorage";
 import type { AppSettings, LocalUploadSession, ScanResult, SnapEvent, User } from "../types";
 import type { UploadManager } from "../upload/uploadManager";
@@ -54,6 +54,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const updateSettings = (partial: Partial<AppSettings>) => {
+    if (partial.apiBaseUrl) {
+      setApiBaseUrl(partial.apiBaseUrl);
+    }
     setSettings((prev) => {
       const next = { ...prev, ...partial };
       localStorage.setItem("snapfind_desktop_settings", JSON.stringify(next));

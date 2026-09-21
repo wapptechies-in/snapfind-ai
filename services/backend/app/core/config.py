@@ -32,8 +32,10 @@ class Settings(BaseSettings):
 
     # --- CORS ---
     # Comma-separated list of allowed origins, e.g.
-    # "http://localhost:5173,http://localhost:5174"
-    CORS_ORIGINS: str = "http://localhost:5173,http://localhost:5174"
+    # "http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:3000,null"
+    CORS_ORIGINS: str = (
+        "http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:3000,null"
+    )
 
     # --- Phase 5 AI & Vector Search Configuration ---
     AI_MODEL_NAME: str = "insightface"
