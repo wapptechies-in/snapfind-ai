@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "description": "SnapFind AI Desktop Photo Processing and Upload Agent",
+  "author": "SnapFind AI Team",
   "main": "dist-electron/main.js",
   "type": "module",
   "scripts": {
@@ -45,6 +46,7 @@
   "build": {
     "appId": "com.snapfind.desktop",
     "productName": "SnapFind Desktop",
+    "electronVersion": "32.3.3",
     "directories": {
       "output": "release"
     },
