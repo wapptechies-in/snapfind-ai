@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Badge, Button, Card, LoadingSpinner } from "../components/common";
 import { useApp } from "../state/store";
@@ -9,8 +9,19 @@ export const EventSelect: React.FC = () => {
   const { events, selectedEvent, setSelectedEvent, loadEvents } = useApp();
   const [search, setSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(events.length === 0);
 
   const safeEvents = Array.isArray(events) ? events : [];
+
+  useEffect(() => {
+    let mounted = true;
+    loadEvents().finally(() => {
+      if (mounted) setInitialLoading(false);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const filtered = safeEvents.filter(
     (e) =>
@@ -56,9 +67,20 @@ export const EventSelect: React.FC = () => {
         </div>
       </div>
 
-      {events.length === 0 ? (
+      {initialLoading ? (
         <Card className="p-12 text-center">
           <LoadingSpinner message="Loading events from studio..." />
+        </Card>
+      ) : safeEvents.length === 0 ? (
+        <Card className="p-12 text-center border-dashed border-hairline">
+          <div className="text-3xl mb-3">📁</div>
+          <h3 className="text-sm font-bold text-cloud mb-1">No Events Found</h3>
+          <p className="text-xs text-dim max-w-sm mx-auto mb-4">
+            You don't have any events created in your studio account yet.
+          </p>
+          <Button size="sm" variant="primary" onClick={handleRefresh} disabled={refreshing}>
+            {refreshing ? "Refreshing..." : "Refresh Events"}
+          </Button>
         </Card>
       ) : filtered.length === 0 ? (
         <Card className="p-12 text-center">
