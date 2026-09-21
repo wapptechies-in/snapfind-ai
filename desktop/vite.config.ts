@@ -3,6 +3,8 @@ import react from "@vitejs/plugin-react";
 import electron from "vite-plugin-electron";
 import renderer from "vite-plugin-electron-renderer";
 
+delete process.env.ELECTRON_RUN_AS_NODE;
+
 export default defineConfig({
   plugins: [
     react(),
