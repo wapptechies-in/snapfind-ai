@@ -76,8 +76,8 @@ function createWindow() {
     height: 820,
     minWidth: 1024,
     minHeight: 700,
-    backgroundColor: "#0B0D12",
-    title: "SnapFind AI Desktop — Photo Processing & Upload Agent",
+    backgroundColor: "#FAF8F5",
+    title: "SnapFind Studio — Professional Photo Processing & Upload Agent",
     icon: fs.existsSync(iconPath) ? iconPath : undefined,
     webPreferences: {
       preload: path.join(appDir, "preload.cjs"),
