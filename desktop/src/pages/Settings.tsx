@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Button, Card } from "../components/common";
 import { useApp } from "../state/store";
+import { authApi } from "../api/auth";
 
 export const Settings: React.FC = () => {
-  const { user, settings, updateSettings, refreshRecentSessions } = useApp();
+  const { user, settings, updateSettings, refreshRecentSessions, refreshProfile } = useApp();
 
   const [apiUrl, setApiUrl] = useState(settings.apiBaseUrl);
   const [concurrency, setConcurrency] = useState(settings.concurrency);
@@ -11,6 +12,29 @@ export const Settings: React.FC = () => {
   const [logs, setLogs] = useState<string[]>([]);
   const [platform, setPlatform] = useState<string>("Loading...");
   const [version, setVersion] = useState<string>("0.1.0");
+
+  // Profile fields
+  const [studioName, setStudioName] = useState(user?.studio_name || "");
+  const [displayName, setDisplayName] = useState(user?.display_name || "");
+  const [phone, setPhone] = useState(user?.phone || "");
+  const [location, setLocation] = useState(user?.location || "");
+  const [website, setWebsite] = useState(user?.website || "");
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
+
+  // Notification prefs
+  const [emailNotifications, setEmailNotifications] = useState(user?.email_notifications ?? true);
+  const [guestDownloadAlerts, setGuestDownloadAlerts] = useState(user?.guest_download_alerts ?? true);
+  const [autoWatermark, setAutoWatermark] = useState(user?.auto_watermark ?? false);
+
+  // Password change
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwSuccess, setPwSuccess] = useState<string | null>(null);
+  const [pwError, setPwError] = useState<string | null>(null);
 
   const fetchLogs = React.useCallback(async () => {
     if (window.desktopAPI) {
@@ -33,6 +57,19 @@ export const Settings: React.FC = () => {
     fetchLogs();
   }, [fetchLogs]);
 
+  // Sync profile fields when user changes
+  useEffect(() => {
+    if (user) {
+      setStudioName(user.studio_name || "");
+      setDisplayName(user.display_name || "");
+      setPhone(user.phone || "");
+      setLocation(user.location || "");
+      setWebsite(user.website || "");
+      setEmailNotifications(user.email_notifications ?? true);
+      setGuestDownloadAlerts(user.guest_download_alerts ?? true);
+      setAutoWatermark(user.auto_watermark ?? false);
+    }
+  }, [user]);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +79,64 @@ export const Settings: React.FC = () => {
     });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleProfileSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileSaving(true);
+    setProfileError(null);
+    setProfileSuccess(null);
+    try {
+      await authApi.updateProfile({
+        studio_name: studioName,
+        display_name: displayName,
+        phone,
+        location,
+        website,
+        email_notifications: emailNotifications,
+        guest_download_alerts: guestDownloadAlerts,
+        auto_watermark: autoWatermark,
+      });
+      await refreshProfile();
+      setProfileSuccess("Studio profile updated successfully.");
+      setTimeout(() => setProfileSuccess(null), 3000);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to save profile.";
+      setProfileError(msg);
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwError(null);
+    setPwSuccess(null);
+    if (newPassword !== confirmPassword) {
+      setPwError("New passwords do not match.");
+      return;
+    }
+    if (newPassword.length < 8) {
+      setPwError("New password must be at least 8 characters.");
+      return;
+    }
+    setPwSaving(true);
+    try {
+      const result = await authApi.changePassword({
+        current_password: currentPassword,
+        new_password: newPassword,
+      });
+      setPwSuccess(result.message || "Password changed successfully.");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setTimeout(() => setPwSuccess(null), 4000);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to change password.";
+      setPwError(msg);
+    } finally {
+      setPwSaving(false);
+    }
   };
 
   const handleClearCache = async () => {
@@ -56,38 +151,182 @@ export const Settings: React.FC = () => {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <div>
-        <h2 className="text-xl font-bold text-white tracking-tight">Desktop Settings</h2>
-        <p className="text-xs text-dim mt-0.5">
+        <h2 className="text-2xl font-serif font-bold text-charcoal tracking-tight">Desktop Settings</h2>
+        <p className="text-xs text-warm-gray mt-1">
           Configure API connection, upload streaming concurrency, and inspect logs.
         </p>
       </div>
 
-      {/* Account Info */}
-      <Card className="p-6">
-        <h3 className="text-sm font-semibold text-cloud mb-4">Photographer Account</h3>
+      {/* Studio Profile — Editable */}
+      <Card className="p-6 sm:p-7 bg-white border-warm-beige shadow-sm">
+        <div className="border-b border-warm-beige pb-4 mb-5">
+          <h3 className="text-base font-serif font-bold text-charcoal">Studio Profile</h3>
+          <p className="text-xs text-warm-gray mt-0.5">
+            This info appears on event landing pages and guest QR placards.
+          </p>
+        </div>
+
+        {profileSuccess && (
+          <div className="mb-4 rounded-xl bg-forest/10 border border-forest/30 px-3.5 py-2.5 text-xs text-forest font-medium">
+            {profileSuccess}
+          </div>
+        )}
+        {profileError && (
+          <div className="mb-4 rounded-xl bg-red-500/10 border border-red-500/30 px-3.5 py-2.5 text-xs text-red-600 font-medium">
+            {profileError}
+          </div>
+        )}
+
+        <form onSubmit={handleProfileSave} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-charcoal mb-1">Studio Brand Name *</label>
+              <input
+                type="text"
+                required
+                value={studioName}
+                onChange={(e) => setStudioName(e.target.value)}
+                className="w-full px-3.5 py-2 rounded-xl border border-warm-beige bg-sand-light/50 text-charcoal text-xs focus:border-forest focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-charcoal mb-1">Lead Photographer Name</label>
+              <input
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="Your full name"
+                className="w-full px-3.5 py-2 rounded-xl border border-warm-beige bg-sand-light/50 text-charcoal text-xs focus:border-forest focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-charcoal mb-1">Phone / WhatsApp</label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+91 98765 43210"
+                className="w-full px-3.5 py-2 rounded-xl border border-warm-beige bg-sand-light/50 text-charcoal text-xs focus:border-forest focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-charcoal mb-1">City, State, Country</label>
+              <input
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="Chennai, Tamil Nadu, India"
+                className="w-full px-3.5 py-2 rounded-xl border border-warm-beige bg-sand-light/50 text-charcoal text-xs focus:border-forest focus:outline-none"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-charcoal mb-1">Studio Website</label>
+              <input
+                type="url"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+                placeholder="https://yourstudio.com"
+                className="w-full px-3.5 py-2 rounded-xl border border-warm-beige bg-sand-light/50 text-charcoal text-xs focus:border-forest focus:outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Notification Prefs */}
+          <div className="pt-4 border-t border-warm-beige space-y-3">
+            <h4 className="text-xs font-semibold text-charcoal uppercase tracking-wider">Notification Preferences</h4>
+            {[
+              { label: "Email Notifications on First Scan", value: emailNotifications, onChange: setEmailNotifications },
+              { label: "Guest Download Alerts (weekly digest)", value: guestDownloadAlerts, onChange: setGuestDownloadAlerts },
+              { label: "Auto-apply Studio Watermark to Previews", value: autoWatermark, onChange: setAutoWatermark },
+            ].map(({ label, value, onChange }) => (
+              <label key={label} className="flex items-center justify-between cursor-pointer">
+                <span className="text-xs text-warm-gray">{label}</span>
+                <button
+                  type="button"
+                  onClick={() => onChange(!value)}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${value ? "bg-forest" : "bg-warm-beige"}`}
+                >
+                  <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${value ? "translate-x-4.5" : "translate-x-1"}`} />
+                </button>
+              </label>
+            ))}
+          </div>
+
+          <div className="pt-4 flex justify-end">
+            <Button type="submit" size="md" variant="primary" disabled={profileSaving} className="font-semibold shadow-sm">
+              {profileSaving ? "Saving..." : "Save Profile"}
+            </Button>
+          </div>
+        </form>
+      </Card>
+
+      {/* Password Change */}
+      <Card className="p-6 sm:p-7 bg-white border-warm-beige shadow-sm">
+        <div className="border-b border-warm-beige pb-4 mb-5">
+          <h3 className="text-base font-serif font-bold text-charcoal">Change Password</h3>
+          <p className="text-xs text-warm-gray mt-0.5">Use a strong password of at least 8 characters.</p>
+        </div>
+
+        {pwSuccess && (
+          <div className="mb-4 rounded-xl bg-forest/10 border border-forest/30 px-3.5 py-2.5 text-xs text-forest font-medium">
+            {pwSuccess}
+          </div>
+        )}
+        {pwError && (
+          <div className="mb-4 rounded-xl bg-red-500/10 border border-red-500/30 px-3.5 py-2.5 text-xs text-red-600 font-medium">
+            {pwError}
+          </div>
+        )}
+
+        <form onSubmit={handlePasswordChange} className="space-y-4 max-w-md">
+          {[
+            { label: "Current Password", value: currentPassword, onChange: setCurrentPassword },
+            { label: "New Password (min. 8 chars)", value: newPassword, onChange: setNewPassword },
+            { label: "Confirm New Password", value: confirmPassword, onChange: setConfirmPassword },
+          ].map(({ label, value, onChange }) => (
+            <div key={label}>
+              <label className="block text-xs font-semibold text-charcoal mb-1">{label}</label>
+              <input
+                type="password"
+                required
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                className="w-full px-3.5 py-2 rounded-xl border border-warm-beige bg-sand-light/50 text-charcoal text-xs focus:border-forest focus:outline-none"
+              />
+            </div>
+          ))}
+          <Button type="submit" size="md" variant="secondary" disabled={pwSaving} className="border-warm-beige font-semibold">
+            {pwSaving ? "Updating..." : "Update Password"}
+          </Button>
+        </form>
+      </Card>
+
+      {/* Account Info (read-only) */}
+      <Card className="p-6 sm:p-7 bg-white border-warm-beige shadow-sm">
+        <h3 className="text-base font-serif font-bold text-charcoal mb-4">Account Information</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
           <div>
-            <span className="text-dim">Studio Name</span>
-            <p className="text-cloud font-medium mt-0.5">{user?.studio_name || "Demo Studio"}</p>
+            <span className="text-warm-gray uppercase text-[10px] tracking-wider font-semibold">Studio Name</span>
+            <p className="text-charcoal font-medium mt-1">{user?.studio_name || "Demo Studio"}</p>
           </div>
           <div>
-            <span className="text-dim">Email Address</span>
-            <p className="text-cloud font-medium mt-0.5">{user?.email || "demo@snapfind.ai"}</p>
+            <span className="text-warm-gray uppercase text-[10px] tracking-wider font-semibold">Email Address</span>
+            <p className="text-charcoal font-medium mt-1">{user?.email || "demo@snapfind.ai"}</p>
           </div>
           <div>
-            <span className="text-dim">User ID</span>
-            <p className="text-dim font-mono mt-0.5">{user?.id || "usr_demo"}</p>
+            <span className="text-warm-gray uppercase text-[10px] tracking-wider font-semibold">User ID</span>
+            <p className="text-warm-gray font-mono mt-1">{user?.id || "usr_demo"}</p>
           </div>
         </div>
       </Card>
 
       {/* Network & Concurrency Settings Form */}
-      <Card className="p-6">
-        <h3 className="text-sm font-semibold text-cloud mb-4">Upload Engine & Network</h3>
+      <Card className="p-6 sm:p-7 bg-white border-warm-beige shadow-sm">
+        <h3 className="text-base font-serif font-bold text-charcoal mb-4">Upload Engine & Network</h3>
 
         <form onSubmit={handleSave} className="space-y-5">
           <div>
-            <label className="block text-xs font-semibold text-cloud mb-1">
+            <label className="block text-xs font-semibold text-charcoal mb-1">
               FastAPI Backend Endpoint URL
             </label>
             <input
@@ -95,19 +334,19 @@ export const Settings: React.FC = () => {
               value={apiUrl}
               onChange={(e) => setApiUrl(e.target.value)}
               placeholder="http://localhost:8000"
-              className="w-full max-w-lg px-3 py-2 rounded-lg border border-hairline bg-panel2 text-cloud text-xs font-mono focus:border-violet focus:outline-none"
+              className="w-full max-w-lg px-3.5 py-2 rounded-xl border border-warm-beige bg-sand-light/50 text-charcoal text-xs font-mono focus:border-forest focus:outline-none"
             />
-            <p className="text-[11px] text-dim mt-1">
+            <p className="text-[11px] text-warm-gray mt-1">
               Default is http://localhost:8000. For cloud deployment, enter your custom staging or production URL.
             </p>
           </div>
 
           <div>
             <div className="flex items-center justify-between max-w-lg mb-1">
-              <label className="text-xs font-semibold text-cloud">
+              <label className="text-xs font-semibold text-charcoal">
                 Concurrent Upload Streams
               </label>
-              <span className="font-mono text-xs font-bold text-violet-light">
+              <span className="font-mono text-xs font-bold text-forest">
                 {concurrency} simultaneous uploads
               </span>
             </div>
@@ -118,27 +357,76 @@ export const Settings: React.FC = () => {
               step="1"
               value={concurrency}
               onChange={(e) => setConcurrency(Number(e.target.value))}
-              className="w-full max-w-lg accent-violet cursor-pointer"
+              className="w-full max-w-lg accent-forest cursor-pointer"
             />
-            <p className="text-[11px] text-dim mt-1">
+            <p className="text-[11px] text-warm-gray mt-1">
               Recommended: 4 streams for high-speed fiber; 2 streams for mobile hotspots.
             </p>
           </div>
 
           <div className="flex items-center gap-3 pt-2">
-            <Button type="submit" size="md" variant="primary">
+            <Button type="submit" size="md" variant="primary" className="font-semibold shadow-sm">
               {saved ? "Settings Saved! ✓" : "Save Settings"}
             </Button>
           </div>
         </form>
       </Card>
 
+      {/* Photographer Plan & Quotas */}
+      <Card className="p-6 sm:p-7 bg-white border-warm-beige shadow-sm">
+        <div className="flex items-center justify-between pb-3 border-b border-warm-beige">
+          <div>
+            <h3 className="text-base font-serif font-bold text-charcoal">Studio Subscription & Quotas</h3>
+            <p className="text-xs text-warm-gray mt-0.5">
+              Account plan limits for {user?.email || "Photographer"}
+            </p>
+          </div>
+          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-forest/10 text-forest border border-forest/20 uppercase tracking-wider">
+            {user?.subscription_tier || "PRO"} Plan
+          </span>
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div className="p-4 rounded-xl bg-sand-light border border-warm-beige">
+            <span className="text-warm-gray block text-[11px]">Active Events Allowance:</span>
+            <span className="text-charcoal font-serif font-bold text-base mt-0.5 block">
+              {user?.max_active_events ?? 50} Active Events Max
+            </span>
+          </div>
+          <div className="p-4 rounded-xl bg-sand-light border border-warm-beige">
+            <span className="text-warm-gray block text-[11px]">Photos per Event:</span>
+            <span className="text-charcoal font-serif font-bold text-base mt-0.5 block">
+              {user?.max_photos_per_event ?? 5000} Photos Max
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-4 flex items-center justify-between pt-3 border-t border-warm-beige">
+          <span className="text-[11px] text-warm-gray">To upgrade plan or change billing:</span>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="border-warm-beige"
+            onClick={() => {
+              const url = "http://localhost:5173/subscription";
+              if (window.desktopAPI) {
+                window.desktopAPI.openExternal(url);
+              } else {
+                window.open(url, "_blank");
+              }
+            }}
+          >
+            Manage Billing on Web Portal ↗
+          </Button>
+        </div>
+      </Card>
+
       {/* Local Storage & Cache */}
-      <Card className="p-6">
+      <Card className="p-6 sm:p-7 bg-white border-warm-beige shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-cloud">Local Cache & Storage</h3>
-            <p className="text-xs text-dim mt-0.5">
+            <h3 className="text-base font-serif font-bold text-charcoal">Local Cache & Storage</h3>
+            <p className="text-xs text-warm-gray mt-0.5">
               SnapFind Desktop never copies full images to disk cache. Session states are stored in your OS application data folder.
             </p>
           </div>
@@ -149,28 +437,28 @@ export const Settings: React.FC = () => {
       </Card>
 
       {/* Application Logs */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between pb-3 border-b border-hairline">
+      <Card className="p-6 sm:p-7 bg-white border-warm-beige shadow-sm">
+        <div className="flex items-center justify-between pb-3 border-b border-warm-beige">
           <div>
-            <h3 className="text-sm font-semibold text-cloud">Application Logs</h3>
-            <p className="text-xs text-dim mt-0.5">
+            <h3 className="text-base font-serif font-bold text-charcoal">Application Logs</h3>
+            <p className="text-xs text-warm-gray mt-0.5">
               Sanitized operational logs. Passwords, secrets, and authorization tokens are strictly redacted.
             </p>
           </div>
-          <Button size="sm" variant="secondary" onClick={fetchLogs}>
+          <Button size="sm" variant="secondary" onClick={fetchLogs} className="border-warm-beige">
             Refresh Logs
           </Button>
         </div>
 
-        <div className="mt-3 p-3 rounded-lg bg-panel2 font-mono text-[11px] text-dim max-h-56 overflow-y-auto space-y-1">
+        <div className="mt-3 p-3.5 rounded-xl bg-sand-light font-mono text-[11px] text-charcoal max-h-56 overflow-y-auto space-y-1 border border-warm-beige">
           {logs.length === 0 ? (
-            <p className="text-dim italic">No log entries available.</p>
+            <p className="text-warm-gray italic">No log entries available.</p>
           ) : (
             logs.map((line, idx) => <div key={idx}>{line}</div>)
           )}
         </div>
 
-        <div className="mt-4 pt-3 border-t border-hairline/60 flex items-center justify-between text-[11px] text-dim font-mono">
+        <div className="mt-4 pt-3 border-t border-warm-beige flex items-center justify-between text-[11px] text-warm-gray font-mono">
           <span>Platform: {platform}</span>
           <span>SnapFind Desktop v{version}</span>
         </div>

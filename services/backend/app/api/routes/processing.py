@@ -22,7 +22,7 @@ from app.schemas.processing import (
     ProcessingStageOut,
     ProcessingStatusResponse,
 )
-from app.workers.celery_app import celery_app
+from app.workers.celery_app import celery_app, is_celery_broker_reachable
 from app.workers.tasks.photo_tasks import (
     process_event_photos_task,
     retry_failed_photos_task,
@@ -214,20 +214,27 @@ def start_event_processing(
         failed_items=0,
     )
     db.add(job)
-    db.flush()
+    db.commit()
 
-    try:
-        task = process_event_photos_task.delay(
-            event_id=event.id, job_id=job.id, force_reprocess=False
-        )
-        job.celery_task_id = task.id
-    except Exception as celery_err:
-        logger.warning(f"Could not dispatch via Celery broker: {celery_err}. Executing task directly.")
+    from app.workers.celery_app import is_celery_broker_reachable
+
+    if is_celery_broker_reachable():
+        try:
+            task = process_event_photos_task.delay(
+                event_id=event.id, job_id=job.id, force_reprocess=False
+            )
+            job.celery_task_id = task.id
+            db.commit()
+        except Exception as celery_err:
+            logger.warning(f"Could not dispatch via Celery broker: {celery_err}. Executing task directly.")
+            process_event_photos_task(
+                event_id=event.id, job_id=job.id, force_reprocess=False
+            )
+    else:
+        logger.info(f"Celery broker offline. Processing event photos directly.")
         process_event_photos_task(
             event_id=event.id, job_id=job.id, force_reprocess=False
         )
-
-    db.commit()
 
     return ProcessingActionResponse(
         success=True,
@@ -272,20 +279,27 @@ def reprocess_event_photos(
         failed_items=0,
     )
     db.add(job)
-    db.flush()
+    db.commit()
 
-    try:
-        task = process_event_photos_task.delay(
-            event_id=event.id, job_id=job.id, force_reprocess=True
-        )
-        job.celery_task_id = task.id
-    except Exception as celery_err:
-        logger.warning(f"Could not dispatch via Celery broker: {celery_err}. Executing task directly.")
+    from app.workers.celery_app import is_celery_broker_reachable
+
+    if is_celery_broker_reachable():
+        try:
+            task = process_event_photos_task.delay(
+                event_id=event.id, job_id=job.id, force_reprocess=True
+            )
+            job.celery_task_id = task.id
+            db.commit()
+        except Exception as celery_err:
+            logger.warning(f"Could not dispatch via Celery broker: {celery_err}. Executing task directly.")
+            process_event_photos_task(
+                event_id=event.id, job_id=job.id, force_reprocess=True
+            )
+    else:
+        logger.info("Celery broker offline. Reprocessing event photos directly.")
         process_event_photos_task(
             event_id=event.id, job_id=job.id, force_reprocess=True
         )
-
-    db.commit()
 
     return ProcessingActionResponse(
         success=True,
@@ -332,16 +346,19 @@ def retry_failed_photos(
         failed_items=0,
     )
     db.add(job)
-    db.flush()
-
-    try:
-        task = retry_failed_photos_task.delay(event_id=event.id, job_id=job.id)
-        job.celery_task_id = task.id
-    except Exception as celery_err:
-        logger.warning(f"Could not dispatch via Celery broker: {celery_err}. Executing task directly.")
-        retry_failed_photos_task(event_id=event.id, job_id=job.id)
-
     db.commit()
+
+    if is_celery_broker_reachable():
+        try:
+            task = retry_failed_photos_task.delay(event_id=event.id, job_id=job.id)
+            job.celery_task_id = task.id
+            db.commit()
+        except Exception as celery_err:
+            logger.warning(f"Could not dispatch via Celery broker: {celery_err}. Executing task directly.")
+            retry_failed_photos_task(event_id=event.id, job_id=job.id)
+    else:
+        logger.info("Celery broker offline. Retrying failed photos directly.")
+        retry_failed_photos_task(event_id=event.id, job_id=job.id)
 
     return ProcessingActionResponse(
         success=True,

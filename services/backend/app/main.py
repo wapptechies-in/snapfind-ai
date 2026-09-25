@@ -15,17 +15,29 @@ from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import (
+    admin,
     ai,
     auth,
+    billing,
     bookings,
     dashboard,
     events,
+    folders,
+    guests,
     health,
     photos,
     processing,
     upload_sessions,
 )
 from app.core.config import get_settings
+from app.db.migrate_approval import run_approval_migrations
+from app.db.migrate_billing import run_billing_migrations
+from app.db.migrate_cover_image import run_cover_image_migrations
+from app.db.migrate_event_status import run_event_status_migrations
+from app.db.migrate_folders import run_folder_migrations
+from app.db.migrate_guest_whatsapp import run_guest_whatsapp_migrations
+from app.db.migrate_photographer_onboarding import run_photographer_onboarding_migrations
+from app.db.migrate_public_gallery import run_public_gallery_migrations
 from app.db.session import init_db
 from app.services.ai.insightface_engine import get_face_engine
 
@@ -36,6 +48,14 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     """Lifespan event to automatically initialize database schema, seed fixtures, and warm up AI face model."""
     init_db()
+    run_approval_migrations()
+    run_billing_migrations()
+    run_cover_image_migrations()
+    run_event_status_migrations()
+    run_folder_migrations()
+    run_guest_whatsapp_migrations()
+    run_photographer_onboarding_migrations()
+    run_public_gallery_migrations()
     # Warm up face engine singleton so it is ready for instant inference
     get_face_engine()
     yield
@@ -50,8 +70,8 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
-    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?|null|app://.*|file://.*",
+    allow_origins=["*"],
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.\d+\.\d+\.\d+)(:\d+)?|null|app://.*|file://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -63,13 +83,17 @@ app.include_router(health.router, tags=["health"])
 # API v1 subrouter
 api_v1 = APIRouter(prefix="/api/v1")
 api_v1.include_router(auth.router)
+api_v1.include_router(admin.router)
 api_v1.include_router(events.router)
+api_v1.include_router(folders.router)
 api_v1.include_router(dashboard.router)
 api_v1.include_router(bookings.router)
 api_v1.include_router(photos.router)
 api_v1.include_router(processing.router)
 api_v1.include_router(upload_sessions.router)
 api_v1.include_router(ai.router)
+api_v1.include_router(billing.router)
+api_v1.include_router(guests.router)
 
 app.include_router(api_v1)
 

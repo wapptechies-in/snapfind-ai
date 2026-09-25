@@ -8,7 +8,7 @@ import io
 import logging
 import os
 from typing import Any
-from PIL import Image, ImageOps
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 from app.core.config import get_settings
 from app.models.photo import Photo
@@ -184,4 +184,130 @@ class StorageService:
         unique_keys = list(set(keys_to_delete))
         if unique_keys:
             self.provider.delete_objects(unique_keys)
+
+    def delete_event_objects(self, event_id: str) -> None:
+        """Delete all storage objects (originals, web, thumbnails) belonging to an event."""
+        prefix = f"events/{event_id}/"
+        self.provider.delete_prefix(prefix)
+
+    def apply_watermark(
+        self,
+        img: Image.Image,
+        text: str = "SNAPFIND AI",
+        opacity: int = 50,
+    ) -> Image.Image:
+        """
+        Applies a clean diagonal semi-transparent watermark pattern
+        and a subtle bottom-right attribution mark.
+        """
+        orig_mode = img.mode
+        rgba_img = img.convert("RGBA")
+        w, h = rgba_img.size
+
+        overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(overlay)
+
+        # Attempt to load clean font
+        try:
+            font_size = max(18, int(h / 24))
+            font = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", font_size)
+        except Exception:
+            try:
+                font = ImageFont.truetype("arial.ttf", 28)
+            except Exception:
+                font = ImageFont.load_default()
+
+        # 1. Subtle diagonal repeating watermark text
+        tile_w = max(240, int(w / 4))
+        tile_h = max(120, int(h / 6))
+        txt_img = Image.new("RGBA", (tile_w, tile_h), (0, 0, 0, 0))
+        txt_draw = ImageDraw.Draw(txt_img)
+        txt_draw.text((20, 20), text, fill=(255, 255, 255, opacity), font=font)
+        rotated_txt = txt_img.rotate(30, expand=True, resample=Image.Resampling.BILINEAR)
+
+        rw, rh = rotated_txt.size
+        for x in range(0, w, rw + 40):
+            for y in range(0, h, rh + 40):
+                overlay.paste(rotated_txt, (x, y), rotated_txt)
+
+        # 2. Sleek bottom-right copyright badge
+        badge_text = f"© {text} • Protected Preview"
+        try:
+            badge_font = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", max(14, int(h / 36)))
+        except Exception:
+            badge_font = font
+
+        bx = max(10, w - max(280, int(w * 0.3)))
+        by = max(10, h - max(36, int(h * 0.05)))
+        draw.text((bx + 1, by + 1), badge_text, fill=(0, 0, 0, 160), font=badge_font)
+        draw.text((bx, by), badge_text, fill=(255, 255, 255, 200), font=badge_font)
+
+        watermarked = Image.alpha_composite(rgba_img, overlay)
+        return watermarked.convert(orig_mode if orig_mode in ("RGB", "L") else "RGB")
+
+    def get_photo_bytes(
+        self,
+        photo: Photo,
+        variant: str = "web",
+        apply_watermark: bool = False,
+        watermark_text: str = "SNAPFIND AI",
+    ) -> bytes | None:
+        """
+        Fetch binary bytes for a photo variant from storage provider or file paths.
+        Optionally applies watermarking overlay on the fly.
+        """
+        keys_to_try = []
+        if variant == "original":
+            keys_to_try = [photo.original_storage_key, photo.storage_key, photo.web_storage_key]
+        elif variant == "thumbnail":
+            keys_to_try = [photo.thumbnail_storage_key, photo.web_storage_key, photo.original_storage_key]
+        else:  # web
+            keys_to_try = [photo.web_storage_key, photo.original_storage_key, photo.storage_key]
+
+        data: bytes | None = None
+        for k in keys_to_try:
+            if not k:
+                continue
+            if not k.startswith("http://") and not k.startswith("https://"):
+                try:
+                    data = self.provider.get_object_bytes(k)
+                    if data:
+                        break
+                except Exception as err:
+                    logger.debug(f"Could not get bytes for key {k}: {err}")
+
+        # Fallback to local file path if stored in url
+        if not data and photo.url and os.path.isfile(photo.url):
+            try:
+                with open(photo.url, "rb") as f:
+                    data = f.read()
+            except Exception as e:
+                logger.debug(f"Could not read local file path {photo.url}: {e}")
+
+        # Fallback to HTTP fetch if URL is an external mock/remote URL
+        if not data and photo.url and photo.url.startswith("http"):
+            try:
+                import urllib.request
+                req = urllib.request.Request(photo.url, headers={"User-Agent": "SnapFind/1.0"})
+                with urllib.request.urlopen(req, timeout=5) as response:
+                    data = response.read()
+            except Exception as e:
+                logger.debug(f"Could not download HTTP url {photo.url}: {e}")
+
+        if not data:
+            return None
+
+        if apply_watermark:
+            try:
+                with Image.open(io.BytesIO(data)) as img:
+                    wm_img = self.apply_watermark(img, text=watermark_text)
+                    buf = io.BytesIO()
+                    wm_img.save(buf, format="JPEG", quality=85, optimize=True)
+                    return buf.getvalue()
+            except Exception as e:
+                logger.warning(f"Watermark application failed: {e}")
+                return data
+
+        return data
+
 

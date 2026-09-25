@@ -8,6 +8,11 @@ interface PhotoViewerProps {
   onClose: () => void;
   onNavigate: (newIndex: number) => void;
   onDownload?: (photo: Photo) => void;
+  onDelete?: (photo: Photo) => Promise<void> | void;
+  onSetCover?: (photo: Photo) => Promise<void> | void;
+  isCover?: boolean;
+  isFavorite?: boolean;
+  onToggleFavorite?: (photo: Photo) => void;
 }
 
 export const PhotoViewer: React.FC<PhotoViewerProps> = ({
@@ -17,8 +22,16 @@ export const PhotoViewer: React.FC<PhotoViewerProps> = ({
   onClose,
   onNavigate,
   onDownload,
+  onDelete,
+  onSetCover,
+  isCover,
+  isFavorite,
+  onToggleFavorite,
 }) => {
   const [downloadNotice, setDownloadNotice] = useState<string | null>(null);
+  const [coverNotice, setCoverNotice] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handlePrev = useCallback(() => {
     onNavigate((currentIndex - 1 + photos.length) % photos.length);
@@ -54,6 +67,31 @@ export const PhotoViewer: React.FC<PhotoViewerProps> = ({
     }
   };
 
+  const handleDelete = async () => {
+    if (!onDelete) return;
+    setIsDeleting(true);
+    try {
+      await onDelete(currentPhoto);
+      setShowDeleteConfirm(false);
+    } catch {
+      // Handled by parent
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleMakeCover = async () => {
+    if (!onSetCover) return;
+    try {
+      await onSetCover(currentPhoto);
+      setCoverNotice("Set as Event Cover! ★");
+      setTimeout(() => setCoverNotice(null), 3000);
+    } catch {
+      setCoverNotice("Failed to update cover.");
+      setTimeout(() => setCoverNotice(null), 3000);
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex flex-col bg-black/95 text-white backdrop-blur-md select-none animate-fade-in"
@@ -70,6 +108,11 @@ export const PhotoViewer: React.FC<PhotoViewerProps> = ({
           <span className="text-sm font-medium text-zinc-200 truncate max-w-xs md:max-w-md">
             {currentPhoto.filename}
           </span>
+          {isCover && (
+            <span className="rounded-full px-2 py-0.5 text-xs font-semibold bg-violet/30 text-violet-light border border-violet/40">
+              ★ Cover
+            </span>
+          )}
           {currentPhoto.matchConfidence !== undefined && (
             <span
               className={`rounded-full px-2 py-0.5 text-xs font-semibold border ${
@@ -84,11 +127,60 @@ export const PhotoViewer: React.FC<PhotoViewerProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
+          {coverNotice && (
+            <span className="text-xs text-violet-light font-medium animate-fade-in bg-violet/20 border border-violet/40 px-2.5 py-1 rounded-md">
+              {coverNotice}
+            </span>
+          )}
           {downloadNotice && (
             <span className="text-xs text-good font-medium animate-fade-in bg-good/15 border border-good/30 px-2.5 py-1 rounded-md">
               {downloadNotice}
             </span>
           )}
+
+          {/* Favorite Button */}
+          {onToggleFavorite && (
+            <button
+              onClick={() => onToggleFavorite(currentPhoto)}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all focus:outline-none ${
+                isFavorite
+                  ? "bg-rose-500/20 text-rose-400 border border-rose-500/40 hover:bg-rose-500/30"
+                  : "bg-white/10 hover:bg-white/20 text-zinc-300 hover:text-white border border-white/15"
+              }`}
+              title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+            >
+              <svg
+                className={`h-4 w-4 ${isFavorite ? "fill-rose-500 text-rose-500" : "fill-none text-current"}`}
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                />
+              </svg>
+              <span className="hidden sm:inline">{isFavorite ? "Favorited" : "Favorite"}</span>
+            </button>
+          )}
+
+          {/* Set as Event Cover Button */}
+          {onSetCover && (
+            <button
+              onClick={handleMakeCover}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all focus:outline-none ${
+                isCover
+                  ? "bg-violet text-white ring-1 ring-violet/50 cursor-default"
+                  : "bg-white/10 hover:bg-violet/40 text-zinc-200 hover:text-white border border-white/15"
+              }`}
+              title="Set this photo as the event's cover image"
+            >
+              <span>★</span>
+              <span className="hidden sm:inline">{isCover ? "Cover Photo" : "Set as Cover"}</span>
+            </button>
+          )}
+
           <button
             onClick={handleDownload}
             className="flex items-center gap-2 rounded-lg bg-white/10 hover:bg-white/20 px-3.5 py-1.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-white/40"
@@ -100,6 +192,43 @@ export const PhotoViewer: React.FC<PhotoViewerProps> = ({
             </svg>
             <span className="hidden sm:inline">Download</span>
           </button>
+
+          {/* Permanent Delete Action */}
+          {onDelete && (
+            <div className="relative">
+              {!showDeleteConfirm ? (
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="flex items-center gap-1.5 rounded-lg bg-red-500/15 hover:bg-red-500/30 text-red-400 border border-red-500/30 px-3 py-1.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                  title="Delete this photo permanently"
+                  aria-label="Delete photo"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  <span className="hidden sm:inline">Delete</span>
+                </button>
+              ) : (
+                <div className="flex items-center gap-1.5 bg-red-950/90 border border-red-500/50 rounded-lg p-1 animate-fade-in shadow-xl">
+                  <span className="text-[11px] text-red-200 px-2 font-medium">Permanently delete?</span>
+                  <button
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="px-2 py-1 rounded bg-red-600 hover:bg-red-500 text-white text-[11px] font-bold transition-all active:scale-95"
+                  >
+                    {isDeleting ? "..." : "Delete"}
+                  </button>
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[11px] transition-all"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           <button
             onClick={onClose}
             className="rounded-lg p-2 text-zinc-400 hover:text-white hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-white/40"
@@ -155,7 +284,7 @@ export const PhotoViewer: React.FC<PhotoViewerProps> = ({
       <div className="px-6 py-3 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-between text-xs text-zinc-400">
         <div className="flex items-center gap-4">
           <span>Dimensions: {currentPhoto.width || 1600} × {currentPhoto.height || 1067}</span>
-          <span>Uploaded: {new Date(currentPhoto.uploadedAt).toLocaleDateString()}</span>
+          <span>Uploaded: {new Date(currentPhoto.uploadedAt || currentPhoto.createdAt || Date.now()).toLocaleDateString()}</span>
         </div>
         <div className="hidden sm:flex items-center gap-2 text-[11px] text-zinc-500">
           <span>Use</span>

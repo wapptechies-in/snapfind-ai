@@ -102,46 +102,46 @@ export const UploadConfirmModal: React.FC<UploadConfirmModalProps> = ({
     <Modal isOpen={isOpen} onClose={onClose} title="Confirm Batch Upload">
       <div className="space-y-4">
         {error && (
-          <div className="p-3 rounded-lg border border-bad/30 bg-bad/10 text-xs text-bad">
+          <div className="p-3 rounded-xl border border-danger/30 bg-danger/10 text-xs text-danger">
             {error}
           </div>
         )}
 
-        <div className="p-4 rounded-xl border border-hairline bg-panel2/50 space-y-2 text-xs">
-          <div className="flex justify-between py-1 border-b border-hairline/60">
-            <span className="text-dim">Destination Event:</span>
-            <span className="font-semibold text-cloud">{event.name}</span>
+        <div className="p-4 rounded-xl border border-warm-beige bg-cream space-y-2 text-xs">
+          <div className="flex justify-between py-1 border-b border-warm-beige">
+            <span className="text-charcoal-muted">Destination Event:</span>
+            <span className="font-semibold text-charcoal">{event.name}</span>
           </div>
-          <div className="flex justify-between py-1 border-b border-hairline/60">
-            <span className="text-dim">Local Source Folder:</span>
-            <span className="font-mono text-cloud truncate max-w-[200px]" title={scanResult.folderPath}>
+          <div className="flex justify-between py-1 border-b border-warm-beige">
+            <span className="text-charcoal-muted">Local Source Folder:</span>
+            <span className="font-mono text-charcoal truncate max-w-[200px]" title={scanResult.folderPath}>
               {scanResult.folderName}
             </span>
           </div>
-          <div className="flex justify-between py-1 border-b border-hairline/60">
-            <span className="text-dim">Ready Photographs:</span>
-            <span className="font-mono font-bold text-good">
+          <div className="flex justify-between py-1 border-b border-warm-beige">
+            <span className="text-charcoal-muted">Ready Photographs:</span>
+            <span className="font-mono font-bold text-forest">
               {scanResult.readyCount.toLocaleString()} files
             </span>
           </div>
-          <div className="flex justify-between py-1 border-b border-hairline/60">
-            <span className="text-dim">Total Payload Size:</span>
-            <span className="font-mono font-bold text-violet-light">
+          <div className="flex justify-between py-1 border-b border-warm-beige">
+            <span className="text-charcoal-muted">Total Payload Size:</span>
+            <span className="font-mono font-bold text-forest">
               {formatBytes(scanResult.totalBytes)}
             </span>
           </div>
           <div className="flex justify-between py-1">
-            <span className="text-dim">Worker Concurrency:</span>
-            <span className="font-mono text-cloud">{settings.concurrency} streams simultaneously</span>
+            <span className="text-charcoal-muted">Worker Concurrency:</span>
+            <span className="font-mono text-charcoal">{settings.concurrency} streams simultaneously</span>
           </div>
         </div>
 
-        <p className="text-[11px] text-dim">
-          Photographs will stream directly from disk to storage using presigned PUT URLs.
-          Server-side Celery workers will automatically begin derivative generation and face indexing.
+        <p className="text-[11px] text-charcoal-muted leading-relaxed">
+          Photographs will stream directly from disk to storage using presigned upload URLs.
+          Server-side async workers will automatically begin derivative generation and face indexing.
         </p>
 
-        <div className="flex items-center justify-end gap-3 pt-3 border-t border-hairline">
+        <div className="flex items-center justify-end gap-3 pt-3 border-t border-warm-beige">
           <Button variant="secondary" size="md" onClick={onClose} disabled={loading}>
             Cancel
           </Button>

@@ -19,6 +19,7 @@ class PhotoCreate(BaseModel):
     mime_type: str | None = Field(default="image/jpeg", alias="mimeType")
     storage_key: str | None = Field(default=None, alias="storageKey")
     thumbnail_key: str | None = Field(default=None, alias="thumbnailKey")
+    folder_id: str | None = Field(default=None, alias="folderId")
 
 
 class UploadInitRequest(BaseModel):
@@ -28,6 +29,7 @@ class UploadInitRequest(BaseModel):
     file_size: int = Field(..., ge=1, alias="fileSize")
     mime_type: str = Field(default="image/jpeg", alias="mimeType")
     checksum: str | None = None
+    folder_id: str | None = Field(default=None, alias="folderId")
 
 
 class UploadInitResponse(BaseModel):
@@ -72,6 +74,8 @@ class PhotoOut(BaseModel):
     original_storage_key: str | None = Field(default=None, alias="originalStorageKey")
     web_storage_key: str | None = Field(default=None, alias="webStorageKey")
     thumbnail_storage_key: str | None = Field(default=None, alias="thumbnailStorageKey")
+    folder_id: str | None = Field(default=None, alias="folderId")
+    folder_name: str | None = Field(default=None, alias="folderName")
     width: int | None = 1600
     height: int | None = 1067
     file_size: int | None = Field(default=None, alias="fileSize")
@@ -79,9 +83,23 @@ class PhotoOut(BaseModel):
     checksum: str | None = None
     upload_status: str = Field(default="uploaded", alias="uploadStatus")
     processing_status: str = Field(default="completed", alias="processingStatus")
+    is_public_gallery: bool = Field(default=False, alias="isPublicGallery")
     created_at: datetime = Field(..., alias="uploadedAt")
 
 
 class PhotoListOut(BaseModel):
     items: list[PhotoOut]
     total: int
+
+
+class GalleryVisibilityUpdate(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    is_public_gallery: bool = Field(..., alias="isPublicGallery")
+
+
+class BulkGalleryVisibilityUpdate(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    photo_ids: list[str] = Field(..., alias="photoIds")
+    is_public_gallery: bool = Field(..., alias="isPublicGallery")

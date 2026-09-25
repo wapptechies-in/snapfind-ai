@@ -145,32 +145,32 @@ export default function EventProcessing() {
     );
   }
 
-  const isProcessing = job.status === "processing" || job.status === "queued";
+  const isProcessing = job.status === "processing" || job.status === "queued" || job.status === "running";
   const hasFailedPhotos = typeof job.failed === "number" && job.failed > 0;
-  const hasPendingPhotos = job.remaining > 0 && !isProcessing;
+  const hasPendingPhotos = ((job.remaining ?? 0) > 0) && !isProcessing;
 
   return (
     <DashboardLayout title={`${event.name} — Processing`}>
       <EventHeader event={event} />
 
       {/* Live Pipeline Status Banner */}
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border border-hairline bg-panel2/50 p-3 text-xs text-dim">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-warm-beige bg-surface p-3.5 text-xs text-charcoal-muted shadow-sm">
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded bg-good/20 px-2 py-0.5 text-[11px] font-semibold text-good">
-            <span className="h-1.5 w-1.5 rounded-full bg-good animate-ping" />
-            LIVE CELERY PIPELINE
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-forest/10 px-2.5 py-0.5 text-[11px] font-semibold text-forest">
+            <span className="h-1.5 w-1.5 rounded-full bg-forest animate-ping" />
+            LIVE PIPELINE
           </span>
-          <span className="text-cloud font-medium">
-            Redis broker connected &middot; Asynchronous worker pool active
+          <span className="text-charcoal font-medium">
+            Async worker pool active &middot; Derivatives &amp; vector embeddings
           </span>
         </div>
-        <div className="flex items-center gap-3 text-dim text-[11px]">
+        <div className="flex items-center gap-3 text-charcoal-muted text-[11px]">
           <span>Polling live every 2.5s</span>
           <span>&middot;</span>
           <span>Updated {lastUpdated.toLocaleTimeString()}</span>
           <button
             onClick={() => id && fetchJobStatus(id)}
-            className="text-violet-light hover:text-white transition-colors cursor-pointer underline"
+            className="text-forest hover:underline font-semibold transition-colors cursor-pointer"
           >
             Refresh
           </button>
@@ -180,16 +180,16 @@ export default function EventProcessing() {
       {/* Feedback Message */}
       {feedback && (
         <div
-          className={`mb-6 p-3 rounded-lg border text-xs flex items-center justify-between ${
+          className={`mb-6 p-3.5 rounded-xl border text-xs flex items-center justify-between shadow-sm ${
             feedback.type === "success"
-              ? "bg-good/10 border-good/30 text-good"
-              : "bg-bad/10 border-bad/30 text-bad"
+              ? "bg-forest/10 border-forest/20 text-forest"
+              : "bg-danger/10 border-danger/20 text-danger"
           }`}
         >
           <span>{feedback.text}</span>
           <button
             onClick={() => setFeedback(null)}
-            className="text-dim hover:text-white ml-3 text-sm cursor-pointer"
+            className="text-charcoal-muted hover:text-charcoal ml-3 text-sm cursor-pointer"
           >
             ✕
           </button>
@@ -197,10 +197,10 @@ export default function EventProcessing() {
       )}
 
       {/* Pipeline Action Controls */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl border border-hairline bg-panel/70">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 p-5 rounded-2xl border border-warm-beige bg-surface shadow-sm">
         <div>
-          <h4 className="text-sm font-semibold text-cloud">Pipeline Controls</h4>
-          <p className="text-xs text-dim mt-0.5">
+          <h4 className="text-sm font-serif font-semibold text-charcoal">Pipeline Controls</h4>
+          <p className="text-xs text-charcoal-muted mt-0.5">
             Trigger batch inference, re-generate derivatives, or retry failed items.
           </p>
         </div>

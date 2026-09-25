@@ -55,6 +55,31 @@ def seed_dev_data(db: Session) -> None:
         hashed_password=demo_user.password_hash,
     )
     db.add(demo_photographer)
+
+    # 2b. Create Desktop Demo User (demo@snapfind.ai / snapfind123)
+    snapfind_demo_user = User(
+        id="usr_002",
+        email="demo@snapfind.ai",
+        password_hash=hash_password("snapfind123"),
+        full_name="SnapFind Pro Photographer",
+        role="photographer",
+        is_active=True,
+    )
+    db.add(snapfind_demo_user)
+    db.flush()
+
+    snapfind_photographer = Photographer(
+        id="p_002",
+        user_id=snapfind_demo_user.id,
+        email=snapfind_demo_user.email,
+        studio_name="SnapFind Studio Pro",
+        display_name="SnapFind Pro Agent",
+        phone="+1 (555) 987-6543",
+        bio="Professional AI studio workflow and event photography.",
+        website="https://snapfind.ai",
+        hashed_password=snapfind_demo_user.password_hash,
+    )
+    db.add(snapfind_photographer)
     db.flush()
 
     # 3. Create Sample Events

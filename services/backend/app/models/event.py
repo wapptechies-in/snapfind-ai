@@ -6,7 +6,7 @@ Status: IMPLEMENTED (Phase 4)
 from datetime import datetime, timezone
 import secrets
 import uuid
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -47,9 +47,15 @@ class Event(Base):
     cover_image_reference: Mapped[str | None] = mapped_column(
         String(512), nullable=True
     )
+    cover_image: Mapped[str | None] = mapped_column(
+        String(512), nullable=True
+    )
     status: Mapped[str] = mapped_column(
         String(32), default="Active", nullable=False, index=True
-    )  # Draft, Processing, Active, Expired, Archived
+    )  # Active, Inactive, Draft, Processing, Expired, Archived
+    is_active: Mapped[bool] = mapped_column(
+        Boolean, default=True, nullable=False, index=True
+    )
 
     # Public token separate from internal primary key ID
     public_token: Mapped[str] = mapped_column(
@@ -64,10 +70,27 @@ class Event(Base):
     expiry_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     expiry_date: Mapped[str | None] = mapped_column(String(32), nullable=True)
 
-    # Engagement counters
+    # Phase 9: Guest Paywall & Digital Purchase Monetization
+    paywall_enabled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    photo_price: Mapped[float] = mapped_column(Float, default=4.99, nullable=False)
+    gallery_unlock_price: Mapped[float] = mapped_column(Float, default=29.99, nullable=False)
+    currency: Mapped[str] = mapped_column(String(8), default="USD", nullable=False)
+
+    # Engagement counters & metrics
     gallery_views: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     total_downloads: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     total_searches: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    total_registrations: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    total_matches_found: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    total_whatsapp_sent: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    total_marketing_consents: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
+    # Event Public Landing & Branding Customization
+    welcome_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    custom_logo_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    show_snapfind_branding: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    show_company_cta: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    show_contact_button: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -93,14 +116,21 @@ class Event(Base):
     # Backward compatibility property for cover photo url
     @property
     def cover_photo_url(self) -> str | None:
-        return self.cover_image_reference
+        return self.cover_image or self.cover_image_reference
 
     @cover_photo_url.setter
     def cover_photo_url(self, val: str | None):
+        self.cover_image = val
         self.cover_image_reference = val
 
     # Relationships
     photographer = relationship("Photographer", back_populates="events")
+    folders = relationship(
+        "Folder",
+        back_populates="event",
+        cascade="all, delete-orphan",
+        order_by="Folder.created_at",
+    )
     photos = relationship(
         "Photo",
         back_populates="event",
@@ -130,3 +160,41 @@ class Event(Base):
         back_populates="event",
         cascade="all, delete-orphan",
     )
+    upload_sessions = relationship(
+        "UploadSession",
+        back_populates="event",
+        cascade="all, delete-orphan",
+        order_by="desc(UploadSession.created_at)",
+    )
+    guest_purchases = relationship(
+        "GuestPurchase",
+        back_populates="event",
+        cascade="all, delete-orphan",
+        order_by="desc(GuestPurchase.created_at)",
+    )
+    guests = relationship(
+        "Guest",
+        back_populates="event",
+        cascade="all, delete-orphan",
+        order_by="desc(Guest.created_at)",
+    )
+    marketing_leads = relationship(
+        "MarketingLead",
+        back_populates="event",
+        cascade="all, delete-orphan",
+        order_by="desc(MarketingLead.created_at)",
+    )
+    whatsapp_logs = relationship(
+        "WhatsAppMessageLog",
+        back_populates="event",
+        cascade="all, delete-orphan",
+        order_by="desc(WhatsAppMessageLog.created_at)",
+    )
+    search_jobs = relationship(
+        "SearchJob",
+        back_populates="event",
+        cascade="all, delete-orphan",
+        order_by="desc(SearchJob.created_at)",
+    )
+
+

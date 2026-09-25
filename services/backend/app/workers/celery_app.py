@@ -19,6 +19,19 @@ celery_app = Celery(
     include=["app.workers.tasks.photo_tasks"],
 )
 
+def is_celery_broker_reachable(timeout: float = 0.05) -> bool:
+    """Fast check if Celery/Redis broker is reachable without hanging."""
+    import socket
+    from urllib.parse import urlparse
+    try:
+        parsed = urlparse(settings.CELERY_BROKER_URL)
+        host = parsed.hostname or "localhost"
+        port = parsed.port or 6379
+        with socket.create_connection((host, port), timeout=timeout):
+            return True
+    except Exception:
+        return False
+
 celery_app.conf.update(
     task_serializer="json",
     accept_content=["json"],
@@ -28,7 +41,9 @@ celery_app.conf.update(
     task_acks_late=True,
     task_reject_on_worker_lost=True,
     worker_prefetch_multiplier=1,
-    broker_connection_retry_on_startup=True,
+    broker_connection_retry_on_startup=False,
+    broker_connection_max_retries=1,
+    broker_connection_timeout=1.0,
     task_track_started=True,
     result_expires=86400,  # 24 hours
 )

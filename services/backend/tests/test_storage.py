@@ -121,12 +121,14 @@ def test_upload_pipeline_lifecycle():
     assert "events/" in storage_key
     assert upload_url.startswith("http")
 
-    # 3. Direct PUT binary to MinIO
-    put_resp = requests.put(
-        upload_url,
-        data=sample_bytes,
+    # 3. Direct PUT binary to storage via client
+    from urllib.parse import urlparse
+    parsed = urlparse(upload_url)
+    put_path = f"{parsed.path}?{parsed.query}" if parsed.path else upload_url
+    put_resp = client.put(
+        put_path,
+        content=sample_bytes,
         headers={"Content-Type": "image/jpeg"},
-        timeout=10,
     )
     assert put_resp.status_code in (200, 204)
 
@@ -154,7 +156,19 @@ def test_upload_pipeline_lifecycle():
     assert url_data["photoId"] == photo_id
     assert "http" in url_data["url"]
 
-    # 6. Public guest gallery endpoint
+    # 6. Public guest gallery endpoint (only shows photos marked is_public_gallery=True)
+    gallery_resp_pre = client.get(f"/api/v1/events/{event_token}/public-photos")
+    assert gallery_resp_pre.status_code == 200
+    assert not any(p["id"] == photo_id for p in gallery_resp_pre.json()["items"])
+
+    # Toggle photo visibility into public gallery
+    toggle_resp = client.patch(
+        f"/api/v1/photos/{photo_id}/gallery-visibility",
+        json={"is_public_gallery": True},
+    )
+    assert toggle_resp.status_code == 200
+    assert toggle_resp.json()["is_public_gallery"] is True
+
     gallery_resp = client.get(f"/api/v1/events/{event_token}/public-photos")
     assert gallery_resp.status_code == 200
     gallery_data = gallery_resp.json()

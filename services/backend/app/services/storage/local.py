@@ -11,11 +11,15 @@ from typing import Any
 from app.services.storage.base import StorageProvider
 
 
+BACKEND_DIR = Path(__file__).resolve().parent.parent.parent.parent
+DEFAULT_MEDIA_DIR = BACKEND_DIR / "media_storage"
+
+
 class LocalStorageProvider(StorageProvider):
     """Local filesystem storage provider for testing and offline environments."""
 
-    def __init__(self, base_dir: str = "media_storage", base_url: str = "/static/media"):
-        self.base_dir = Path(base_dir).resolve()
+    def __init__(self, base_dir: str | Path | None = None, base_url: str = "/static/media"):
+        self.base_dir = Path(base_dir).resolve() if base_dir else DEFAULT_MEDIA_DIR
         self.base_url = base_url.rstrip("/")
         self.base_dir.mkdir(parents=True, exist_ok=True)
 
@@ -31,7 +35,7 @@ class LocalStorageProvider(StorageProvider):
         target = self._get_path(key)
         target.parent.mkdir(parents=True, exist_ok=True)
         return {
-            "upload_url": f"/api/v1/storage/upload?key={key}",
+            "upload_url": f"http://127.0.0.1:8000/api/v1/storage/upload?key={key}",
             "method": "PUT",
             "headers": {"Content-Type": content_type},
             "expires_in": expires_in,
@@ -45,7 +49,7 @@ class LocalStorageProvider(StorageProvider):
         filename: str | None = None,
         inline: bool = False,
     ) -> str:
-        return f"/api/v1/storage/file/{key}"
+        return f"http://127.0.0.1:8000/api/v1/storage/file/{key}"
 
     def object_exists(self, key: str) -> bool:
         return self._get_path(key).is_file()
@@ -86,5 +90,12 @@ class LocalStorageProvider(StorageProvider):
     def delete_objects(self, keys: list[str]) -> bool:
         for k in keys:
             self.delete_object(k)
+        return True
+
+    def delete_prefix(self, prefix: str) -> bool:
+        prefix_path = self._get_path(prefix)
+        if prefix_path.is_dir():
+            import shutil
+            shutil.rmtree(prefix_path, ignore_errors=True)
         return True
 

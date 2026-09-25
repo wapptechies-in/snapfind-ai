@@ -1,5 +1,6 @@
-export * from "./client";
-export * from "./auth";
-export * from "./events";
-export * from "./uploads";
-export * from "./processing";
+/**
+ * Desktop API Service Layer.
+ * Re-exports unified @snapfind/api-client services with full backward compatibility.
+ */
+
+export * from "@snapfind/api-client";

@@ -4,13 +4,13 @@
   "version": "0.1.0",
   "description": "SnapFind AI Desktop Photo Processing and Upload Agent",
   "author": "SnapFind AI Team",
-  "main": "dist-electron/main.js",
+  "main": "dist-electron/main.cjs",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build:electron": "tsc -p tsconfig.electron.json && esbuild electron/preload.ts --bundle --platform=node --format=cjs --external:electron --outfile=dist-electron/preload.cjs",
+    "build:electron": "esbuild electron/main.ts --bundle --platform=node --format=cjs --external:electron --outfile=dist-electron/main.cjs && esbuild electron/preload.ts --bundle --platform=node --format=cjs --external:electron --outfile=dist-electron/preload.cjs",
     "build:renderer": "tsc -b && vite build",
-    "build": "npm run build:electron && npm run build:renderer",
+    "build": "npm run build:renderer && npm run build:electron",
     "start": "electron .",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
@@ -19,12 +19,18 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@snapfind/tokens": "*",
+    "@snapfind/types": "*",
+    "@snapfind/api-client": "*",
+    "@snapfind/ui": "*",
+    "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2"
   },
   "devDependencies": {
     "@types/node": "^22.5.4",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^8.5.0",

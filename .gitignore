@@ -29,10 +29,13 @@ build/
 # Databases
 *.sqlite3
 *.db
+*.db-shm
+*.db-wal
 /database/local/
 
 # Uploads / temp media (local dev only — originals never go to git)
 **/uploads/
+**/media_storage/
 **/tmp/
 *.tmp
 
@@ -41,6 +44,8 @@ desktop/out/
 desktop/dist/
 desktop/dist-electron/
 desktop/release/
+desktop/stdout.txt
+desktop/stderr.txt
 
 
 # Logs

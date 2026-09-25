@@ -79,3 +79,8 @@ class StorageProvider(ABC):
         """Batch delete multiple objects from storage."""
         pass
 
+    @abstractmethod
+    def delete_prefix(self, prefix: str) -> bool:
+        """Delete all objects matching a key prefix from storage."""
+        pass
+

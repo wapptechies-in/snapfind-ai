@@ -26,6 +26,7 @@ class S3StorageProvider(StorageProvider):
         access_key: str | None = None,
         secret_key: str | None = None,
         region_name: str = "us-east-1",
+        cdn_url: str | None = None,
     ):
         self.bucket_name = bucket_name
         self.endpoint_url = endpoint_url
@@ -33,6 +34,7 @@ class S3StorageProvider(StorageProvider):
         self.access_key = access_key
         self.secret_key = secret_key
         self.region_name = region_name
+        self.cdn_url = cdn_url.rstrip("/") if cdn_url else None
 
         client_config = Config(
             signature_version="s3v4",
@@ -125,6 +127,10 @@ class S3StorageProvider(StorageProvider):
         inline: bool = False,
     ) -> str:
         """Generate short-lived presigned GET URL for viewing or downloading."""
+        if self.cdn_url and inline and not filename:
+            clean_key = key.lstrip("/")
+            return f"{self.cdn_url}/{clean_key}"
+
         params: dict[str, Any] = {
             "Bucket": self.bucket_name,
             "Key": key,
@@ -213,4 +219,21 @@ class S3StorageProvider(StorageProvider):
             return True
         except ClientError as e:
             logger.warning(f"Error batch deleting objects: {e}")
+            return False
+
+    def delete_prefix(self, prefix: str) -> bool:
+        """Delete all objects matching a key prefix from bucket."""
+        try:
+            paginator = self.client.get_paginator("list_objects_v2")
+            for page in paginator.paginate(Bucket=self.bucket_name, Prefix=prefix):
+                if "Contents" in page:
+                    keys = [{"Key": obj["Key"]} for obj in page["Contents"]]
+                    if keys:
+                        self.client.delete_objects(
+                            Bucket=self.bucket_name,
+                            Delete={"Objects": keys, "Quiet": True},
+                        )
+            return True
+        except Exception as e:
+            logger.warning(f"Error deleting prefix '{prefix}': {e}")
             return False

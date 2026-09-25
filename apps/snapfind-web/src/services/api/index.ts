@@ -1,20 +1,6 @@
 /**
  * SnapFind Web Application — Unified API Service Module
- * Status: MOCK (Phase 3)
+ * Re-exports unified @snapfind/api-client services with full backward compatibility.
  */
 
-import { mockDashboardStats } from "../../data/mockStats";
-import { delay } from "./client";
-import { authApi } from "./auth";
-import { eventsApi } from "./events";
-import { photosApi } from "./photos";
-import { searchApi } from "./search";
-
-export { authApi, eventsApi, photosApi, searchApi };
-
-export const dashboardApi = {
-  async getStats() {
-    await delay(150);
-    return { ...mockDashboardStats };
-  },
-};
+export * from "@snapfind/api-client";

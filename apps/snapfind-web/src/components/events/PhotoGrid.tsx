@@ -10,6 +10,10 @@ interface PhotoGridProps {
   selectedIds?: string[];
   onToggleSelect?: (photoId: string) => void;
   showConfidence?: boolean;
+  coverImageUrl?: string | null;
+  onSetCover?: (photo: Photo) => void;
+  onDeletePhoto?: (photo: Photo) => void;
+  onToggleGalleryVisibility?: (photo: Photo) => void;
   emptyTitle?: string;
   emptyDescription?: string;
   emptyActionLabel?: string;
@@ -24,6 +28,10 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({
   selectedIds = [],
   onToggleSelect,
   showConfidence = false,
+  coverImageUrl,
+  onSetCover,
+  onDeletePhoto,
+  onToggleGalleryVisibility,
   emptyTitle = "No photos found",
   emptyDescription = "No photos match your current selection or search criteria.",
   emptyActionLabel,
@@ -43,18 +51,30 @@ export const PhotoGrid: React.FC<PhotoGridProps> = ({
 
   return (
     <div className={`grid ${columns} gap-3.5 sm:gap-4`}>
-      {photos.map((photo, index) => (
-        <PhotoCard
-          key={photo.id}
-          photo={photo}
-          onClick={() => onPhotoClick(index)}
-          selectable={selectable}
-          selected={selectedIds.includes(photo.id)}
-          onToggleSelect={onToggleSelect}
-          showConfidence={showConfidence}
-        />
-      ))}
+      {photos.map((photo, index) => {
+        // Check if photo URL or webUrl matches event cover
+        const isCover =
+          !!coverImageUrl &&
+          (photo.url === coverImageUrl ||
+            photo.thumbnailUrl === coverImageUrl ||
+            (coverImageUrl.includes(photo.id)));
+
+        return (
+          <PhotoCard
+            key={photo.id}
+            photo={photo}
+            onClick={() => onPhotoClick(index)}
+            selectable={selectable}
+            selected={selectedIds.includes(photo.id)}
+            onToggleSelect={onToggleSelect}
+            showConfidence={showConfidence}
+            isCover={isCover}
+            onSetCover={onSetCover}
+            onDelete={onDeletePhoto}
+            onToggleGalleryVisibility={onToggleGalleryVisibility}
+          />
+        );
+      })}
     </div>
   );
 };
-

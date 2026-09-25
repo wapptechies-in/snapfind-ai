@@ -35,7 +35,8 @@ class Photographer(Base):
     phone: Mapped[str | None] = mapped_column(String(64), nullable=True)
     bio: Mapped[str | None] = mapped_column(Text, nullable=True)
     website: Mapped[str | None] = mapped_column(String(512), nullable=True)
-    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    location: Mapped[str | None] = mapped_column(String(255), nullable=True)   # City, State, Country
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=True, default="")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
@@ -47,6 +48,44 @@ class Photographer(Base):
         onupdate=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
+
+    # Role & Access Approval Architecture
+    role: Mapped[str] = mapped_column(
+        String(32), default="photographer", nullable=False
+    )  # photographer, admin, super_admin
+    approval_status: Mapped[str] = mapped_column(
+        String(32), default="pending", nullable=False
+    )  # pending, approved, rejected, suspended
+    auth_provider: Mapped[str] = mapped_column(
+        String(32), default="email", nullable=False
+    )  # email, google
+    google_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    avatar_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    approved_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    rejection_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Onboarding state — true after wizard is completed
+    onboarding_completed: Mapped[bool] = mapped_column(default=False, nullable=False)
+
+    # Notification preferences
+    email_notifications: Mapped[bool] = mapped_column(default=True, nullable=False)
+    guest_download_alerts: Mapped[bool] = mapped_column(default=True, nullable=False)
+    auto_watermark: Mapped[bool] = mapped_column(default=False, nullable=False)
+
+    # Phase 9: Subscription & Monetization fields
+    subscription_tier: Mapped[str] = mapped_column(
+        String(32), default="free", nullable=False
+    )  # free, pro, studio
+    subscription_status: Mapped[str] = mapped_column(
+        String(32), default="active", nullable=False
+    )  # active, canceled, past_due
+    stripe_customer_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    stripe_subscription_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    razorpay_customer_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    razorpay_subscription_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    max_active_events: Mapped[int] = mapped_column(default=2, nullable=False)
+    max_photos_per_event: Mapped[int] = mapped_column(default=500, nullable=False)
 
     # Relationships
     user = relationship("User", back_populates="photographer")

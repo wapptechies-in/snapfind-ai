@@ -3,9 +3,14 @@ Photos API routes: photo upload pipeline, storage management, metadata, and URLs
 Status: IMPLEMENTED (Phase 6)
 """
 
+import io
 import logging
-from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+import os
+from typing import Annotated, Any
+import zipfile
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
+from fastapi.responses import FileResponse, StreamingResponse
+from pydantic import BaseModel
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
@@ -13,12 +18,15 @@ from app.api.dependencies import get_current_photographer_or_default
 from app.core.config import get_settings
 from app.db.session import get_db
 from app.models.audit_log import AuditLog
+from app.models.billing import GuestPurchase
 from app.models.download_log import DownloadLog
 from app.models.event import Event
 from app.models.photo import Photo, generate_photo_id
 from app.models.photographer import Photographer
 from app.models.processing_job import ProcessingJob
 from app.schemas.photo import (
+    BulkGalleryVisibilityUpdate,
+    GalleryVisibilityUpdate,
     PhotoCreate,
     PhotoListOut,
     PhotoOut,
@@ -29,7 +37,7 @@ from app.schemas.photo import (
 )
 from app.services.ai.service import process_photo_for_faces
 from app.services.storage import StorageService
-from app.workers.tasks.photo_tasks import process_single_photo_task
+from app.workers.tasks.photo_tasks import process_photo_sync, process_single_photo_task
 
 
 logger = logging.getLogger("snapfind.photos")
@@ -55,7 +63,22 @@ def _resolve_event(event_id_or_token: str, db: Session) -> Event:
     return event
 
 
-def _enrich_photo_urls(photo: Photo, storage: StorageService) -> PhotoOut:
+def _client_reachable_url(url: str | None, request: Request | None = None) -> str | None:
+    """Replace local loopback URLs with the origin used by the requesting client."""
+    if not url or not request:
+        return url
+
+    for local_origin in ("http://127.0.0.1:8000", "http://localhost:8000"):
+        if url.startswith(local_origin):
+            return f"{str(request.base_url).rstrip('/')}{url[len(local_origin):]}"
+    return url
+
+
+def _enrich_photo_urls(
+    photo: Photo,
+    storage: StorageService,
+    request: Request | None = None,
+) -> PhotoOut:
     """Enrich a Photo model with dynamically generated presigned URLs if not hardcoded."""
     web_url = photo.url
     thumb_url = photo.thumbnail_url
@@ -75,12 +98,14 @@ def _enrich_photo_urls(photo: Photo, storage: StorageService) -> PhotoOut:
         eventId=photo.event_id,
         filename=photo.filename,
         originalFilename=photo.original_filename or photo.filename,
-        url=web_url,
-        thumbnailUrl=thumb_url,
+        url=_client_reachable_url(web_url, request),
+        thumbnailUrl=_client_reachable_url(thumb_url, request),
         storageKey=photo.storage_key,
         originalStorageKey=photo.original_storage_key,
         webStorageKey=photo.web_storage_key,
         thumbnailStorageKey=photo.thumbnail_storage_key,
+        folderId=photo.folder_id,
+        folderName=photo.folder.name if getattr(photo, "folder", None) else None,
         width=photo.width or 1600,
         height=photo.height or 1067,
         fileSize=photo.file_size,
@@ -88,6 +113,7 @@ def _enrich_photo_urls(photo: Photo, storage: StorageService) -> PhotoOut:
         checksum=photo.checksum,
         uploadStatus=photo.upload_status,
         processingStatus=photo.processing_status,
+        is_public_gallery=getattr(photo, "is_public_gallery", False),
         uploadedAt=photo.created_at,
     )
 
@@ -112,6 +138,19 @@ def upload_init(
     and returns a short-lived presigned PUT URL for direct-to-storage upload.
     """
     event = _resolve_event(event_id, db)
+
+    # Enforce photographer subscription photo limit
+    photographer = db.get(Photographer, event.photographer_id)
+    if photographer:
+        current_photos = db.scalar(
+            select(func.count(Photo.id)).where(Photo.event_id == event.id)
+        ) or 0
+        max_photos = getattr(photographer, "max_photos_per_event", 5000)
+        if current_photos >= max_photos:
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail=f"Photo upload limit ({max_photos} photos) reached for this event under your {getattr(photographer, 'subscription_tier', 'free').upper()} plan. Please upgrade to Pro for higher limits.",
+            )
 
     # Validate file size (max configured MB)
     max_bytes = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
@@ -151,6 +190,7 @@ def upload_init(
         file_size=payload.file_size,
         mime_type=payload.mime_type,
         checksum=payload.checksum,
+        folder_id=payload.folder_id,
         upload_status="pending",
         processing_status="pending",
     )
@@ -175,14 +215,17 @@ def upload_complete(
     payload: UploadCompleteRequest,
     photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
     db: Annotated[Session, Depends(get_db)],
+    background_tasks: BackgroundTasks = None,
 ) -> PhotoOut:
     """
     Step 2 of binary upload pipeline:
     Signals that client finished uploading the binary to storage.
     Verifies object existence, transitions photo to 'uploaded' and 'queued',
-    creates a ProcessingJob, and dispatches asynchronous background Celery task.
+    creates a ProcessingJob, and dispatches asynchronous background processing.
     Returns immediately (< 50ms) without blocking the HTTP client.
     """
+    from app.workers.celery_app import is_celery_broker_reachable
+
     photo = db.get(Photo, photo_id)
     if not photo:
         raise HTTPException(
@@ -216,24 +259,29 @@ def upload_complete(
             failed_items=0,
         )
         db.add(job)
-        db.flush()
-
-        # Dispatch async Celery background task
-        try:
-            task = process_single_photo_task.delay(photo_id=photo.id, job_id=job.id)
-            job.celery_task_id = task.id
-        except Exception as celery_err:
-            logger.warning(
-                f"Could not enqueue Celery task for photo {photo.id}: {celery_err}. Falling back to sync processing."
-            )
-            try:
-                # Direct task execution fallback if broker unreachable
-                process_single_photo_task(photo_id=photo.id, job_id=job.id)
-            except Exception as sync_err:
-                logger.error(f"Fallback processing failed for {photo.id}: {sync_err}")
-
+        # Commit now so the record exists for background tasks
         db.commit()
         db.refresh(photo)
+
+        def _run_processing(p_id: str, j_id: str):
+            try:
+                if is_celery_broker_reachable():
+                    task = process_single_photo_task.delay(photo_id=p_id, job_id=j_id)
+                    logger.info(f"Enqueued Celery task {task.id} for photo {p_id}")
+                else:
+                    logger.info(f"Celery broker offline. Processing photo {p_id} directly.")
+                    process_photo_sync(photo_id=p_id, job_id=j_id)
+            except Exception as run_err:
+                logger.warning(f"Error during photo task dispatch for {p_id}: {run_err}. Falling back to sync processing.")
+                try:
+                    process_photo_sync(photo_id=p_id, job_id=j_id)
+                except Exception as sync_err:
+                    logger.error(f"Background processing failed for {p_id}: {sync_err}", exc_info=True)
+
+        if background_tasks is not None:
+            background_tasks.add_task(_run_processing, photo.id, job.id)
+        else:
+            _run_processing(photo.id, job.id)
 
         return _enrich_photo_urls(photo, storage)
 
@@ -253,13 +301,15 @@ def upload_complete(
 @router.get("/photos/{photo_id}/url", response_model=PhotoUrlResponse)
 def get_photo_url(
     photo_id: str,
+    request: Request,
     db: Annotated[Session, Depends(get_db)],
     variant: Annotated[str, Query(pattern="^(original|web|thumbnail)$")] = "web",
     download: Annotated[bool, Query()] = False,
+    download_token: Annotated[str | None, Query(alias="downloadToken")] = None,
 ) -> PhotoUrlResponse:
     """
     Generate short-lived presigned URL for viewing or downloading a specific variant.
-    Enforces event policies (downloads_enabled, original_downloads_enabled)
+    Enforces event policies (downloads_enabled, original_downloads_enabled, paywall)
     and tracks download activity in download_logs.
     """
     photo = db.get(Photo, photo_id)
@@ -289,6 +339,31 @@ def get_photo_url(
                 detail="Original high-resolution downloads are disabled for this event",
             )
 
+        # Enforce Paywall on original high-res download
+        if variant == "original" and getattr(event, "paywall_enabled", False):
+            # Verify if valid download token exists for this photo or whole event
+            has_purchase = False
+            if download_token:
+                purchase = db.scalar(
+                    select(GuestPurchase).where(
+                        GuestPurchase.download_token == download_token,
+                        GuestPurchase.event_id == event.id,
+                        GuestPurchase.status == "completed",
+                        or_(
+                            GuestPurchase.photo_id == photo.id,
+                            GuestPurchase.purchase_type == "gallery",
+                        ),
+                    )
+                )
+                if purchase:
+                    has_purchase = True
+
+            if not has_purchase:
+                raise HTTPException(
+                    status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                    detail=f"Paywall enabled: This photo requires purchase ({event.currency} {event.photo_price:.2f}) before downloading full resolution.",
+                )
+
         # Log download and increment count
         log_entry = DownloadLog(
             event_id=event.id,
@@ -315,7 +390,7 @@ def get_photo_url(
 
     return PhotoUrlResponse(
         photoId=photo.id,
-        url=url,
+        url=_client_reachable_url(url, request) or "",
         variant=variant,
         expiresIn=settings.PRESIGNED_URL_EXPIRE_SECONDS,
         filename=filename,
@@ -328,34 +403,42 @@ def get_photo_url(
 @router.get("/events/{event_id}/photos", response_model=PhotoListOut)
 def list_event_photos(
     event_id: str,
+    request: Request,
     db: Annotated[Session, Depends(get_db)],
     page: Annotated[int, Query(ge=1)] = 1,
-    limit: Annotated[int, Query(ge=1, le=200)] = 50,
+    limit: Annotated[int, Query(ge=1, le=2000)] = 500,
+    folder_id: Annotated[str | None, Query(alias="folderId")] = None,
 ) -> PhotoListOut:
     """
     Retrieve photo metadata for a given event ID or public token.
     Populates presigned web & thumbnail URLs dynamically.
+    Supports filtering by sub-folder ID.
     """
     event = _resolve_event(event_id, db)
     storage = StorageService()
 
+    base_filter = [Photo.event_id == event.id, Photo.upload_status != "failed"]
+
+    if folder_id and folder_id.lower() not in ("all", ""):
+        if folder_id.lower() in ("unassigned", "root", "none"):
+            base_filter.append(Photo.folder_id.is_(None))
+        else:
+            base_filter.append(Photo.folder_id == folder_id)
+
     total = db.scalar(
-        select(func.count(Photo.id))
-        .where(Photo.event_id == event.id)
-        .where(Photo.upload_status != "failed")
+        select(func.count(Photo.id)).where(*base_filter)
     ) or 0
 
     offset = (page - 1) * limit
     photos = db.scalars(
         select(Photo)
-        .where(Photo.event_id == event.id)
-        .where(Photo.upload_status != "failed")
+        .where(*base_filter)
         .order_by(Photo.created_at.desc())
         .offset(offset)
         .limit(limit)
     ).all()
 
-    enriched = [_enrich_photo_urls(p, storage) for p in photos]
+    enriched = [_enrich_photo_urls(p, storage, request) for p in photos]
 
     return PhotoListOut(
         items=enriched,
@@ -390,6 +473,7 @@ def create_event_photo(
         mime_type=photo_in.mime_type or "image/jpeg",
         storage_key=photo_in.storage_key,
         thumbnail_key=photo_in.thumbnail_key,
+        folder_id=photo_in.folder_id,
         upload_status="uploaded",
         processing_status="completed",
     )
@@ -446,3 +530,300 @@ def delete_photo(
     db.commit()
 
     return {"ok": True, "id": photo_id}
+
+
+class BulkDeletePhotosRequest(BaseModel):
+    photo_ids: list[str]
+
+
+@router.post("/photos/bulk-delete")
+def bulk_delete_photos(
+    payload: BulkDeletePhotosRequest,
+    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    db: Annotated[Session, Depends(get_db)],
+) -> dict[str, Any]:
+    """Delete multiple photos and their storage objects in one batch."""
+    if not payload.photo_ids:
+        return {"ok": True, "deleted_count": 0, "deleted_ids": []}
+
+    photos = db.scalars(
+        select(Photo).where(Photo.id.in_(payload.photo_ids))
+    ).all()
+
+    storage = StorageService()
+    deleted_ids = []
+    for photo in photos:
+        try:
+            storage.delete_photo_objects(photo)
+        except Exception as e:
+            logger.warning(f"Error cleaning storage for photo {photo.id}: {e}")
+
+        audit = AuditLog(
+            user_id=photographer.user_id,
+            action="photo_deleted_bulk",
+            entity_type="photo",
+            entity_id=photo.id,
+            metadata_json=f'{{"event_id": "{photo.event_id}", "filename": "{photo.filename}"}}',
+        )
+        db.add(audit)
+        db.delete(photo)
+        deleted_ids.append(photo.id)
+
+    db.commit()
+    return {"ok": True, "deleted_count": len(deleted_ids), "deleted_ids": deleted_ids}
+
+
+# --- ZIP Archive Downloads (Guest Experience & Bulk Export) ---
+
+
+class DownloadZipRequest(BaseModel):
+    photo_ids: list[str]
+    variant: str = "web"  # "web" or "original"
+
+
+@router.post("/photos/download-zip")
+def download_photos_zip(
+    payload: DownloadZipRequest,
+    db: Annotated[Session, Depends(get_db)],
+):
+    """
+    Package selected photos into a streaming ZIP file on the fly.
+    Respects event download policies and watermarks previews if enabled.
+    """
+    if not payload.photo_ids:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No photo IDs provided",
+        )
+
+    photos = db.scalars(
+        select(Photo).where(Photo.id.in_(payload.photo_ids))
+    ).all()
+
+    if not photos:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No valid photos found for the specified IDs",
+        )
+
+    # Check event download permissions
+    event_ids = list(set(p.event_id for p in photos))
+    events = {e.id: e for e in db.scalars(select(Event).where(Event.id.in_(event_ids))).all()}
+
+    for eid, ev in events.items():
+        if not ev.downloads_enabled:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Downloads are disabled for event '{ev.name}'",
+            )
+        if payload.variant == "original" and not ev.original_downloads_enabled:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Original resolution downloads are disabled for event '{ev.name}'",
+            )
+
+    storage = StorageService()
+    zip_buffer = io.BytesIO()
+
+    with zipfile.ZipFile(zip_buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
+        used_names = set()
+        for idx, photo in enumerate(photos):
+            ev = events.get(photo.event_id)
+            apply_wm = ev.watermark_enabled if ev and payload.variant != "original" else False
+            wm_text = ev.name if ev else "SNAPFIND AI"
+
+            data = storage.get_photo_bytes(photo, variant=payload.variant, apply_watermark=apply_wm, watermark_text=wm_text)
+            if not data:
+                continue
+
+            base_name = photo.original_filename or photo.filename or f"photo_{photo.id}.jpg"
+            if not base_name.lower().endswith((".jpg", ".jpeg", ".png", ".webp")):
+                base_name += ".jpg"
+
+            entry_name = base_name
+            count = 1
+            while entry_name in used_names:
+                name_part, ext = os.path.splitext(base_name)
+                entry_name = f"{name_part}_{count}{ext}"
+                count += 1
+            used_names.add(entry_name)
+
+            zf.writestr(entry_name, data)
+
+            log_entry = DownloadLog(
+                event_id=photo.event_id,
+                photo_id=photo.id,
+                download_type=f"zip_{payload.variant}",
+            )
+            db.add(log_entry)
+
+    for ev in events.values():
+        ev.total_downloads += len([p for p in photos if p.event_id == ev.id])
+    db.commit()
+
+    zip_buffer.seek(0)
+    return StreamingResponse(
+        zip_buffer,
+        media_type="application/zip",
+        headers={"Content-Disposition": 'attachment; filename="snapfind-photos.zip"'},
+    )
+
+
+@router.get("/events/{event_id_or_token}/download-zip")
+def download_event_photos_zip(
+    event_id_or_token: str,
+    db: Annotated[Session, Depends(get_db)],
+    variant: Annotated[str, Query(pattern="^(original|web)$")] = "web",
+):
+    """
+    Download all active photos for an event or token as a ZIP archive.
+    """
+    event = _resolve_event(event_id_or_token, db)
+
+    if not event.downloads_enabled:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Downloads are disabled for this event",
+        )
+    if variant == "original" and not event.original_downloads_enabled:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Original resolution downloads are disabled for this event",
+        )
+
+    query = (
+        select(Photo)
+        .where(Photo.event_id == event.id)
+        .where(Photo.upload_status != "failed")
+    )
+    if event_id_or_token == event.public_token:
+        query = query.where(Photo.is_public_gallery == True)
+
+    photos = db.scalars(query.order_by(Photo.created_at.asc())).all()
+
+    if not photos:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No photos available to download in this event",
+        )
+
+    storage = StorageService()
+    zip_buffer = io.BytesIO()
+
+    with zipfile.ZipFile(zip_buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
+        used_names = set()
+        for idx, photo in enumerate(photos):
+            apply_wm = event.watermark_enabled if variant != "original" else False
+            data = storage.get_photo_bytes(photo, variant=variant, apply_watermark=apply_wm, watermark_text=event.name)
+            if not data:
+                continue
+
+            base_name = photo.original_filename or photo.filename or f"photo_{idx + 1}.jpg"
+            if not base_name.lower().endswith((".jpg", ".jpeg", ".png", ".webp")):
+                base_name += ".jpg"
+
+            entry_name = base_name
+            count = 1
+            while entry_name in used_names:
+                name_part, ext = os.path.splitext(base_name)
+                entry_name = f"{name_part}_{count}{ext}"
+                count += 1
+            used_names.add(entry_name)
+
+            zf.writestr(entry_name, data)
+
+            log_entry = DownloadLog(
+                event_id=event.id,
+                photo_id=photo.id,
+                download_type=f"zip_{variant}",
+            )
+            db.add(log_entry)
+
+    event.total_downloads += len(photos)
+    db.commit()
+
+    safe_event_name = "".join(c for c in event.name if c.isalnum() or c in ("-", "_")).strip() or "event"
+    zip_buffer.seek(0)
+    return StreamingResponse(
+        zip_buffer,
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{safe_event_name}-photos.zip"'},
+    )
+
+
+@router.put("/storage/upload")
+async def handle_storage_upload(
+    request: Request,
+    key: str = Query(...),
+):
+    """
+    Direct binary upload handler for local filesystem storage fallback.
+    Receives raw binary payload stream and saves it to local storage key path.
+    """
+    from app.services.storage.local import LocalStorageProvider
+
+    body = await request.body()
+    local_provider = LocalStorageProvider()
+    file_path = local_provider._get_path(key)
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(file_path, "wb") as f:
+        f.write(body)
+    return {"status": "ok", "key": key, "bytes_written": len(body)}
+
+
+@router.get("/storage/file/{key:path}")
+def handle_storage_file(key: str):
+    """
+    Serves stored photos from local storage fallback.
+    """
+    from app.services.storage.local import LocalStorageProvider
+
+    local_provider = LocalStorageProvider()
+    file_path = local_provider._get_path(key)
+    if not file_path.is_file():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Storage object '{key}' not found",
+        )
+    return FileResponse(file_path)
+
+
+@router.patch("/photos/{photo_id}/gallery-visibility")
+def update_photo_gallery_visibility(
+    photo_id: str,
+    payload: GalleryVisibilityUpdate,
+    db: Annotated[Session, Depends(get_db)],
+):
+    """Toggle or set whether an individual photo appears in the public customer gallery."""
+    photo = db.get(Photo, photo_id)
+    if not photo:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Photo '{photo_id}' not found",
+        )
+    photo.is_public_gallery = payload.is_public_gallery
+    db.commit()
+    return {"success": True, "photo_id": photo.id, "is_public_gallery": photo.is_public_gallery}
+
+
+@router.post("/events/{event_id}/photos/gallery-visibility")
+def bulk_update_gallery_visibility(
+    event_id: str,
+    payload: BulkGalleryVisibilityUpdate,
+    db: Annotated[Session, Depends(get_db)],
+):
+    """Bulk update public customer gallery visibility for a list of photos under an event."""
+    event = _resolve_event(event_id, db)
+    updated_count = 0
+    if payload.photo_ids:
+        photos = db.scalars(
+            select(Photo)
+            .where(Photo.event_id == event.id)
+            .where(Photo.id.in_(payload.photo_ids))
+        ).all()
+        for p in photos:
+            p.is_public_gallery = payload.is_public_gallery
+            updated_count += 1
+        db.commit()
+    return {"success": True, "count": updated_count, "is_public_gallery": payload.is_public_gallery}
+

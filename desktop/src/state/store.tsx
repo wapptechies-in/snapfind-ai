@@ -4,16 +4,21 @@ import { authApi } from "../api/auth";
 import { eventsApi } from "../api/events";
 import { getAuthToken, setApiBaseUrl } from "../api/client";
 import { sessionStorage } from "../storage/sessionStorage";
-import type { AppSettings, LocalUploadSession, ScanResult, SnapEvent, User } from "../types";
+import type { AppSettings, CreateEventPayload, LocalUploadSession, ScanResult, SnapEvent, User } from "../types";
 import type { UploadManager } from "../upload/uploadManager";
 
 interface AppContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, pass: string) => Promise<void>;
+  loginWithGoogle: (credential: string, studioName?: string) => Promise<void>;
   logout: () => void;
+  refreshProfile: () => Promise<void>;
+  updateProfile: (data: Partial<User>) => Promise<void>;
   events: SnapEvent[];
   loadEvents: () => Promise<void>;
+  createEvent: (payload: CreateEventPayload) => Promise<SnapEvent>;
+  deleteEvent: (id: string) => Promise<void>;
   selectedEvent: SnapEvent | null;
   setSelectedEvent: (ev: SnapEvent | null) => void;
   scanResult: ScanResult | null;
@@ -25,6 +30,7 @@ interface AppContextType {
   recentSessions: LocalUploadSession[];
   refreshRecentSessions: () => Promise<void>;
 }
+
 
 const AppContext = createContext<AppContextType | null>(null);
 
@@ -85,6 +91,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const createEvent = async (payload: CreateEventPayload): Promise<SnapEvent> => {
+    const created = await eventsApi.createEvent(payload);
+    setEvents((prev) => [created, ...prev]);
+    setSelectedEvent(created);
+    return created;
+  };
+
+  const deleteEvent = async (id: string): Promise<void> => {
+    await eventsApi.deleteEvent(id);
+    setEvents((prev) => prev.filter((e) => e.id !== id));
+    if (selectedEvent?.id === id) {
+      setSelectedEvent(null);
+    }
+  };
+
+
   // Restore user session on mount
   useEffect(() => {
     async function initAuth() {
@@ -119,6 +141,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await refreshRecentSessions();
   };
 
+  const loginWithGoogle = async (credential: string, studioName?: string) => {
+    const res = await authApi.loginWithGoogle(credential, studioName);
+    setUser(res.user);
+    await loadEvents();
+    await refreshRecentSessions();
+  };
+
+  const refreshProfile = async () => {
+    try {
+      const me = await authApi.getMe();
+      setUser(me);
+    } catch (err) {
+      console.error("Failed to refresh profile:", err);
+    }
+  };
+
+  const updateProfile = async (data: Partial<User>) => {
+    const updated = await authApi.updateProfile(data);
+    setUser(updated);
+  };
+
   const logout = () => {
     authApi.logout();
     setUser(null);
@@ -133,9 +176,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         user,
         loading,
         login,
+        loginWithGoogle,
         logout,
+        refreshProfile,
+        updateProfile,
         events,
         loadEvents,
+        createEvent,
+        deleteEvent,
         selectedEvent,
         setSelectedEvent,
         scanResult,

@@ -1,3 +1,4 @@
+import { getApiBaseUrl } from "../api/client";
 import { uploadsApi } from "../api/uploads";
 import { sessionStorage } from "../storage/sessionStorage";
 import type { LocalUploadSession, UploadQueueItem } from "../types";
@@ -224,7 +225,7 @@ export class UploadManager {
         const payload = chunk.map((item) => ({
           filename: item.filename,
           fileSize: item.fileSize,
-          mimeType: item.mimeType,
+          mimeType: item.mimeType || "image/jpeg",
           checksum: item.checksum,
         }));
 
@@ -234,7 +235,12 @@ export class UploadManager {
           const matching = chunk.find((c) => c.filename === resItem.filename && !c.photoId);
           if (matching) {
             matching.photoId = resItem.photoId;
-            matching.uploadUrl = resItem.uploadUrl;
+            let fullUrl = resItem.uploadUrl || "";
+            if (fullUrl.startsWith("/")) {
+              fullUrl = `${getApiBaseUrl()}${fullUrl}`;
+            }
+            matching.uploadUrl = fullUrl;
+            matching.uploadHeaders = resItem.headers || {};
             matching.storageKey = resItem.storageKey;
           }
         }
@@ -289,10 +295,10 @@ export class UploadManager {
       if (window.desktopAPI) {
         // Real streaming direct PUT upload via Electron main process
         const res = await window.desktopAPI.uploadBinaryStream(
-          item.filePath,
+          item.filePath || item.filename,
           item.uploadUrl!,
-          item.mimeType,
-          {},
+          item.mimeType || "image/jpeg",
+          item.uploadHeaders || {},
           (sent: number, total: number) => {
             if (this.isCancelled || this.isPaused) return;
             item.bytesUploaded = sent;

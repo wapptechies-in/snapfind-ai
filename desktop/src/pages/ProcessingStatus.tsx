@@ -90,7 +90,7 @@ export const ProcessingStatus: React.FC = () => {
 
   const handleOpenGallery = async () => {
     if (!selectedEvent) return;
-    const galleryUrl = `http://localhost:5173/event/${selectedEvent.public_token}`;
+    const galleryUrl = `http://localhost:5173/event/${selectedEvent.public_token}/gallery`;
     if (window.desktopAPI) {
       await window.desktopAPI.openExternal(galleryUrl);
     } else {
@@ -139,14 +139,14 @@ export const ProcessingStatus: React.FC = () => {
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       {/* Event Header */}
-      <div className="p-4 rounded-xl border border-hairline bg-panel2/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="p-5 rounded-2xl border border-warm-beige bg-surface flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
         <div>
-          <span className="text-[10px] text-violet-light font-bold uppercase tracking-wider">
+          <span className="text-[10px] text-forest font-bold uppercase tracking-wider">
             Server AI Processing Monitor
           </span>
-          <h2 className="text-base font-bold text-white mt-0.5">{selectedEvent.name}</h2>
-          <p className="text-xs text-dim font-mono">
-            Token: {selectedEvent.public_token} &middot; Celery workers active via Redis broker
+          <h2 className="text-lg font-serif font-bold text-charcoal mt-0.5">{selectedEvent.name}</h2>
+          <p className="text-xs text-charcoal-muted font-mono">
+            Token: {selectedEvent.public_token} &middot; Async workers active
           </p>
         </div>
 
@@ -162,9 +162,9 @@ export const ProcessingStatus: React.FC = () => {
 
       {/* Message alert */}
       {message && (
-        <div className="p-3 rounded-lg border border-violet/30 bg-violet/10 text-xs text-violet-light flex items-center justify-between">
+        <div className="p-3.5 rounded-xl border border-forest/20 bg-forest/10 text-xs text-forest flex items-center justify-between shadow-sm">
           <span>{message}</span>
-          <button onClick={() => setMessage(null)} className="text-dim hover:text-white cursor-pointer">
+          <button onClick={() => setMessage(null)} className="text-charcoal-muted hover:text-charcoal cursor-pointer">
             ✕
           </button>
         </div>
@@ -172,12 +172,12 @@ export const ProcessingStatus: React.FC = () => {
 
       {/* Pipeline Overview Card */}
       {statusData && (
-        <Card className="p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-hairline">
+        <Card className="p-6 bg-surface border-warm-beige shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-warm-beige">
             <div>
-              <h3 className="text-base font-semibold text-cloud">Server-Side Pipeline Status</h3>
-              <p className="text-xs text-dim mt-0.5">
-                Derivative generation, facial landmark detection, 512-d embeddings, and pgvector HNSW indexing
+              <h3 className="text-base font-serif font-semibold text-charcoal">Server-Side Pipeline Status</h3>
+              <p className="text-xs text-charcoal-muted mt-0.5">
+                Derivative generation, facial landmark detection, 512-d embeddings, and vector indexing
               </p>
             </div>
 
@@ -188,30 +188,30 @@ export const ProcessingStatus: React.FC = () => {
 
           {/* Counts Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 my-6">
-            <div className="p-4 rounded-xl border border-hairline bg-panel2/40 text-center">
-              <p className="text-xs text-dim font-medium">Total Photos</p>
-              <p className="text-2xl font-bold text-cloud font-mono mt-1">
+            <div className="p-4 rounded-xl border border-warm-beige bg-cream text-center">
+              <p className="text-xs text-charcoal-muted font-medium">Total Photos</p>
+              <p className="text-2xl font-bold text-charcoal font-mono mt-1">
                 {statusData.totalPhotos.toLocaleString()}
               </p>
             </div>
 
-            <div className="p-4 rounded-xl border border-hairline bg-panel2/40 text-center">
-              <p className="text-xs text-dim font-medium">Processed</p>
-              <p className="text-2xl font-bold text-good font-mono mt-1">
+            <div className="p-4 rounded-xl border border-warm-beige bg-cream text-center">
+              <p className="text-xs text-charcoal-muted font-medium">Processed</p>
+              <p className="text-2xl font-bold text-forest font-mono mt-1">
                 {statusData.processed.toLocaleString()}
               </p>
             </div>
 
-            <div className="p-4 rounded-xl border border-hairline bg-panel2/40 text-center">
-              <p className="text-xs text-dim font-medium">Remaining</p>
-              <p className="text-2xl font-bold text-dim font-mono mt-1">
+            <div className="p-4 rounded-xl border border-warm-beige bg-cream text-center">
+              <p className="text-xs text-charcoal-muted font-medium">Remaining</p>
+              <p className="text-2xl font-bold text-charcoal-muted font-mono mt-1">
                 {statusData.remaining.toLocaleString()}
               </p>
             </div>
 
-            <div className={`p-4 rounded-xl border text-center ${hasFailed ? "border-bad/30 bg-bad/10" : "border-hairline bg-panel2/40"}`}>
-              <p className={`text-xs font-medium ${hasFailed ? "text-bad" : "text-dim"}`}>Failed</p>
-              <p className={`text-2xl font-bold font-mono mt-1 ${hasFailed ? "text-bad" : "text-dim"}`}>
+            <div className={`p-4 rounded-xl border text-center ${hasFailed ? "border-danger/30 bg-danger/10" : "border-warm-beige bg-cream"}`}>
+              <p className={`text-xs font-medium ${hasFailed ? "text-danger" : "text-charcoal-muted"}`}>Failed</p>
+              <p className={`text-2xl font-bold font-mono mt-1 ${hasFailed ? "text-danger" : "text-charcoal-muted"}`}>
                 {statusData.failed.toLocaleString()}
               </p>
             </div>
@@ -220,20 +220,20 @@ export const ProcessingStatus: React.FC = () => {
           {/* Progress Bar */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-cloud">Overall Processing Completion</span>
-              <span className="font-mono text-violet-light font-bold">
+              <span className="font-semibold text-charcoal">Overall Processing Completion</span>
+              <span className="font-mono text-forest font-bold">
                 {statusData.progressPercent}%
               </span>
             </div>
             <ProgressBar
               percent={statusData.progressPercent}
-              variant={hasFailed ? "bad" : statusData.progressPercent === 100 ? "good" : "violet"}
+              variant={hasFailed ? "danger" : statusData.progressPercent === 100 ? "success" : "primary"}
             />
           </div>
 
           {/* Action Controls */}
-          <div className="mt-6 pt-5 border-t border-hairline flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs text-dim">
+          <div className="mt-6 pt-5 border-t border-warm-beige flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-charcoal-muted">
               Background jobs run asynchronously outside the web browser.
             </p>
 
@@ -266,8 +266,8 @@ export const ProcessingStatus: React.FC = () => {
 
       {/* Pipeline Stages Breakdown */}
       {statusData && (
-        <Card className="p-6">
-          <h3 className="text-sm font-semibold text-cloud mb-4">Pipeline Execution Stages</h3>
+        <Card className="p-6 bg-surface border-warm-beige shadow-sm">
+          <h3 className="text-sm font-serif font-semibold text-charcoal mb-4">Pipeline Execution Stages</h3>
 
           <div className="space-y-3">
             {statusData.stages.map((stage) => {
@@ -278,37 +278,37 @@ export const ProcessingStatus: React.FC = () => {
               return (
                 <div
                   key={stage.name}
-                  className="flex items-center justify-between p-3.5 rounded-lg border border-hairline bg-panel2/30"
+                  className="flex items-center justify-between p-3.5 rounded-xl border border-warm-beige bg-cream/50"
                 >
                   <div className="flex items-center gap-3">
                     <div
                       className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold ${
                         isCompleted
-                          ? "bg-good/20 text-good"
+                          ? "bg-forest/15 text-forest"
                           : isStageProcessing
-                          ? "bg-violet/20 text-violet-light animate-pulse"
+                          ? "bg-forest/15 text-forest animate-pulse"
                           : isStageFailed
-                          ? "bg-bad/20 text-bad"
-                          : "bg-panel2 text-dim"
+                          ? "bg-danger/15 text-danger"
+                          : "bg-surface text-charcoal-muted border border-warm-beige"
                       }`}
                     >
                       {isCompleted ? "✓" : isStageProcessing ? "⟳" : isStageFailed ? "✕" : "•"}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-cloud">{stage.name}</p>
-                      {stage.detail && <p className="text-xs text-dim mt-0.5">{stage.detail}</p>}
+                      <p className="text-sm font-medium text-charcoal">{stage.name}</p>
+                      {stage.detail && <p className="text-xs text-charcoal-muted mt-0.5">{stage.detail}</p>}
                     </div>
                   </div>
 
                   <span
                     className={`text-xs font-medium px-2.5 py-1 rounded-full ${
                       isCompleted
-                        ? "text-good bg-good/10"
+                        ? "text-forest bg-forest/10"
                         : isStageProcessing
-                        ? "text-violet-light bg-violet/10 animate-pulse font-semibold"
+                        ? "text-forest bg-forest/15 animate-pulse font-semibold"
                         : isStageFailed
-                        ? "text-bad bg-bad/10 font-semibold"
-                        : "text-dim bg-panel2"
+                        ? "text-danger bg-danger/10 font-semibold"
+                        : "text-charcoal-muted bg-surface border border-warm-beige"
                     }`}
                   >
                     {stage.status}

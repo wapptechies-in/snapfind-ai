@@ -41,21 +41,23 @@ class Settings(BaseSettings):
     AI_MODEL_NAME: str = "insightface"
     AI_MODEL_VERSION: str = "buffalo_s"
     FACE_EMBEDDING_DIMENSION: int = 512
-    FACE_DETECTION_THRESHOLD: float = 0.60
-    MIN_FACE_SIZE: int = 30
-    MAX_BLUR_THRESHOLD: float = 15.0
-    STRONG_MATCH_THRESHOLD: float = 0.55
-    POSSIBLE_MATCH_THRESHOLD: float = 0.38
-    TOP_K: int = 50
+    FACE_DETECTION_THRESHOLD: float = 0.55
+    MIN_FACE_SIZE: int = 25
+    MAX_BLUR_THRESHOLD: float = 10.0
+    STRONG_MATCH_THRESHOLD: float = 0.50
+    POSSIBLE_MATCH_THRESHOLD: float = 0.32
+    TOP_K: int = 500
 
-    # --- Phase 6 Cloud Photo Storage Configuration ---
+    # --- Cloud Photo Storage & CDN Configuration ---
     STORAGE_PROVIDER: str = "minio"  # minio, s3, r2, local
-    STORAGE_ENDPOINT_URL: str = "http://localhost:9000"
-    STORAGE_PUBLIC_ENDPOINT_URL: str = "http://localhost:9000"
+    STORAGE_ENDPOINT_URL: str | None = "http://localhost:9000"
+    STORAGE_PUBLIC_ENDPOINT_URL: str | None = "http://localhost:9000"
     STORAGE_ACCESS_KEY: str = "minioadmin"
     STORAGE_SECRET_KEY: str = "minioadmin"
     STORAGE_BUCKET_NAME: str = "snapfind-photos"
     STORAGE_REGION: str = "us-east-1"
+    STORAGE_CDN_URL: str | None = None  # e.g. https://cdn.yourdomain.com or CloudFront distribution
+    CLOUDFLARE_R2_ACCOUNT_ID: str | None = None
     MAX_UPLOAD_SIZE_MB: int = 50
     PRESIGNED_URL_EXPIRE_SECONDS: int = 3600
 
@@ -69,7 +71,14 @@ class Settings(BaseSettings):
     THUMBNAIL_MAX_HEIGHT: int = 400
     WEB_IMAGE_MAX_WIDTH: int = 1920
     WEB_IMAGE_MAX_HEIGHT: int = 1920
-    WEB_IMAGE_QUALITY: int = 85
+    # --- WhatsApp Messaging Service Configuration ---
+    FRONTEND_BASE_URL: str = "http://localhost:5173"
+    WHATSAPP_PROVIDER: str = "mock"  # mock, twilio, meta
+    TWILIO_ACCOUNT_SID: str = ""
+    TWILIO_AUTH_TOKEN: str = ""
+    TWILIO_WHATSAPP_NUMBER: str = "+14155238886"
+    META_WHATSAPP_TOKEN: str = ""
+    META_WHATSAPP_PHONE_ID: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env",

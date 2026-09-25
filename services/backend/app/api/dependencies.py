@@ -41,6 +41,48 @@ def get_current_photographer(
     if not photographer:
         raise credentials_exception
 
+    # Enforce access approval gate
+    if photographer.approval_status == "pending":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="ACCOUNT_PENDING: Your account is pending admin approval. You will be able to log in once approved.",
+        )
+    if photographer.approval_status == "rejected":
+        reason = f" Reason: {photographer.rejection_reason}" if photographer.rejection_reason else ""
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"ACCOUNT_REJECTED: Your application was rejected.{reason}",
+        )
+    if photographer.approval_status == "suspended":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="ACCOUNT_SUSPENDED: Your account has been suspended. Please contact support.",
+        )
+
+    return photographer
+
+
+def get_current_admin(
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
+) -> Photographer:
+    """Requires role to be 'admin' or 'super_admin'."""
+    if photographer.role not in ("admin", "super_admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="ADMIN_REQUIRED: Administrative privileges required.",
+        )
+    return photographer
+
+
+def get_current_super_admin(
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
+) -> Photographer:
+    """Requires role to be 'super_admin'."""
+    if photographer.role != "super_admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="SUPERADMIN_REQUIRED: Super administrator privileges required.",
+        )
     return photographer
 
 

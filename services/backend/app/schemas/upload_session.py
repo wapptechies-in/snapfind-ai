@@ -54,6 +54,7 @@ class BatchUploadInitItem(BaseModel):
     file_size: int = Field(alias="fileSize")
     mime_type: str = Field(default="image/jpeg", alias="mimeType")
     checksum: str | None = None
+    folder_id: str | None = Field(default=None, alias="folderId")
 
     model_config = ConfigDict(populate_by_name=True)
 

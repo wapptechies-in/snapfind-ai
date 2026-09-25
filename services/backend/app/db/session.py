@@ -17,27 +17,71 @@ from app.core.config import get_settings
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
+def _is_host_reachable(host: str, port: int, timeout: float = 0.05) -> bool:
+    import socket
+    try:
+        with socket.create_connection((host, port), timeout=timeout):
+            return True
+    except OSError:
+        return False
+
 db_url = settings.DATABASE_URL
 if db_url.startswith("postgresql://"):
     db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
 
-connect_args = {}
-if db_url.startswith("sqlite"):
-    connect_args["check_same_thread"] = False
+from pathlib import Path
+from urllib.parse import urlparse
 
-try:
-    engine = create_engine(db_url, pool_pre_ping=True, connect_args=connect_args)
-    # Test connection
-    with engine.connect() as conn:
+BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
+CANONICAL_SQLITE_PATH = BACKEND_DIR / "snapfind_local.db"
+
+use_sqlite = False
+if "postgresql" in db_url:
+    try:
+        parsed = urlparse(db_url)
+        host = parsed.hostname or "localhost"
+        port = parsed.port or 5432
+        if not _is_host_reachable(host, port):
+            use_sqlite = True
+            logger.info("Configured PostgreSQL at %s:%s is unreachable. Falling back immediately to SQLite.", host, port)
+    except Exception:
         pass
-except Exception as e:
-    logger.warning(
-        "Could not connect to configured DATABASE_URL (%s). Falling back to SQLite.",
-        e,
-    )
-    db_url = "sqlite:///./snapfind_local.db"
-    connect_args = {"check_same_thread": False}
+
+from sqlalchemy import event
+
+def _configure_sqlite_engine(eng):
+    @event.listens_for(eng, "connect")
+    def set_sqlite_pragma(dbapi_connection, connection_record):
+        try:
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.execute("PRAGMA synchronous=NORMAL")
+            cursor.execute("PRAGMA busy_timeout=30000")
+            cursor.close()
+        except Exception:
+            pass
+
+if use_sqlite or db_url.startswith("sqlite"):
+    db_url = f"sqlite:///{CANONICAL_SQLITE_PATH.as_posix()}"
+    connect_args = {"check_same_thread": False, "timeout": 30}
     engine = create_engine(db_url, pool_pre_ping=True, connect_args=connect_args)
+    _configure_sqlite_engine(engine)
+else:
+    connect_args = {"connect_timeout": 2}
+    try:
+        engine = create_engine(db_url, pool_pre_ping=True, connect_args=connect_args)
+        with engine.connect() as conn:
+            pass
+    except Exception as e:
+        logger.warning(
+            "Could not connect to configured DATABASE_URL (%s). Falling back to SQLite at %s.",
+            e,
+            CANONICAL_SQLITE_PATH,
+        )
+        db_url = f"sqlite:///{CANONICAL_SQLITE_PATH.as_posix()}"
+        connect_args = {"check_same_thread": False, "timeout": 30}
+        engine = create_engine(db_url, pool_pre_ping=True, connect_args=connect_args)
+        _configure_sqlite_engine(engine)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

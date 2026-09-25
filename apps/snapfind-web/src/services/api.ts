@@ -8,7 +8,8 @@
 
 import type { AuthResponse, DashboardSummary, SnapEvent, User } from "../types";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
+const defaultApiHost = typeof window !== "undefined" && window.location.hostname ? window.location.hostname : "127.0.0.1";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? `http://${defaultApiHost}:8000`;
 const TOKEN_KEY = "snapfind_token";
 
 export type HealthResponse = {

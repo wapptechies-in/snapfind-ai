@@ -184,6 +184,7 @@ def batch_upload_init(
             file_size=item.file_size,
             mime_type=item.mime_type,
             checksum=item.checksum,
+            folder_id=item.folder_id,
             upload_status="pending",
             processing_status="pending",
         )

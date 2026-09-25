@@ -1,0 +1,209 @@
+services:
+  # --- Reverse Proxy & Automated SSL (Traefik v3) ---
+  traefik:
+    image: traefik:v3.1
+    container_name: snapfind-traefik
+    restart: unless-stopped
+    command:
+      - "--api.dashboard=false"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      # Global HTTP -> HTTPS Redirection
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      # Automated Let's Encrypt SSL Certificates
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:-admin@example.com}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - snapfind_traefik_acme:/letsencrypt
+    networks:
+      - snapfind-net
+
+  # --- Database (PostgreSQL 16 + pgvector) ---
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: snapfind-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-snapfind_ai}
+      POSTGRES_USER: ${POSTGRES_USER:-snapfind_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-snapfind_password_change_me_2026}
+    volumes:
+      - snapfind_pgdata:/var/lib/postgresql/data
+      - ./deploy/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-snapfind_user} -d ${POSTGRES_DB:-snapfind_ai}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - snapfind-net
+
+  # --- Cache & Distributed Task Queue Broker (Redis 7) ---
+  redis:
+    image: redis:7-alpine
+    container_name: snapfind-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass "${REDIS_PASSWORD:-redis_password_change_me_2026}"
+    volumes:
+      - snapfind_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_password_change_me_2026}", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - snapfind-net
+
+  # --- FastAPI Backend API ---
+  backend:
+    build:
+      context: ./services/backend
+      dockerfile: Dockerfile
+    container_name: snapfind-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-snapfind_user}:${POSTGRES_PASSWORD:-snapfind_password_change_me_2026}@postgres:5432/${POSTGRES_DB:-snapfind_ai}
+      ENVIRONMENT: production
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+      SECRET_KEY: ${SECRET_KEY:-snapfind_production_jwt_secret_key_change_me_2026}
+      CORS_ORIGINS: https://${STUDIO_DOMAIN:-studio.snapfind.ai},https://${PORTFOLIO_DOMAIN:-snapfind.ai},https://${API_DOMAIN:-api.snapfind.ai}
+      # Cloud Storage Configuration (s3, r2, or minio)
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-s3}
+      STORAGE_ENDPOINT_URL: ${STORAGE_ENDPOINT_URL:-}
+      STORAGE_PUBLIC_ENDPOINT_URL: ${STORAGE_PUBLIC_ENDPOINT_URL:-}
+      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
+      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY}
+      STORAGE_BUCKET_NAME: ${STORAGE_BUCKET_NAME:-snapfind-photos}
+      STORAGE_REGION: ${STORAGE_REGION:-us-east-1}
+      STORAGE_CDN_URL: ${STORAGE_CDN_URL:-}
+      CLOUDFLARE_R2_ACCOUNT_ID: ${CLOUDFLARE_R2_ACCOUNT_ID:-}
+      # Redis & Celery
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_password_change_me_2026}@redis:6379/0
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-redis_password_change_me_2026}@redis:6379/0
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD:-redis_password_change_me_2026}@redis:6379/1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`${API_DOMAIN:-api.snapfind.ai}`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.backend.loadbalancer.server.port=8000"
+      - "traefik.http.routers.backend.middlewares=secHeaders@docker,gzip@docker"
+      # Middlewares
+      - "traefik.http.middlewares.gzip.compress=true"
+      - "traefik.http.middlewares.secHeaders.headers.sslredirect=true"
+      - "traefik.http.middlewares.secHeaders.headers.stsSeconds=315360000"
+      - "traefik.http.middlewares.secHeaders.headers.browserXssFilter=true"
+      - "traefik.http.middlewares.secHeaders.headers.contentTypeNosniff=true"
+    networks:
+      - snapfind-net
+
+  # --- Celery AI Background Worker (Photo Processing & Vector Indexing) ---
+  worker:
+    build:
+      context: ./services/backend
+      dockerfile: Dockerfile
+    container_name: snapfind-worker
+    restart: unless-stopped
+    command: celery -A app.workers.celery_app worker -l info --concurrency=${CELERY_CONCURRENCY:-4}
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-snapfind_user}:${POSTGRES_PASSWORD:-snapfind_password_change_me_2026}@postgres:5432/${POSTGRES_DB:-snapfind_ai}
+      ENVIRONMENT: production
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-s3}
+      STORAGE_ENDPOINT_URL: ${STORAGE_ENDPOINT_URL:-}
+      STORAGE_PUBLIC_ENDPOINT_URL: ${STORAGE_PUBLIC_ENDPOINT_URL:-}
+      STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY}
+      STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY}
+      STORAGE_BUCKET_NAME: ${STORAGE_BUCKET_NAME:-snapfind-photos}
+      STORAGE_REGION: ${STORAGE_REGION:-us-east-1}
+      STORAGE_CDN_URL: ${STORAGE_CDN_URL:-}
+      CLOUDFLARE_R2_ACCOUNT_ID: ${CLOUDFLARE_R2_ACCOUNT_ID:-}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_password_change_me_2026}@redis:6379/0
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD:-redis_password_change_me_2026}@redis:6379/0
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD:-redis_password_change_me_2026}@redis:6379/1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - snapfind-net
+
+  # --- SnapFind Web Application (Studio Hub & Customer Gallery) ---
+  web:
+    build:
+      context: ./apps/snapfind-web
+      dockerfile: Dockerfile
+    container_name: snapfind-web
+    restart: unless-stopped
+    depends_on:
+      - backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.web.rule=Host(`${STUDIO_DOMAIN:-studio.snapfind.ai}`)"
+      - "traefik.http.routers.web.entrypoints=websecure"
+      - "traefik.http.routers.web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.web.loadbalancer.server.port=80"
+      - "traefik.http.routers.web.middlewares=secHeaders@docker,gzip@docker"
+    networks:
+      - snapfind-net
+
+  # --- Photographer Portfolio & Client Booking Website ---
+  portfolio:
+    build:
+      context: ./apps/photographer-website
+      dockerfile: Dockerfile
+    container_name: snapfind-portfolio
+    restart: unless-stopped
+    depends_on:
+      - backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portfolio.rule=Host(`${PORTFOLIO_DOMAIN:-snapfind.ai}`)"
+      - "traefik.http.routers.portfolio.entrypoints=websecure"
+      - "traefik.http.routers.portfolio.tls.certresolver=letsencrypt"
+      - "traefik.http.services.portfolio.loadbalancer.server.port=80"
+      - "traefik.http.routers.portfolio.middlewares=secHeaders@docker,gzip@docker"
+    networks:
+      - snapfind-net
+
+  # --- Optional Self-Hosted S3 Storage (MinIO) ---
+  minio:
+    image: minio/minio:latest
+    container_name: snapfind-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_KEY:-minioadminpassword}
+    volumes:
+      - snapfind_miniodata:/data
+    profiles:
+      - self-hosted-storage
+    networks:
+      - snapfind-net
+
+volumes:
+  snapfind_traefik_acme:
+  snapfind_pgdata:
+  snapfind_redisdata:
+  snapfind_miniodata:
+
+networks:
+  snapfind-net:
+    driver: bridge
+

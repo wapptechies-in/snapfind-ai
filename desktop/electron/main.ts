@@ -6,8 +6,15 @@ import * as https from "node:https";
 import * as path from "node:path";
 import { fileURLToPath, URL } from "node:url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const appDir = typeof __dirname !== "undefined" ? __dirname : process.cwd();
+
+process.on("uncaughtException", (err) => {
+  appendLog("FATAL", `Uncaught exception: ${err?.stack || err?.message || err}`);
+});
+
+process.on("unhandledRejection", (reason) => {
+  appendLog("ERROR", `Unhandled rejection: ${reason}`);
+});
 
 const SUPPORTED_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp"]);
 let mainWindow: BrowserWindow | null = null;
@@ -23,7 +30,14 @@ function getSessionsDir(): string {
 }
 
 function getLogFilePath(): string {
-  return path.join(app.getPath("userData"), "snapfind-desktop.log");
+  try {
+    if (app && typeof app.getPath === "function") {
+      return path.join(app.getPath("userData"), "snapfind-desktop.log");
+    }
+  } catch {
+    // fallback
+  }
+  return path.join(process.cwd(), "snapfind-desktop.log");
 }
 
 function appendLog(level: string, message: string) {
@@ -36,6 +50,7 @@ function appendLog(level: string, message: string) {
 
     const line = `[${timestamp}] [${level.toUpperCase()}] ${sanitized}\n`;
     fs.appendFileSync(getLogFilePath(), line, "utf8");
+    console.log(line.trim());
   } catch (err) {
     console.error("Failed to write log line:", err);
   }
@@ -52,32 +67,72 @@ function computeFileSha256(filePath: string): Promise<string> {
 }
 
 function createWindow() {
+  const iconPath = fs.existsSync(path.join(appDir, "../dist/app-logo.png"))
+    ? path.join(appDir, "../dist/app-logo.png")
+    : path.join(appDir, "../public/app-logo.png");
+
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 820,
     minWidth: 1024,
     minHeight: 700,
     backgroundColor: "#0B0D12",
-    title: "SnapFind Desktop",
+    title: "SnapFind AI Desktop — Photo Processing & Upload Agent",
+    icon: fs.existsSync(iconPath) ? iconPath : undefined,
     webPreferences: {
-      preload: path.join(__dirname, "preload.cjs"),
+      preload: path.join(appDir, "preload.cjs"),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
     },
   });
 
-  // In development, load Vite dev server; in production, load built index.html
-  if (process.env.VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
+  mainWindow.setMenuBarVisibility(false);
+
+  // In packaged app or production, load built index.html instantly. Only in dev with server running, load dev URL.
+  const isDev = !app.isPackaged && Boolean(process.env.VITE_DEV_SERVER_URL || process.env.NODE_ENV === "development");
+  const devServerUrl = isDev ? (process.env.VITE_DEV_SERVER_URL || "http://localhost:5175") : undefined;
+
+  mainWindow.webContents.on("did-fail-load", (_event, errorCode, errorDescription, validatedURL) => {
+    appendLog("FATAL", `did-fail-load: code=${errorCode}, desc=${errorDescription}, url=${validatedURL}`);
+  });
+
+  mainWindow.webContents.on("did-finish-load", () => {
+    appendLog("INFO", "mainWindow successfully finished loading!");
+  });
+
+  mainWindow.webContents.on("render-process-gone", (_event, details) => {
+    appendLog("FATAL", `Renderer process gone: reason=${details.reason}, exitCode=${details.exitCode}`);
+  });
+
+  const htmlPath = path.join(appDir, "../dist/index.html");
+  appendLog("INFO", `Target HTML: ${htmlPath}, exists: ${fs.existsSync(htmlPath)}, isPackaged: ${app.isPackaged}`);
+
+  if (devServerUrl) {
+    appendLog("INFO", `Loading devServerUrl: ${devServerUrl}`);
+    mainWindow.loadURL(devServerUrl).catch((err) => {
+      appendLog("WARN", `Failed to load ${devServerUrl}, falling back to dist: ${err.message}`);
+      mainWindow?.loadFile(htmlPath).catch((loadErr) => {
+        appendLog("FATAL", `Fallback loadFile failed: ${loadErr.message}`);
+      });
+    });
   } else {
-    mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
+    appendLog("INFO", `Loading file: ${htmlPath}`);
+    mainWindow.loadFile(htmlPath).catch((err) => {
+      appendLog("FATAL", `mainWindow.loadFile failed: ${err.message}`);
+    });
   }
 
   appendLog("INFO", `SnapFind Desktop started on platform ${process.platform} (${process.arch})`);
 
   mainWindow.webContents.on("console-message", (_event, level, message, line, sourceId) => {
     appendLog("RENDERER", `[Level ${level}] ${message} (${sourceId}:${line})`);
+  });
+
+  mainWindow.on("ready-to-show", () => {
+    appendLog("INFO", "mainWindow ready-to-show event fired");
+    mainWindow?.show();
+    mainWindow?.focus();
   });
 
   mainWindow.on("closed", () => {
@@ -263,8 +318,11 @@ ipcMain.handle(
         const stat = fs.statSync(filePath);
         const totalBytes = stat.size;
         let bytesSent = 0;
-
-        const parsedUrl = new URL(uploadUrl);
+        let targetUrl = uploadUrl;
+        if (targetUrl.startsWith("/")) {
+          targetUrl = `http://127.0.0.1:8000${targetUrl}`;
+        }
+        const parsedUrl = new URL(targetUrl);
         const isHttps = parsedUrl.protocol === "https:";
         const client = isHttps ? https : http;
 

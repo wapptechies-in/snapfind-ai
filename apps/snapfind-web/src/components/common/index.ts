@@ -1,9 +1,7 @@
-export * from "./Button";
-export * from "./Badge";
-export * from "./Card";
-export * from "./Input";
-export * from "./Modal";
-export * from "./Tabs";
-export * from "./Feedback";
-export * from "./Toggle";
+/**
+ * Web UI Presentation Primitives.
+ * Re-exports unified @snapfind/ui components.
+ */
+
+export * from "@snapfind/ui";
 export * from "./Header";

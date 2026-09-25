@@ -21,9 +21,47 @@ export default function CreateEvent() {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
+  const [coverSource, setCoverSource] = useState<"preset" | "upload">("preset");
   const [coverImage, setCoverImage] = useState(defaultCovers[0].url);
+  const [customCoverUrl, setCustomCoverUrl] = useState<string | null>(null);
+  const [coverFileName, setCoverFileName] = useState<string | null>(null);
+  const [uploadingCover, setUploadingCover] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowed = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowed.includes(file.type)) {
+      setError("Please select a JPEG, PNG, or WebP image.");
+      return;
+    }
+
+    try {
+      setUploadingCover(true);
+      setError(null);
+      setCoverFileName(file.name);
+
+      const res = await eventsApi.uploadCover(file);
+      setCustomCoverUrl(res.url);
+      setCoverImage(res.url);
+      setCoverSource("upload");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg || "Failed to upload custom cover image.");
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
+  const handleRemoveCustomCover = () => {
+    setCustomCoverUrl(null);
+    setCoverFileName(null);
+    setCoverImage(defaultCovers[0].url);
+    setCoverSource("preset");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,8 +82,9 @@ export default function CreateEvent() {
         coverImage,
       });
       navigate(`/events/${created.id}`);
-    } catch {
-      setError("Could not create event. Please try again.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Could not create event. Please check your plan quota or try again.";
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -57,12 +96,12 @@ export default function CreateEvent() {
         {/* Breadcrumb Header */}
         <div className="flex items-center justify-between">
           <div>
-            <div className="flex items-center gap-2 text-xs text-dim mb-1">
-              <Link to="/events" className="hover:text-cloud">Events</Link>
+            <div className="flex items-center gap-2 text-xs text-charcoal-muted mb-1">
+              <Link to="/events" className="hover:text-charcoal">Events</Link>
               <span>/</span>
-              <span className="text-cloud">Create</span>
+              <span className="text-charcoal font-medium">Create</span>
             </div>
-            <h2 className="text-xl font-bold tracking-tight text-cloud">Create New Event</h2>
+            <h2 className="text-xl font-serif font-bold tracking-tight text-charcoal">Create New Event</h2>
           </div>
           <Link to="/events">
             <Button variant="secondary" size="sm">
@@ -71,21 +110,11 @@ export default function CreateEvent() {
           </Link>
         </div>
 
-        {/* Mock notice */}
-        <div className="flex items-center gap-2 rounded-lg border border-hairline bg-panel2/50 px-3.5 py-2.5 text-xs text-dim">
-          <span className="rounded bg-violet/20 px-1.5 py-0.5 text-[10px] font-semibold text-violet-light">
-            MOCK
-          </span>
-          <span>
-            Event creation is handled in local frontend state for Phase 3. PostgreSQL persistence connects in later phases.
-          </span>
-        </div>
-
         {error && <Alert type="error">{error}</Alert>}
 
         <div className="grid gap-8 lg:grid-cols-12 items-start">
           {/* Left Form: 7 cols */}
-          <Card className="p-6 lg:col-span-7">
+          <Card className="p-6 lg:col-span-7 bg-surface border-warm-beige shadow-sm">
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input
                 label="Event Name *"
@@ -137,32 +166,131 @@ export default function CreateEvent() {
                 onChange={(e) => setDescription(e.target.value)}
               />
 
-              <div>
-                <label className="block text-xs font-medium text-dim mb-2">
-                  Preset Cover Image
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {defaultCovers.map((cov) => (
+              {/* Cover Photo Controls */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-semibold text-charcoal">
+                    Cover Image
+                  </label>
+                  <div className="flex items-center bg-cream border border-warm-beige rounded-lg p-0.5 text-xs">
                     <button
-                      key={cov.label}
                       type="button"
-                      onClick={() => setCoverImage(cov.url)}
-                      className={`relative rounded-lg overflow-hidden border-2 h-20 text-left transition-all ${
-                        coverImage === cov.url
-                          ? "border-violet ring-2 ring-violet/20"
-                          : "border-transparent opacity-60 hover:opacity-100"
+                      onClick={() => setCoverSource("preset")}
+                      className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
+                        coverSource === "preset"
+                          ? "bg-forest text-white shadow-sm font-semibold"
+                          : "text-charcoal-muted hover:text-charcoal"
                       }`}
                     >
-                      <img src={cov.url} alt="" className="h-full w-full object-cover" />
-                      <span className="absolute inset-x-0 bottom-0 bg-black/75 px-1.5 py-0.5 text-[10px] text-white font-medium truncate">
-                        {cov.label}
-                      </span>
+                      Presets
                     </button>
-                  ))}
+                    <button
+                      type="button"
+                      onClick={() => setCoverSource("upload")}
+                      className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
+                        coverSource === "upload"
+                          ? "bg-forest text-white shadow-sm font-semibold"
+                          : "text-charcoal-muted hover:text-charcoal"
+                      }`}
+                    >
+                      Custom Upload
+                    </button>
+                  </div>
                 </div>
+
+                {coverSource === "preset" ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {defaultCovers.map((cov) => (
+                      <button
+                        key={cov.label}
+                        type="button"
+                        onClick={() => {
+                          setCoverImage(cov.url);
+                          setCustomCoverUrl(null);
+                        }}
+                        className={`relative rounded-lg overflow-hidden border-2 h-20 text-left transition-all ${
+                          coverImage === cov.url
+                            ? "border-forest ring-2 ring-forest/30"
+                            : "border-transparent opacity-70 hover:opacity-100"
+                        }`}
+                      >
+                        <img src={cov.url} alt="" className="h-full w-full object-cover" />
+                        <span className="absolute inset-x-0 bottom-0 bg-black/75 px-1.5 py-0.5 text-[10px] text-white font-medium truncate">
+                          {cov.label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {customCoverUrl ? (
+                      <div className="relative rounded-xl border border-forest/30 bg-cream p-3 flex items-center gap-3">
+                        <img
+                          src={customCoverUrl}
+                          alt="Custom Cover"
+                          className="w-20 h-14 object-cover rounded-lg border border-warm-beige flex-shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-semibold text-charcoal truncate">
+                              {coverFileName || "Custom Cover Image"}
+                            </span>
+                            <span className="px-1.5 py-0.5 rounded bg-forest/10 text-forest font-mono text-[9px] font-medium">
+                              ✓ Uploaded
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-charcoal-muted truncate mt-0.5">
+                            This custom photo will be used on event cards and the guest gallery.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleRemoveCustomCover}
+                          className="px-2.5 py-1 text-xs text-danger hover:underline rounded-lg transition-colors cursor-pointer"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center border-2 border-dashed border-warm-beige hover:border-forest rounded-xl p-6 cursor-pointer bg-cream/40 hover:bg-cream/80 transition-all text-center group">
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          className="hidden"
+                          onChange={handleFileChange}
+                          disabled={uploadingCover}
+                        />
+                        {uploadingCover ? (
+                          <div className="flex items-center gap-2 text-forest text-xs py-2">
+                            <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <circle cx="12" cy="12" r="10" strokeDasharray="32" strokeDashoffset="12" />
+                            </svg>
+                            <span>Uploading custom cover image to cloud storage...</span>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="w-9 h-9 rounded-full bg-forest/10 text-forest flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                <polyline points="21 15 16 10 5 21" />
+                              </svg>
+                            </div>
+                            <span className="text-xs font-semibold text-charcoal">
+                              Upload custom cover photo
+                            </span>
+                            <span className="text-[10px] text-charcoal-muted mt-0.5">
+                              JPEG, PNG, or WebP up to 10MB
+                            </span>
+                          </>
+                        )}
+                      </label>
+                    )}
+                  </div>
+                )}
               </div>
 
-              <div className="pt-4 border-t border-hairline flex items-center justify-end gap-3">
+              <div className="pt-4 border-t border-warm-beige flex items-center justify-end gap-3">
                 <Link to="/events">
                   <Button type="button" variant="ghost">
                     Cancel
@@ -178,14 +306,14 @@ export default function CreateEvent() {
           {/* Right Live Preview: 5 cols */}
           <div className="lg:col-span-5 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-dim">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-charcoal-muted">
                 Live Card Preview
               </h3>
-              <span className="text-[10px] text-violet-light font-medium">Real-time</span>
+              <span className="text-[10px] text-forest font-medium">Real-time</span>
             </div>
 
-            <Card className="overflow-hidden border-violet/30 shadow-xl">
-              <div className="relative h-48 w-full bg-panel2 overflow-hidden">
+            <Card className="overflow-hidden border-warm-beige bg-surface shadow-md">
+              <div className="relative h-48 w-full bg-cream overflow-hidden">
                 <img
                   src={coverImage}
                   alt="Preview"
@@ -202,31 +330,31 @@ export default function CreateEvent() {
               </div>
 
               <div className="p-5">
-                <h4 className="text-base font-bold text-cloud">
+                <h4 className="text-base font-serif font-bold text-charcoal">
                   {name || "Untitled Event Name"}
                 </h4>
-                <p className="mt-1 text-xs text-dim flex items-center gap-1.5">
+                <p className="mt-1 text-xs text-charcoal-muted flex items-center gap-1.5">
                   <span>📅</span> {date || "Select Date"}
-                  <span className="text-hairline">•</span>
+                  <span className="text-warm-beige">•</span>
                   <span>📍</span> {location || "Venue location"}
                 </p>
-                <p className="mt-3 text-xs text-dim line-clamp-2">
+                <p className="mt-3 text-xs text-charcoal-muted line-clamp-2">
                   {description || "No description provided yet."}
                 </p>
 
-                <div className="mt-5 pt-3 border-t border-hairline flex items-center justify-between text-xs text-dim">
+                <div className="mt-5 pt-3 border-t border-warm-beige flex items-center justify-between text-xs text-charcoal-muted">
                   <span>
-                    <strong className="text-cloud font-semibold">0</strong> Photos
+                    <strong className="text-charcoal font-semibold">0</strong> Photos
                   </span>
-                  <span className="text-[11px] text-violet-light">
+                  <span className="text-[11px] text-forest font-medium">
                     Shortlink generated upon saving
                   </span>
                 </div>
               </div>
             </Card>
 
-            <div className="rounded-lg border border-hairline bg-panel p-4 text-xs text-dim space-y-2">
-              <p className="font-semibold text-cloud">What happens next?</p>
+            <div className="rounded-2xl border border-warm-beige bg-surface p-4 text-xs text-charcoal-muted space-y-2 shadow-sm">
+              <p className="font-semibold text-charcoal">What happens next?</p>
               <ul className="list-disc list-inside space-y-1 text-[11px]">
                 <li>A unique QR token will be assigned to this gallery.</li>
                 <li>You can access Photos, Processing, QR, and Settings tabs.</li>

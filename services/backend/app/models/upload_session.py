@@ -58,7 +58,7 @@ class UploadSession(Base):
     )
 
     # Relationships
-    event = relationship("Event", backref="upload_sessions")
+    event = relationship("Event", back_populates="upload_sessions")
     photographer = relationship("Photographer", backref="upload_sessions")
     items = relationship(
         "UploadSessionItem",

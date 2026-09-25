@@ -183,6 +183,10 @@ def test_photo_processing_and_event_scoped_search():
     assert data_b["totalMatches"] == 0
     assert len(data_b["strongMatches"]) == 0
 
+    # Cleanup test events
+    client.delete(f"/api/v1/events/{event_a_id}")
+    client.delete(f"/api/v1/events/{event_b_id}")
+
 
 def test_selfie_validation_errors():
     """Verify exactly-one-face enforcement on guest selfie search."""
@@ -223,4 +227,7 @@ def test_selfie_validation_errors():
         )
     assert resp_none.status_code == 400
     assert "no face detected" in resp_none.json()["detail"].lower()
+
+    # Cleanup dummy event
+    client.delete(f"/api/v1/events/{ev_resp.json()['id']}")
 

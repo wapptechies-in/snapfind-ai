@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Badge, Button } from "../common";
 import type { SnapEvent } from "../../types";
+import { DEFAULT_EVENT_COVER } from "../../constants/images";
 
 interface EventHeaderProps {
   event: SnapEvent;
@@ -34,9 +35,14 @@ export const EventHeader: React.FC<EventHeaderProps> = ({ event }) => {
         {/* Cover Backdrop with subtle blur */}
         <div className="h-40 sm:h-52 w-full relative overflow-hidden bg-panel2">
           <img
-            src={event.coverImage}
+            src={event.coverImage || (event as any).cover_image || (event as any).cover_photo_url || DEFAULT_EVENT_COVER}
             alt={event.name}
             className="h-full w-full object-cover object-center"
+            onError={(e) => {
+              if (e.currentTarget.src !== DEFAULT_EVENT_COVER) {
+                e.currentTarget.src = DEFAULT_EVENT_COVER;
+              }
+            }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-panel via-panel/60 to-black/30" />
         </div>
@@ -45,9 +51,14 @@ export const EventHeader: React.FC<EventHeaderProps> = ({ event }) => {
         <div className="p-6 pt-0 relative -mt-16 sm:-mt-20 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="flex items-end gap-4">
             <img
-              src={event.coverImage}
+              src={event.coverImage || (event as any).cover_image || (event as any).cover_photo_url || DEFAULT_EVENT_COVER}
               alt=""
               className="h-24 w-24 sm:h-28 sm:w-28 rounded-xl object-cover border-4 border-panel shadow-2xl bg-panel2"
+              onError={(e) => {
+                if (e.currentTarget.src !== DEFAULT_EVENT_COVER) {
+                  e.currentTarget.src = DEFAULT_EVENT_COVER;
+                }
+              }}
             />
             <div className="pb-1">
               <div className="flex flex-wrap items-center gap-2">
@@ -71,7 +82,7 @@ export const EventHeader: React.FC<EventHeaderProps> = ({ event }) => {
           </div>
 
           <div className="flex items-center gap-2.5 self-start md:self-end">
-            <Link to={`/event/${event.token}`} target="_blank">
+            <Link to={`/event/${event.token}/gallery`} target="_blank">
               <Button size="sm" variant="secondary">
                 Customer Gallery ↗
               </Button>

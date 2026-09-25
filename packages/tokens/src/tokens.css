@@ -1,0 +1,140 @@
+:root {
+  /* SnapFind Studio Semantic Tokens */
+  --sf-bg: #FAF8F5;
+  --sf-surface: #FFFFFF;
+  --sf-surface-soft: #F5F2EB;
+  --sf-surface-hover: #F8F6F1;
+  
+  --sf-primary: #1E3A2F;
+  --sf-primary-hover: #284D3E;
+  --sf-primary-tint: #EDF3EF;
+
+  --sf-secondary: #5F7D6B;
+  --sf-secondary-light: #8FA899;
+  --sf-secondary-soft: #EDF2EE;
+
+  --sf-accent: #C5A880;
+  --sf-accent-light: #DFC9AF;
+  --sf-accent-soft: #FAF6F0;
+
+  --sf-text: #1A1C1A;
+  --sf-text-muted: #636B66;
+  --sf-text-subtle: #969D98;
+
+  --sf-border: #E7E3DC;
+  --sf-border-light: #F0EDE8;
+
+  --sf-success: #2D7A4F;
+  --sf-success-bg: #EBF5EE;
+  --sf-warning: #C88719;
+  --sf-warning-bg: #FEF7EB;
+  --sf-danger: #C2413A;
+  --sf-danger-bg: #FDF2F1;
+
+  --sf-radius-sm: 8px;
+  --sf-radius-md: 14px;
+  --sf-radius-lg: 20px;
+  --sf-radius-xl: 28px;
+
+  --sf-shadow-card: 0 4px 20px rgba(27, 43, 34, 0.04);
+  --sf-shadow-hover: 0 8px 30px rgba(27, 43, 34, 0.08);
+
+  /* Compatibility CSS vars */
+  --sf-color-base: #FAF8F5;
+  --sf-color-panel: #FFFFFF;
+  --sf-color-panel2: #F5F2EB;
+  --sf-color-hairline: #E7E3DC;
+  --sf-color-cloud: #1A1C1A;
+  --sf-color-dim: #636B66;
+  --sf-color-violet: #1E3A2F;
+  --sf-color-violet-light: #5F7D6B;
+  --sf-color-good: #2D7A4F;
+  --sf-color-bad: #C2413A;
+}
+
+/* Warm Ivory Ambient Atmosphere */
+.sf-ambient-bg {
+  background-color: #FAF8F5;
+  background-image: 
+    radial-gradient(circle at 10% 10%, rgba(95, 125, 107, 0.04), transparent 45%),
+    radial-gradient(circle at 90% 90%, rgba(197, 168, 128, 0.06), transparent 45%);
+}
+
+/* Luxury Card Shadow & Hover */
+.sf-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E7E3DC;
+  box-shadow: 0 2px 12px rgba(26, 28, 26, 0.03);
+  transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 160ms cubic-bezier(0.16, 1, 0.3, 1), border-color 160ms ease;
+}
+
+.sf-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(26, 28, 26, 0.06);
+  border-color: #C5A880;
+}
+
+/* Editorial Serif & Clean Sans helper utilities */
+.font-display {
+  font-family: "Playfair Display", "Cormorant Garamond", Lora, Georgia, serif;
+}
+
+.font-body {
+  font-family: "Plus Jakarta Sans", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Elegant Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FAF8F5;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D9D4CC;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #B8B2A6;
+}
+
+/* Interactive Click & Micro-Interactions */
+.interactive-click {
+  transition: transform 140ms cubic-bezier(0.34, 1.56, 0.64, 1), background-color 140ms ease, box-shadow 140ms ease;
+}
+
+.interactive-click:active {
+  transform: scale(0.96);
+}
+
+.btn-luxury {
+  transition: all 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-luxury:active {
+  transform: scale(0.97) translateY(1px);
+}
+
+.nav-active-pill {
+  background-color: #E2EBE2;
+  color: #1E3A2F;
+  font-weight: 600;
+}
+
+.botanical-leaves-bg {
+  background-image: radial-gradient(circle at 100% 100%, rgba(95, 125, 107, 0.08) 0%, transparent 50%),
+                    radial-gradient(circle at 0% 0%, rgba(197, 168, 128, 0.06) 0%, transparent 40%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

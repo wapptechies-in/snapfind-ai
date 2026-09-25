@@ -5,7 +5,7 @@ Status: IMPLEMENTED (Phase 4)
 
 from datetime import datetime, timezone
 import uuid
-from sqlalchemy import DateTime, ForeignKey, Integer, String
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -25,6 +25,12 @@ class Photo(Base):
         String(64),
         ForeignKey("events.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
+    )
+    folder_id: Mapped[str | None] = mapped_column(
+        String(64),
+        ForeignKey("folders.id", ondelete="SET NULL"),
+        nullable=True,
         index=True,
     )
     filename: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -47,6 +53,9 @@ class Photo(Base):
     processing_status: Mapped[str] = mapped_column(
         String(32), default="completed", nullable=False, index=True
     )  # pending, processing, completed, failed
+    is_public_gallery: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False, server_default="0", index=True
+    )
     url: Mapped[str | None] = mapped_column(String(512), nullable=True)
     thumbnail_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
@@ -63,6 +72,7 @@ class Photo(Base):
 
     # Relationships
     event = relationship("Event", back_populates="photos")
+    folder = relationship("Folder", back_populates="photos")
     faces = relationship(
         "Face",
         back_populates="photo",

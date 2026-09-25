@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_current_photographer
+from app.api.dependencies import get_current_photographer_or_default
 from app.db.session import get_db
 from app.models.event import Event
 from app.models.photo import Photo
@@ -20,8 +20,9 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 
 @router.get("/summary", response_model=DashboardSummaryOut)
+@router.get("/stats", response_model=DashboardSummaryOut)
 def get_dashboard_summary(
-    current_photographer: Annotated[Photographer, Depends(get_current_photographer)],
+    current_photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
     db: Annotated[Session, Depends(get_db)],
 ) -> DashboardSummaryOut:
     """Compute aggregate dashboard metrics for the current photographer."""
@@ -34,7 +35,7 @@ def get_dashboard_summary(
     active_events = db.scalar(
         select(func.count(Event.id)).where(
             Event.photographer_id == current_photographer.id,
-            Event.status == "active",
+            Event.status.ilike("active"),
         )
     ) or 0
 
@@ -50,14 +51,17 @@ def get_dashboard_summary(
         )
     ) or 0
 
-    # In Phase 2, downloads are calculated from visitor activity or search ratio
-    estimated_downloads = int(total_searches * 0.8)
+    total_downloads = db.scalar(
+        select(func.coalesce(func.sum(Event.total_downloads), 0)).where(
+            Event.photographer_id == current_photographer.id
+        )
+    ) or int(total_searches * 0.8)
 
     return DashboardSummaryOut(
         totalEvents=total_events,
         totalPhotos=total_photos,
         activeEvents=active_events,
         photoSearches=total_searches,
-        downloads=estimated_downloads,
+        downloads=total_downloads,
     )
 

@@ -70,12 +70,14 @@ def test_upload_session_lifecycle():
     assert first_item["uploadUrl"].startswith("http")
     assert "storageKey" in first_item
 
-    # 5. Direct PUT binary to MinIO using presigned URL
-    put_resp = requests.put(
-        first_item["uploadUrl"],
-        data=jpeg_bytes,
+    # 5. Direct PUT binary to storage via client
+    from urllib.parse import urlparse
+    parsed = urlparse(first_item["uploadUrl"])
+    put_path = f"{parsed.path}?{parsed.query}" if parsed.path else first_item["uploadUrl"]
+    put_resp = client.put(
+        put_path,
+        content=jpeg_bytes,
         headers={"Content-Type": "image/jpeg"},
-        timeout=10,
     )
     assert put_resp.status_code in (200, 204)
 

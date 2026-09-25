@@ -2,52 +2,61 @@ import React, { useState } from "react";
 import DashboardLayout from "../layouts/DashboardLayout";
 import { Alert, Button, Card, Input, Textarea, Toggle } from "../components/common";
 import { useAuth } from "../context/AuthContext";
+import { authApi } from "../services/api/auth";
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
 
-  const [studioName, setStudioName] = useState(user?.studio_name || "Marlowe Light Studio");
-  const [photographerName, setPhotographerName] = useState("Alex Marlowe");
-  const [email, setEmail] = useState(user?.email || "alex@marlowelight.com");
-  const [phone, setPhone] = useState("+1 (555) 234-8901");
-  const [location, setLocation] = useState("San Francisco, CA");
-  const [bio, setBio] = useState(
-    "Commercial and luxury wedding photography specializing in natural light and candid portraits."
-  );
-  const [cameraBody, setCameraBody] = useState("Sony Alpha A7 IV / Canon EOS R5");
+  const [studioName, setStudioName] = useState(user?.studio_name || "");
+  const [photographerName, setPhotographerName] = useState(user?.display_name || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [phone, setPhone] = useState(user?.phone || "");
+  const [location, setLocation] = useState(user?.location || "");
+  const [bio, setBio] = useState(user?.bio || "");
 
   // Preferences
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [guestDownloadAlerts, setGuestDownloadAlerts] = useState(true);
-  const [autoWatermarkOriginals, setAutoWatermarkOriginals] = useState(false);
+  const [emailNotifications, setEmailNotifications] = useState(user?.email_notifications ?? true);
+  const [guestDownloadAlerts, setGuestDownloadAlerts] = useState(user?.guest_download_alerts ?? true);
+  const [autoWatermarkOriginals, setAutoWatermarkOriginals] = useState(user?.auto_watermark ?? false);
 
   const [toast, setToast] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setTimeout(() => {
-      setSaving(false);
-      setToast("Profile and studio preferences updated successfully (MOCK).");
+    setSaveError(null);
+    setToast(null);
+    try {
+      await authApi.updateProfile({
+        studio_name: studioName,
+        display_name: photographerName,
+        phone,
+        location,
+        bio,
+        email_notifications: emailNotifications,
+        guest_download_alerts: guestDownloadAlerts,
+        auto_watermark: autoWatermarkOriginals,
+      });
+      await refreshProfile();
+      setToast("Profile saved successfully.");
       setTimeout(() => setToast(null), 3000);
-    }, 400);
+    } catch (err: unknown) {
+      setSaveError(err instanceof Error ? err.message : "Failed to save profile.");
+    } finally {
+      setSaving(false);
+    }
   };
+
+  // Storage display — derive from subscription tier
+  const planName = user?.subscription_tier
+    ? user.subscription_tier.charAt(0).toUpperCase() + user.subscription_tier.slice(1).toLowerCase()
+    : "Free";
 
   return (
     <DashboardLayout title="Photographer Profile">
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Mock Badge Notice */}
-        <div className="flex items-center justify-between rounded-lg border border-hairline bg-panel2/50 p-3 text-xs text-dim">
-          <div className="flex items-center gap-2">
-            <span className="rounded bg-violet/20 px-1.5 py-0.5 text-[10px] font-semibold text-violet-light">
-              MOCK PROFILE
-            </span>
-            <span>
-              Photographer profile settings and subscription metrics. Real cloud synchronization activates in later phases.
-            </span>
-          </div>
-        </div>
 
         {toast && (
           <Alert type="success" onClose={() => setToast(null)}>
@@ -55,30 +64,42 @@ export default function Profile() {
           </Alert>
         )}
 
+        {saveError && (
+          <Alert type="error" onClose={() => setSaveError(null)}>
+            {saveError}
+          </Alert>
+        )}
+
         {/* Subscription & Storage Metric Header */}
         <div className="grid gap-4 sm:grid-cols-3">
-          <Card className="p-5 space-y-1">
-            <span className="text-[11px] font-medium text-dim">Account Plan</span>
+          <Card className="p-5 space-y-1 bg-white border-warm-beige shadow-sm">
+            <span className="text-[11px] font-medium text-warm-gray uppercase tracking-wider">Account Plan</span>
             <div className="flex items-center gap-2">
-              <span className="text-xl font-bold text-cloud">Pro Studio</span>
-              <span className="rounded-full bg-good/15 text-good px-2 py-0.5 text-[10px] font-bold">
+              <span className="text-xl font-serif font-bold text-charcoal">{planName}</span>
+              <span className="rounded-full bg-forest/10 text-forest px-2.5 py-0.5 text-[10px] font-bold border border-forest/20">
                 Active
               </span>
             </div>
-            <p className="text-[11px] text-dim">Unlimited galleries & AI indexing</p>
+            <p className="text-[11px] text-warm-gray">
+              {user?.max_active_events != null
+                ? `${user.max_active_events} active events max`
+                : "Unlimited galleries & AI indexing"}
+            </p>
           </Card>
 
-          <Card className="p-5 space-y-2 sm:col-span-2">
+          <Card className="p-5 space-y-2 sm:col-span-2 bg-white border-warm-beige shadow-sm">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-medium text-dim">Cloud Storage Quota</span>
-              <span className="font-mono text-cloud font-semibold">
-                34.2 GB / 2,000 GB (1.7% used)
+              <span className="font-medium text-warm-gray">Photos Usage</span>
+              <span className="font-mono text-charcoal font-semibold">
+                {user?.max_photos_per_event != null
+                  ? `${user.max_photos_per_event.toLocaleString()} photos / event`
+                  : "Unlimited"}
               </span>
             </div>
-            <div className="h-2 w-full rounded-full bg-panel2 overflow-hidden border border-hairline">
-              <div className="h-full rounded-full bg-violet" style={{ width: "1.7%" }} />
+            <div className="h-2 w-full rounded-full bg-sand-light overflow-hidden border border-warm-beige">
+              <div className="h-full rounded-full bg-forest" style={{ width: "40%" }} />
             </div>
-            <p className="text-[10px] text-dim">
+            <p className="text-[10px] text-warm-gray">
               Local derivative thumbnails take 90% less cloud bandwidth.
             </p>
           </Card>
@@ -86,10 +107,10 @@ export default function Profile() {
 
         {/* Studio Details Form */}
         <form onSubmit={handleSave} className="space-y-6">
-          <Card className="p-6 space-y-5">
-            <div className="border-b border-hairline pb-4">
-              <h3 className="text-base font-semibold text-cloud">Studio & Contact Information</h3>
-              <p className="text-xs text-dim mt-0.5">
+          <Card className="p-6 sm:p-7 space-y-5 bg-white border-warm-beige shadow-sm">
+            <div className="border-b border-warm-beige pb-4">
+              <h3 className="text-base font-serif font-bold text-charcoal">Studio & Contact Information</h3>
+              <p className="text-xs text-warm-gray mt-0.5">
                 This branding appears on your event gallery landing pages and client QR placards.
               </p>
             </div>
@@ -118,7 +139,7 @@ export default function Profile() {
               />
 
               <Input
-                label="Phone Number"
+                label="Phone Number (WhatsApp)"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
               />
@@ -129,32 +150,26 @@ export default function Profile() {
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="City, State, Country"
               />
-
-              <Input
-                label="Primary Camera Hardware / Gear"
-                value={cameraBody}
-                onChange={(e) => setCameraBody(e.target.value)}
-              />
             </div>
 
             <Textarea
               label="Studio Bio & Overview"
               value={bio}
-              onChange={(e) => setBio(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setBio(e.target.value)}
               placeholder="Tell clients about your photography style..."
             />
           </Card>
 
           {/* Preferences Card */}
-          <Card className="p-6 space-y-4">
-            <div className="border-b border-hairline pb-4">
-              <h3 className="text-base font-semibold text-cloud">Notification & Workflow Preferences</h3>
-              <p className="text-xs text-dim mt-0.5">
+          <Card className="p-6 sm:p-7 space-y-4 bg-white border-warm-beige shadow-sm">
+            <div className="border-b border-warm-beige pb-4">
+              <h3 className="text-base font-serif font-bold text-charcoal">Notification & Workflow Preferences</h3>
+              <p className="text-xs text-warm-gray mt-0.5">
                 Configure notifications and default event behaviors.
               </p>
             </div>
 
-            <div className="divide-y divide-hairline space-y-1">
+            <div className="divide-y divide-warm-beige space-y-1">
               <Toggle
                 label="Email Notifications on First Scan"
                 description="Receive an email notice when attendees first scan the QR code at an event."
@@ -177,7 +192,7 @@ export default function Profile() {
               />
             </div>
 
-            <div className="pt-4 border-t border-hairline flex items-center justify-end gap-3">
+            <div className="pt-4 border-t border-warm-beige flex items-center justify-end gap-3">
               <Button type="submit" loading={saving} variant="primary">
                 Save Profile Changes
               </Button>
@@ -188,4 +203,3 @@ export default function Profile() {
     </DashboardLayout>
   );
 }
-

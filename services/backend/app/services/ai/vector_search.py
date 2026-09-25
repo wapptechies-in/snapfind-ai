@@ -50,13 +50,71 @@ def search_event_faces(
     else:
         vec_list = list(query_vector)
 
-    # Cosine distance operator <=> in pgvector:
-    # similarity = 1 - cosine_distance
+    is_sqlite = False
+    try:
+        bind = db.get_bind()
+        if bind and bind.dialect.name == "sqlite":
+            is_sqlite = True
+    except Exception:
+        pass
+
+    ranked_matches: list[dict[str, Any]] = []
+
+    if is_sqlite:
+        # SQLite in-memory cosine similarity fallback (dev/offline mode)
+        faces_with_photos = db.execute(
+            select(Photo, Face)
+            .join(Photo, Photo.id == Face.photo_id)
+            .where(Face.event_id == event_id)
+            .where(Face.embedding.isnot(None))
+        ).all()
+
+        q_vec = np.array(vec_list, dtype=np.float32)
+        q_norm = np.linalg.norm(q_vec)
+        if q_norm > 0:
+            q_vec = q_vec / q_norm
+
+        scored: list[tuple[Photo, str, float]] = []
+        for photo, face in faces_with_photos:
+            if not face.embedding:
+                continue
+            f_vec = np.array(face.embedding, dtype=np.float32)
+            f_norm = np.linalg.norm(f_vec)
+            if f_norm > 0:
+                f_vec = f_vec / f_norm
+            sim = float(np.dot(q_vec, f_vec))
+            if sim >= min_similarity:
+                scored.append((photo, face.id, sim))
+
+        scored.sort(key=lambda x: x[2], reverse=True)
+
+        seen_photos: set[str] = set()
+        for photo, face_id, similarity in scored:
+            if photo.id in seen_photos:
+                continue
+            seen_photos.add(photo.id)
+
+            sim_float = float(round(similarity, 4))
+            category = "strong" if sim_float >= strong_threshold else "possible"
+
+            ranked_matches.append({
+                "photo_id": photo.id,
+                "face_id": face_id,
+                "similarity": sim_float,
+                "confidence_percent": int(round(sim_float * 100)),
+                "category": category,
+                "photo": photo,
+            })
+
+            if len(ranked_matches) >= top_k:
+                break
+
+        return ranked_matches
+
+    # PostgreSQL + pgvector branch
     distance_expr = Face.embedding.cosine_distance(vec_list)
     similarity_expr = (1.0 - distance_expr).label("similarity")
 
-    # Group by Photo to return the highest face match per photo
-    # We join Photo so we have complete photo metadata ready for the customer
     query = (
         select(
             Photo,
@@ -73,10 +131,7 @@ def search_event_faces(
 
     results = db.execute(query).all()
 
-    # Deduplicate by photo_id (keep highest similarity face for that photo)
     seen_photos: set[str] = set()
-    ranked_matches: list[dict[str, Any]] = []
-
     for photo, face_id, similarity in results:
         if photo.id in seen_photos:
             continue
