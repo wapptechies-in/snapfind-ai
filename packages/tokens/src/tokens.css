@@ -1,34 +1,34 @@
 :root {
-  /* SnapFind Studio Semantic Tokens */
-  --sf-bg: #FAF8F5;
+  /* SnapFind Studio Luxury Semantic Tokens */
+  --sf-bg: #FBF9F4;
   --sf-surface: #FFFFFF;
-  --sf-surface-soft: #F5F2EB;
-  --sf-surface-hover: #F8F6F1;
+  --sf-surface-soft: #F5EFEB;
+  --sf-surface-hover: #FAF7F2;
   
-  --sf-primary: #1E3A2F;
-  --sf-primary-hover: #284D3E;
-  --sf-primary-tint: #EDF3EF;
+  --sf-primary: #163E2B;
+  --sf-primary-hover: #1E5139;
+  --sf-primary-tint: #EAF4EE;
 
-  --sf-secondary: #5F7D6B;
-  --sf-secondary-light: #8FA899;
-  --sf-secondary-soft: #EDF2EE;
+  --sf-secondary: #4A6B56;
+  --sf-secondary-light: #7D9D89;
+  --sf-secondary-soft: #E2EDE0;
 
-  --sf-accent: #C5A880;
-  --sf-accent-light: #DFC9AF;
-  --sf-accent-soft: #FAF6F0;
+  --sf-accent: #C8A874;
+  --sf-accent-light: #E2CEAD;
+  --sf-accent-soft: #FAF4EB;
 
-  --sf-text: #1A1C1A;
-  --sf-text-muted: #636B66;
-  --sf-text-subtle: #969D98;
+  --sf-text: #152019;
+  --sf-text-muted: #556057;
+  --sf-text-subtle: #7C867E;
 
-  --sf-border: #E7E3DC;
-  --sf-border-light: #F0EDE8;
+  --sf-border: #E8E2D5;
+  --sf-border-light: #F2ECE2;
 
-  --sf-success: #2D7A4F;
-  --sf-success-bg: #EBF5EE;
-  --sf-warning: #C88719;
+  --sf-success: #226B43;
+  --sf-success-bg: #EAF5EE;
+  --sf-warning: #B87814;
   --sf-warning-bg: #FEF7EB;
-  --sf-danger: #C2413A;
+  --sf-danger: #B83832;
   --sf-danger-bg: #FDF2F1;
 
   --sf-radius-sm: 8px;
@@ -36,47 +36,57 @@
   --sf-radius-lg: 20px;
   --sf-radius-xl: 28px;
 
-  --sf-shadow-card: 0 4px 20px rgba(27, 43, 34, 0.04);
-  --sf-shadow-hover: 0 8px 30px rgba(27, 43, 34, 0.08);
+  --sf-shadow-card: 0 2px 10px rgba(22, 62, 43, 0.03);
+  --sf-shadow-hover: 0 10px 28px rgba(22, 62, 43, 0.06);
 
   /* Compatibility CSS vars */
-  --sf-color-base: #FAF8F5;
+  --sf-color-base: #FBF9F4;
   --sf-color-panel: #FFFFFF;
-  --sf-color-panel2: #F5F2EB;
-  --sf-color-hairline: #E7E3DC;
-  --sf-color-cloud: #1A1C1A;
-  --sf-color-dim: #636B66;
-  --sf-color-violet: #1E3A2F;
-  --sf-color-violet-light: #5F7D6B;
-  --sf-color-good: #2D7A4F;
-  --sf-color-bad: #C2413A;
+  --sf-color-panel2: #F5EFEB;
+  --sf-color-hairline: #E8E2D5;
+  --sf-color-cloud: #152019;
+  --sf-color-dim: #556057;
+  --sf-color-violet: #163E2B;
+  --sf-color-violet-light: #4A6B56;
+  --sf-color-good: #226B43;
+  --sf-color-bad: #B83832;
 }
 
-/* Warm Ivory Ambient Atmosphere */
+/* Warm Ivory Ambient Atmosphere with Botanical Light Gradients */
 .sf-ambient-bg {
-  background-color: #FAF8F5;
+  background-color: #FBF9F4;
   background-image: 
-    radial-gradient(circle at 10% 10%, rgba(95, 125, 107, 0.04), transparent 45%),
-    radial-gradient(circle at 90% 90%, rgba(197, 168, 128, 0.06), transparent 45%);
+    radial-gradient(circle at 10% 10%, rgba(74, 107, 86, 0.05), transparent 45%),
+    radial-gradient(circle at 90% 90%, rgba(200, 168, 116, 0.07), transparent 45%);
 }
 
 /* Luxury Card Shadow & Hover */
 .sf-card {
   background-color: #FFFFFF;
-  border: 1px solid #E7E3DC;
-  box-shadow: 0 2px 12px rgba(26, 28, 26, 0.03);
-  transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 160ms cubic-bezier(0.16, 1, 0.3, 1), border-color 160ms ease;
+  border: 1px solid #E8E2D5;
+  box-shadow: 0 2px 10px rgba(22, 62, 43, 0.03);
+  transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1), border-color 180ms ease;
 }
 
 .sf-card-hover:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(26, 28, 26, 0.06);
-  border-color: #C5A880;
+  box-shadow: 0 10px 28px rgba(22, 62, 43, 0.07);
+  border-color: #C8A874;
 }
 
 /* Editorial Serif & Clean Sans helper utilities */
 .font-display {
   font-family: "Playfair Display", "Cormorant Garamond", Lora, Georgia, serif;
+}
+
+.font-editorial {
+  font-family: "Playfair Display", "Cormorant Garamond", Lora, Georgia, serif;
+  letter-spacing: -0.015em;
+}
+
+.font-poetic {
+  font-family: "Cormorant Garamond", "Playfair Display", Georgia, serif;
+  font-style: italic;
 }
 
 .font-body {
@@ -90,19 +100,19 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #FAF8F5;
+  background: #FBF9F4;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #D9D4CC;
+  background: #DDD7CB;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #B8B2A6;
+  background: #BCB4A4;
 }
 
-/* Interactive Click & Micro-Interactions */
+/* Interactive Click & Tactile Micro-Interactions */
 .interactive-click {
   transition: transform 140ms cubic-bezier(0.34, 1.56, 0.64, 1), background-color 140ms ease, box-shadow 140ms ease;
 }
@@ -112,22 +122,65 @@
 }
 
 .btn-luxury {
-  transition: all 160ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-luxury:hover {
+  transform: translateY(-1px);
 }
 
 .btn-luxury:active {
-  transform: scale(0.97) translateY(1px);
+  transform: scale(0.97) translateY(0);
+}
+
+.btn-luxury-forest {
+  background-color: #163E2B;
+  color: #FFFFFF;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(22, 62, 43, 0.18);
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-luxury-forest:hover {
+  background-color: #1E5139;
+  box-shadow: 0 6px 20px rgba(22, 62, 43, 0.26);
+  transform: translateY(-1px);
+}
+
+.btn-luxury-forest:active {
+  transform: scale(0.97);
+  box-shadow: 0 2px 6px rgba(22, 62, 43, 0.14);
+}
+
+.btn-luxury-champagne {
+  background-color: #C8A874;
+  color: #152019;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(200, 168, 116, 0.22);
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-luxury-champagne:hover {
+  background-color: #D4B785;
+  box-shadow: 0 6px 20px rgba(200, 168, 116, 0.32);
+  transform: translateY(-1px);
+}
+
+.btn-luxury-champagne:active {
+  transform: scale(0.97);
 }
 
 .nav-active-pill {
-  background-color: #E2EBE2;
-  color: #1E3A2F;
-  font-weight: 600;
+  background-color: #E2EDE0 !important;
+  color: #163E2B !important;
+  font-weight: 600 !important;
+  border: 1px solid #C7D8C4 !important;
 }
 
 .botanical-leaves-bg {
-  background-image: radial-gradient(circle at 100% 100%, rgba(95, 125, 107, 0.08) 0%, transparent 50%),
-                    radial-gradient(circle at 0% 0%, rgba(197, 168, 128, 0.06) 0%, transparent 40%);
+  background-image: 
+    radial-gradient(circle at 100% 100%, rgba(74, 107, 86, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 0% 0%, rgba(200, 168, 116, 0.07) 0%, transparent 40%);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -99,29 +99,30 @@ export const Dashboard: React.FC = () => {
       {/* Top Greeting & Action Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#1A1C1A] tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-charcoal tracking-tight">
             Good Morning, {displayName} 👋
           </h1>
-          <p className="text-xs sm:text-sm text-[#737A74] mt-0.5">
-            Let's preserve beautiful memories together.
+          <p className="text-xs sm:text-sm text-warm-gray mt-1 flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-forest animate-pulse" />
+            <span>Let's preserve beautiful memories together.</span>
           </p>
         </div>
 
         <button
           onClick={() => setIsCreateModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1E3A2F] hover:bg-[#284D3E] text-white text-xs font-semibold shadow-sm hover:shadow transition-all duration-150 active:scale-[0.97] cursor-pointer"
+          className="btn-luxury-forest inline-flex items-center gap-2 px-4.5 py-2.5 rounded-xl text-xs font-semibold shadow-md active:scale-95 cursor-pointer"
         >
-          <span className="text-sm leading-none">+</span>
+          <span className="text-base leading-none font-bold">+</span>
           <span>New Event</span>
         </button>
       </div>
 
       {/* 4 Metric Cards Row (Matching Reference) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         {/* Metric 1: Active Events */}
-        <div className="bg-white rounded-2xl p-5 border border-[#E7E3DC] shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+        <div className="bg-white rounded-2xl p-5 border border-warm-border shadow-card hover:-translate-y-1 hover:shadow-hover hover:border-champagne/40 transition-all duration-200">
           <div className="flex items-center gap-3.5">
-            <div className="h-11 w-11 rounded-xl bg-[#EAF2EC] text-[#2E6B47] flex items-center justify-center flex-shrink-0">
+            <div className="h-12 w-12 rounded-xl bg-[#D9F2E6] text-[#165B3B] border border-[#BEE5D3] flex items-center justify-center flex-shrink-0 shadow-xs">
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="4" width="18" height="18" rx="2" />
                 <line x1="16" y1="2" x2="16" y2="6" />
@@ -130,18 +131,18 @@ export const Dashboard: React.FC = () => {
               </svg>
             </div>
             <div>
-              <p className="text-2xl font-serif font-bold text-[#1A1C1A]">
+              <p className="text-2xl sm:text-3xl font-serif font-bold text-charcoal leading-none">
                 {liveStats?.activeEvents ?? 12}
               </p>
-              <p className="text-xs text-[#737A74] font-medium">Active Events</p>
+              <p className="text-xs text-warm-gray font-medium mt-1">Active Events</p>
             </div>
           </div>
         </div>
 
         {/* Metric 2: Photos */}
-        <div className="bg-white rounded-2xl p-5 border border-[#E7E3DC] shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+        <div className="bg-white rounded-2xl p-5 border border-warm-border shadow-card hover:-translate-y-1 hover:shadow-hover hover:border-champagne/40 transition-all duration-200">
           <div className="flex items-center gap-3.5">
-            <div className="h-11 w-11 rounded-xl bg-[#FEF4EB] text-[#D97706] flex items-center justify-center flex-shrink-0">
+            <div className="h-12 w-12 rounded-xl bg-[#FCECDD] text-[#9E5926] border border-[#F5D5BA] flex items-center justify-center flex-shrink-0 shadow-xs">
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="3" width="18" height="18" rx="2" />
                 <circle cx="8.5" cy="8.5" r="1.5" />
@@ -149,36 +150,36 @@ export const Dashboard: React.FC = () => {
               </svg>
             </div>
             <div>
-              <p className="text-2xl font-serif font-bold text-[#1A1C1A]">
+              <p className="text-2xl sm:text-3xl font-serif font-bold text-charcoal leading-none">
                 {liveStats?.totalPhotos ? liveStats.totalPhotos.toLocaleString() : "8,452"}
               </p>
-              <p className="text-xs text-[#737A74] font-medium">Photos</p>
+              <p className="text-xs text-warm-gray font-medium mt-1">Photos</p>
             </div>
           </div>
         </div>
 
         {/* Metric 3: Guest Views */}
-        <div className="bg-white rounded-2xl p-5 border border-[#E7E3DC] shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+        <div className="bg-white rounded-2xl p-5 border border-warm-border shadow-card hover:-translate-y-1 hover:shadow-hover hover:border-champagne/40 transition-all duration-200">
           <div className="flex items-center gap-3.5">
-            <div className="h-11 w-11 rounded-xl bg-[#F0EEFB] text-[#6366F1] flex items-center justify-center flex-shrink-0">
+            <div className="h-12 w-12 rounded-xl bg-[#EDE8F8] text-[#5B4C8A] border border-[#D8CFEE] flex items-center justify-center flex-shrink-0 shadow-xs">
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                 <circle cx="12" cy="12" r="3" />
               </svg>
             </div>
             <div>
-              <p className="text-2xl font-serif font-bold text-[#1A1C1A]">
+              <p className="text-2xl sm:text-3xl font-serif font-bold text-charcoal leading-none">
                 {liveStats?.photoSearches ? liveStats.photoSearches.toLocaleString() : "3,127"}
               </p>
-              <p className="text-xs text-[#737A74] font-medium">Guest Views</p>
+              <p className="text-xs text-warm-gray font-medium mt-1">Guest Views</p>
             </div>
           </div>
         </div>
 
         {/* Metric 4: Happy Clients */}
-        <div className="bg-white rounded-2xl p-5 border border-[#E7E3DC] shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
+        <div className="bg-white rounded-2xl p-5 border border-warm-border shadow-card hover:-translate-y-1 hover:shadow-hover hover:border-champagne/40 transition-all duration-200">
           <div className="flex items-center gap-3.5">
-            <div className="h-11 w-11 rounded-xl bg-[#E8F8F5] text-[#0D9488] flex items-center justify-center flex-shrink-0">
+            <div className="h-12 w-12 rounded-xl bg-[#FAF4EB] text-[#8F6E3B] border border-[#E2CEAD] flex items-center justify-center flex-shrink-0 shadow-xs">
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="10" />
                 <path d="M8 14s1.5 2 4 2 4-2 4-2" />
@@ -187,40 +188,40 @@ export const Dashboard: React.FC = () => {
               </svg>
             </div>
             <div>
-              <p className="text-2xl font-serif font-bold text-[#1A1C1A]">86%</p>
-              <p className="text-xs text-[#737A74] font-medium">Happy Clients</p>
+              <p className="text-2xl sm:text-3xl font-serif font-bold text-charcoal leading-none">86%</p>
+              <p className="text-xs text-warm-gray font-medium mt-1">Happy Clients</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Featured Promotional Banner Card (Matching Reference: "Capture Share Cherish Every Moment") */}
-      <div className="relative overflow-hidden rounded-3xl border border-[#E7E3DC] bg-[#FAF6EE] shadow-sm flex flex-col md:flex-row items-stretch justify-between min-h-[190px]">
+      <div className="relative overflow-hidden rounded-3xl border border-warm-border bg-[#FAF6EE] shadow-card flex flex-col md:flex-row items-stretch justify-between min-h-[200px]">
         {/* Left Decorative Botanical Leaves */}
         <div className="absolute left-0 bottom-0 pointer-events-none opacity-40">
           <BotanicalLeaves width={220} height={190} />
         </div>
 
         {/* Left Text Column */}
-        <div className="relative z-10 p-6 sm:p-8 flex flex-col justify-center max-w-md">
+        <div className="relative z-10 p-7 sm:p-9 flex flex-col justify-center max-w-md">
           <div className="space-y-0.5">
-            <h2 className="font-serif text-2xl sm:text-3xl text-[#2B352E] font-medium leading-tight">
+            <h2 className="font-serif text-2xl sm:text-3xl text-charcoal font-medium leading-tight">
               Capture
             </h2>
-            <h2 className="font-serif text-2xl sm:text-3xl text-[#2B352E] font-medium leading-tight">
+            <h2 className="font-serif text-2xl sm:text-3xl text-charcoal font-medium leading-tight">
               Share
             </h2>
-            <h2 className="font-serif text-2xl sm:text-3xl text-[#2B352E] font-medium leading-tight">
+            <h2 className="font-serif text-2xl sm:text-3xl text-charcoal font-medium leading-tight">
               Cherish
             </h2>
-            <p className="font-serif text-base sm:text-lg font-bold text-[#1E3A2F] pt-1">
+            <p className="font-serif italic text-lg sm:text-xl text-forest font-semibold pt-1">
               Every Moment
             </p>
           </div>
         </div>
 
         {/* Right Photography Image */}
-        <div className="relative md:w-1/2 min-h-[160px] md:min-h-full overflow-hidden">
+        <div className="relative md:w-1/2 min-h-[170px] md:min-h-full overflow-hidden">
           <img
             src="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80"
             alt="Romantic wedding couple smiling"
