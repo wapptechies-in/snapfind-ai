@@ -4,7 +4,7 @@ Guest Registration, Consent Management, WhatsApp dispatch, and Right to be Forgo
 
 from datetime import datetime, timezone
 import logging
-from typing import Annotated
+from typing import Annotated, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
