@@ -154,23 +154,23 @@ export default function EventProcessing() {
       <EventHeader event={event} />
 
       {/* Live Pipeline Status Banner */}
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-warm-beige bg-surface p-3.5 text-xs text-charcoal-muted shadow-sm">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-hairline bg-slate p-3.5 text-xs text-cool-gray shadow-sm">
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-forest/10 px-2.5 py-0.5 text-[11px] font-semibold text-forest">
-            <span className="h-1.5 w-1.5 rounded-full bg-forest animate-ping" />
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-gold/10 px-2.5 py-0.5 text-[11px] font-semibold text-gold">
+            <span className="h-1.5 w-1.5 rounded-full bg-gold animate-ping" />
             LIVE PIPELINE
           </span>
-          <span className="text-charcoal font-medium">
+          <span className="text-soft-white font-medium">
             Async worker pool active &middot; Derivatives &amp; vector embeddings
           </span>
         </div>
-        <div className="flex items-center gap-3 text-charcoal-muted text-[11px]">
+        <div className="flex items-center gap-3 text-cool-gray text-[11px]">
           <span>Polling live every 2.5s</span>
           <span>&middot;</span>
           <span>Updated {lastUpdated.toLocaleTimeString()}</span>
           <button
             onClick={() => id && fetchJobStatus(id)}
-            className="text-forest hover:underline font-semibold transition-colors cursor-pointer"
+            className="text-gold hover:underline font-semibold transition-colors cursor-pointer"
           >
             Refresh
           </button>
@@ -182,14 +182,14 @@ export default function EventProcessing() {
         <div
           className={`mb-6 p-3.5 rounded-xl border text-xs flex items-center justify-between shadow-sm ${
             feedback.type === "success"
-              ? "bg-forest/10 border-forest/20 text-forest"
-              : "bg-danger/10 border-danger/20 text-danger"
+              ? "bg-sage/10 border-sage/20 text-sage"
+              : "bg-coral/10 border-coral/20 text-coral"
           }`}
         >
           <span>{feedback.text}</span>
           <button
             onClick={() => setFeedback(null)}
-            className="text-charcoal-muted hover:text-charcoal ml-3 text-sm cursor-pointer"
+            className="text-cool-gray hover:text-soft-white ml-3 text-sm cursor-pointer"
           >
             ✕
           </button>
@@ -197,10 +197,10 @@ export default function EventProcessing() {
       )}
 
       {/* Pipeline Action Controls */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 p-5 rounded-2xl border border-warm-beige bg-surface shadow-sm">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 p-5 rounded-2xl border border-hairline bg-slate shadow-sm">
         <div>
-          <h4 className="text-sm font-serif font-semibold text-charcoal">Pipeline Controls</h4>
-          <p className="text-xs text-charcoal-muted mt-0.5">
+          <h4 className="text-sm font-bold text-soft-white">Pipeline Controls</h4>
+          <p className="text-xs text-cool-gray mt-0.5">
             Trigger batch inference, re-generate derivatives, or retry failed items.
           </p>
         </div>

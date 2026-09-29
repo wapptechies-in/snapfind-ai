@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_current_photographer_or_default
+from app.api.dependencies import get_current_photographer
 from app.db.session import get_db
 from app.models.event import Event
 from app.models.photo import Photo
@@ -56,7 +56,7 @@ def _resolve_event(event_id_or_token: str, db: Session) -> Event:
 )
 def get_event_processing_status(
     event_id: str,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> ProcessingStatusResponse:
     """
@@ -64,6 +64,11 @@ def get_event_processing_status(
     Designed for 2.5s polling from the frontend.
     """
     event = _resolve_event(event_id, db)
+    if event.photographer_id != photographer.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to manage processing for this event.",
+        )
 
     # 1. Photo status counts
     total_photos = db.scalar(
@@ -183,13 +188,18 @@ def get_event_processing_status(
 )
 def start_event_processing(
     event_id: str,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> ProcessingActionResponse:
     """
     Triggers background Celery processing for all pending or un-indexed photos in the event.
     """
     event = _resolve_event(event_id, db)
+    if event.photographer_id != photographer.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to manage processing for this event.",
+        )
 
     unprocessed_count = db.scalar(
         select(func.count(Photo.id)).where(
@@ -250,7 +260,7 @@ def start_event_processing(
 )
 def reprocess_event_photos(
     event_id: str,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> ProcessingActionResponse:
     """
@@ -258,6 +268,11 @@ def reprocess_event_photos(
     Regenerates derivatives, re-detects faces, re-embeds vectors, and clears previous faces.
     """
     event = _resolve_event(event_id, db)
+    if event.photographer_id != photographer.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to manage processing for this event.",
+        )
 
     total_photos = db.scalar(
         select(func.count(Photo.id)).where(Photo.event_id == event.id)
@@ -315,13 +330,18 @@ def reprocess_event_photos(
 )
 def retry_failed_photos(
     event_id: str,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> ProcessingActionResponse:
     """
     Retries processing only for photos currently in 'failed' status.
     """
     event = _resolve_event(event_id, db)
+    if event.photographer_id != photographer.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to manage processing for this event.",
+        )
 
     failed_count = db.scalar(
         select(func.count(Photo.id)).where(
@@ -374,13 +394,18 @@ def retry_failed_photos(
 )
 def cancel_event_processing(
     event_id: str,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> ProcessingActionResponse:
     """
     Cancels active processing jobs for the event and revokes Celery tasks.
     """
     event = _resolve_event(event_id, db)
+    if event.photographer_id != photographer.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to manage processing for this event.",
+        )
 
     active_jobs = db.scalars(
         select(ProcessingJob).where(

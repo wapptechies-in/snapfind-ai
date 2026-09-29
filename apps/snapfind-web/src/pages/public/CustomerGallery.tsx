@@ -130,9 +130,10 @@ export default function CustomerGallery() {
       setToastNotice(`Packaging all ${photos.length} photos into a ZIP archive...`);
       await eventsApi.downloadAllZip(event.token || event.id, "web");
       setToastNotice(`Successfully downloaded event photos (.zip)!`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("ZIP download failed:", err);
-      setToastNotice(`Error downloading ZIP: ${err?.message || "Please try again."}`);
+      const msg = err instanceof Error ? err.message : "Please try again.";
+      setToastNotice(`Error downloading ZIP: ${msg}`);
     } finally {
       setDownloadingZip(false);
       setTimeout(() => setToastNotice(null), 5000);
@@ -146,9 +147,10 @@ export default function CustomerGallery() {
       setToastNotice(`Packaging ${favoriteIds.length} favorite photos into a ZIP archive...`);
       await photosApi.downloadZip(favoriteIds, "web");
       setToastNotice(`Successfully downloaded ${favoriteIds.length} favorite photos!`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Favorites ZIP download failed:", err);
-      setToastNotice(`Error downloading ZIP: ${err?.message || "Please try again."}`);
+      const msg = err instanceof Error ? err.message : "Please try again.";
+      setToastNotice(`Error downloading ZIP: ${msg}`);
     } finally {
       setDownloadingZip(false);
       setTimeout(() => setToastNotice(null), 5000);
@@ -273,18 +275,18 @@ export default function CustomerGallery() {
   return (
     <GalleryLayout event={event} activeAction="gallery">
       {/* Hero Header Section */}
-      <section className="relative overflow-hidden border-b border-warm-beige bg-gradient-to-b from-forest/5 via-cream to-cream px-4 py-14 sm:px-8 sm:py-20 text-center">
+      <section className="relative overflow-hidden border-b border-[#E8E2D8] bg-ivory px-4 py-14 sm:px-8 sm:py-20 text-center">
         <div className="max-w-3xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 rounded-full border border-forest/20 bg-forest/10 px-3.5 py-1 text-xs font-semibold text-forest shadow-sm">
+          <div className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3.5 py-1 text-xs font-semibold text-gold-darker shadow-sm">
             <span>✨</span>
             <span>Private Event Collection</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl font-serif font-bold tracking-tight text-charcoal leading-tight">
+          <h1 className="text-3xl sm:text-5xl font-serif font-bold tracking-tight text-midnight leading-tight">
             {event.name}
           </h1>
 
-          <p className="text-sm sm:text-base text-charcoal-muted">
+          <p className="text-sm sm:text-base text-muted">
             {event.eventType} Photography •{" "}
             {new Date(event.date).toLocaleDateString("en-US", {
               day: "numeric",
@@ -292,32 +294,32 @@ export default function CustomerGallery() {
               year: "numeric",
             })}
           </p>
-          <p className="text-xs text-charcoal-muted/80">{event.location}</p>
+          <p className="text-xs text-muted/80">{event.location}</p>
 
           {/* Primary Find My Photos Hero CTA & Share */}
           <div className="pt-6 flex flex-wrap items-center justify-center gap-3">
             <Link to={`/event/${event.token}/search`}>
-              <button className="group relative inline-flex items-center gap-2.5 rounded-full bg-forest hover:bg-forest-light px-7 py-3 text-sm sm:text-base font-semibold text-white shadow-sm transition-all hover:scale-105 active:scale-95 cursor-pointer">
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <button className="group relative inline-flex items-center gap-2.5 rounded-full bg-gold hover:bg-gold-light px-7 py-3 text-sm sm:text-base font-semibold text-midnight shadow-gold/20 shadow-md transition-all hover:scale-105 active:scale-95 cursor-pointer">
+                <svg className="h-5 w-5 text-midnight" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="12" cy="8" r="4" />
                   <path d="M6 20v-2a6 6 0 0112 0v2" />
                 </svg>
                 <span>Find My Photos</span>
-                <span className="text-white/70 group-hover:translate-x-0.5 transition-transform">→</span>
+                <span className="text-midnight/70 group-hover:translate-x-0.5 transition-transform">→</span>
               </button>
             </Link>
 
             <button
               onClick={() => setShowShareModal(true)}
-              className="inline-flex items-center gap-2 rounded-full border border-warm-beige bg-surface hover:bg-cream px-5 py-3 text-sm font-medium text-charcoal transition-colors shadow-sm cursor-pointer"
+              className="inline-flex items-center gap-2 rounded-full border border-[#E8E2D8] bg-white hover:bg-ivory px-5 py-3 text-sm font-medium text-midnight transition-colors shadow-sm cursor-pointer"
             >
-              <svg className="h-4 w-4 text-forest" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <svg className="h-4 w-4 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
               </svg>
               <span>Share Gallery</span>
             </button>
           </div>
-          <p className="text-[11px] text-charcoal-muted mt-2">
+          <p className="text-[11px] text-muted mt-2">
             Upload a quick selfie to discover every photo you appear in
           </p>
         </div>
@@ -332,19 +334,19 @@ export default function CustomerGallery() {
         )}
 
         {/* Toolbar & Filter Tabs */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-warm-beige">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E8E2D8]">
           {/* Tabs: Public Gallery vs Favorites */}
-          <div className="flex items-center gap-2 bg-surface p-1 rounded-xl border border-warm-beige shadow-sm">
+          <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-[#E8E2D8] shadow-sm">
             <button
               onClick={() => setActiveTab("all")}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === "all"
-                  ? "bg-forest text-white shadow-sm font-semibold"
-                  : "text-charcoal-muted hover:text-charcoal"
+                  ? "bg-gold text-midnight shadow-sm font-bold"
+                  : "text-muted hover:text-midnight"
               }`}
             >
               <span>Public Gallery</span>
-              <span className="rounded-full bg-black/10 px-1.5 py-0.2 text-[10px]">
+              <span className="rounded-full bg-midnight/10 px-1.5 py-0.2 text-[10px]">
                 {photos.length}
               </span>
             </button>
@@ -353,15 +355,15 @@ export default function CustomerGallery() {
               onClick={() => setActiveTab("favorites")}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === "favorites"
-                  ? "bg-forest text-white shadow-sm font-semibold"
-                  : "text-charcoal-muted hover:text-charcoal"
+                  ? "bg-coral text-white shadow-sm font-bold"
+                  : "text-muted hover:text-midnight"
               }`}
             >
-              <svg className="h-3.5 w-3.5 fill-current text-rose-500" viewBox="0 0 24 24">
+              <svg className="h-3.5 w-3.5 fill-current text-white" viewBox="0 0 24 24">
                 <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
               <span>Favorites</span>
-              <span className="rounded-full bg-black/10 px-1.5 py-0.2 text-[10px]">
+              <span className="rounded-full bg-midnight/10 px-1.5 py-0.2 text-[10px]">
                 {favoriteIds.length}
               </span>
             </button>
@@ -375,7 +377,7 @@ export default function CustomerGallery() {
                 variant="primary"
                 disabled={favoriteIds.length === 0 || downloadingZip}
                 onClick={handleDownloadFavoritesZip}
-                className="gap-2 text-xs"
+                className="gap-2 text-xs bg-coral hover:bg-coral-light border-none text-white font-semibold"
               >
                 {downloadingZip ? (
                   <>
@@ -400,11 +402,11 @@ export default function CustomerGallery() {
                 variant="secondary"
                 disabled={photos.length === 0 || downloadingZip}
                 onClick={handleDownloadAllZip}
-                className="gap-2 text-xs border-warm-beige"
+                className="gap-2 text-xs border-[#E8E2D8] bg-white text-midnight hover:bg-ivory"
               >
                 {downloadingZip ? (
                   <>
-                    <svg className="animate-spin h-3.5 w-3.5 text-charcoal" viewBox="0 0 24 24" fill="none">
+                    <svg className="animate-spin h-3.5 w-3.5 text-midnight" viewBox="0 0 24 24" fill="none">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
@@ -422,7 +424,7 @@ export default function CustomerGallery() {
             )}
 
             <Link to={`/event/${event.token}/search`}>
-              <Button size="sm" variant="outline" className="border-warm-beige text-charcoal hover:bg-cream text-xs">
+              <Button size="sm" variant="outline" className="border-[#E8E2D8] text-midnight hover:bg-ivory text-xs">
                 Selfie Search
               </Button>
             </Link>
@@ -431,13 +433,13 @@ export default function CustomerGallery() {
 
         {/* Empty State for Public Gallery */}
         {activeTab === "all" && displayedPhotos.length === 0 && (
-          <div className="py-16 text-center border border-warm-beige rounded-2xl bg-surface p-8 max-w-lg mx-auto space-y-4 shadow-sm">
-            <div className="h-14 w-14 mx-auto rounded-full bg-forest/10 border border-forest/20 flex items-center justify-center text-2xl text-forest">
+          <div className="py-16 text-center border border-[#E8E2D8] rounded-2xl bg-white p-8 max-w-lg mx-auto space-y-4 shadow-sm">
+            <div className="h-14 w-14 mx-auto rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center text-2xl text-gold">
               📸
             </div>
             <div>
-              <h3 className="text-base font-serif font-semibold text-charcoal">Private Guest Search Active</h3>
-              <p className="mt-1.5 text-xs text-charcoal-muted leading-relaxed">
+              <h3 className="text-base font-serif font-semibold text-midnight">Private Guest Search Active</h3>
+              <p className="mt-1.5 text-xs text-muted leading-relaxed">
                 The photographer has configured this event for private selfie search.
                 Upload your selfie to automatically search and find every photograph you appear in!
               </p>
@@ -455,21 +457,21 @@ export default function CustomerGallery() {
 
         {/* Empty State for Favorites */}
         {activeTab === "favorites" && displayedPhotos.length === 0 && (
-          <div className="py-16 text-center border border-warm-beige rounded-2xl bg-surface p-8 max-w-lg mx-auto shadow-sm">
-            <div className="h-12 w-12 mx-auto rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-500 mb-3">
+          <div className="py-16 text-center border border-[#E8E2D8] rounded-2xl bg-white p-8 max-w-lg mx-auto space-y-4 shadow-sm">
+            <div className="h-12 w-12 mx-auto rounded-full bg-coral/10 border border-coral/20 flex items-center justify-center text-coral mb-3">
               <svg className="h-6 w-6 fill-current" viewBox="0 0 24 24">
                 <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
             </div>
-            <h3 className="text-base font-serif font-semibold text-charcoal">No favorites saved yet</h3>
-            <p className="mt-1 text-xs text-charcoal-muted max-w-sm mx-auto">
+            <h3 className="text-base font-serif font-semibold text-midnight">No favorites saved yet</h3>
+            <p className="mt-1 text-xs text-muted max-w-sm mx-auto">
               Click the heart icon on any photo to save your personal picks and download them as a ZIP!
             </p>
             <Button
               size="sm"
               variant="outline"
               onClick={() => setActiveTab("all")}
-              className="mt-4 text-xs border-warm-beige text-charcoal"
+              className="mt-4 text-xs border-[#E8E2D8] text-midnight hover:bg-ivory"
             >
               Browse Public Gallery
             </Button>
@@ -485,10 +487,10 @@ export default function CustomerGallery() {
               <div
                 key={photo.id}
                 onClick={() => setSelectedPhotoIndex(index)}
-                className={`group relative aspect-[3/2] sm:aspect-[4/3] rounded-2xl overflow-hidden bg-cream cursor-pointer border transition-all shadow-sm ${
+                className={`group relative aspect-[3/2] sm:aspect-[4/3] rounded-2xl overflow-hidden bg-ivory cursor-pointer border transition-all shadow-sm ${
                   isFav
-                    ? "border-rose-400 ring-2 ring-rose-200"
-                    : "border-warm-beige hover:border-forest/50"
+                    ? "border-coral ring-2 ring-coral/30"
+                    : "border-[#E8E2D8] hover:border-gold/50"
                 }`}
               >
                 <img
@@ -512,8 +514,8 @@ export default function CustomerGallery() {
                   aria-label={isFav ? "Remove favorite" : "Add to favorites"}
                   className={`absolute top-2.5 right-2.5 h-8 w-8 rounded-full flex items-center justify-center backdrop-blur-md transition-all cursor-pointer ${
                     isFav
-                      ? "bg-rose-500 text-white shadow-sm scale-100"
-                      : "bg-black/40 text-white/80 hover:text-white hover:bg-black/60 opacity-80 group-hover:opacity-100"
+                      ? "bg-coral text-white shadow-sm scale-100"
+                      : "bg-midnight/50 text-white/80 hover:text-white hover:bg-midnight/70 opacity-80 group-hover:opacity-100"
                   }`}
                 >
                   <svg
@@ -531,11 +533,11 @@ export default function CustomerGallery() {
                 </button>
 
                 {/* Bottom Overlay Label */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-3 pointer-events-none">
-                  <span className="text-xs font-medium text-white truncate max-w-[70%]">
+                <div className="absolute inset-0 bg-gradient-to-t from-midnight/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-3 pointer-events-none">
+                  <span className="text-xs font-medium text-soft-white truncate max-w-[70%]">
                     {photo.filename}
                   </span>
-                  <span className="text-forest-tint font-medium text-[11px]">
+                  <span className="text-gold font-medium text-[11px]">
                     View
                   </span>
                 </div>
@@ -548,21 +550,21 @@ export default function CustomerGallery() {
       {/* Share Gallery Modal */}
       {showShareModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-midnight/70 backdrop-blur-sm animate-fade-in"
           onClick={() => setShowShareModal(false)}
         >
           <div
-            className="w-full max-w-md rounded-2xl bg-surface border border-warm-beige p-6 shadow-2xl space-y-5 text-charcoal"
+            className="w-full max-w-md rounded-2xl bg-white border border-[#E8E2D8] p-6 shadow-2xl space-y-5 text-midnight"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-3 border-b border-warm-beige">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E8E2D8]">
               <div className="flex items-center gap-2">
                 <span className="text-lg">✨</span>
-                <h3 className="text-base font-serif font-bold text-charcoal">Share Gallery</h3>
+                <h3 className="text-base font-serif font-bold text-midnight">Share Gallery</h3>
               </div>
               <button
                 onClick={() => setShowShareModal(false)}
-                className="h-7 w-7 rounded-lg bg-cream hover:bg-surface text-charcoal-muted hover:text-charcoal flex items-center justify-center cursor-pointer border border-warm-beige"
+                className="h-7 w-7 rounded-lg bg-ivory hover:bg-slate-100 text-muted hover:text-midnight flex items-center justify-center cursor-pointer border border-[#E8E2D8]"
               >
                 ✕
               </button>
@@ -570,27 +572,27 @@ export default function CustomerGallery() {
 
             {/* QR Code Canvas */}
             <div className="flex flex-col items-center justify-center py-2 space-y-2">
-              <div className="p-3 bg-white rounded-2xl shadow-md border border-warm-beige">
+              <div className="p-3 bg-white rounded-2xl shadow-md border border-[#E8E2D8]">
                 <canvas ref={qrCanvasRef} className="block" />
               </div>
-              <p className="text-[11px] text-charcoal-muted text-center">
+              <p className="text-[11px] text-muted text-center">
                 Point a phone camera at this QR code to view the gallery instantly on mobile
               </p>
             </div>
 
             {/* Copy Link Input */}
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-charcoal-muted">Direct Gallery Link</label>
+              <label className="text-xs font-medium text-muted">Direct Gallery Link</label>
               <div className="flex items-center gap-2">
                 <input
                   type="text"
                   readOnly
                   value={window.location.href}
-                  className="flex-1 rounded-xl bg-cream border border-warm-beige px-3 py-2 text-xs font-mono text-charcoal select-all focus:outline-none focus:border-forest"
+                  className="flex-1 rounded-xl bg-ivory border border-[#E8E2D8] px-3 py-2 text-xs font-mono text-midnight select-all focus:outline-none focus:border-gold"
                 />
                 <button
                   onClick={handleCopyLink}
-                  className="rounded-xl bg-forest hover:bg-forest-light px-3.5 py-2 text-xs font-semibold text-white transition-colors flex items-center gap-1.5 shrink-0 shadow-sm cursor-pointer"
+                  className="rounded-xl bg-gold hover:bg-gold-light px-3.5 py-2 text-xs font-semibold text-midnight transition-colors flex items-center gap-1.5 shrink-0 shadow-sm cursor-pointer"
                 >
                   {copiedLink ? (
                     <>
@@ -607,7 +609,7 @@ export default function CustomerGallery() {
             </div>
 
             {/* Social Share Buttons */}
-            <div className="pt-2 border-t border-warm-beige flex items-center justify-between gap-2">
+            <div className="pt-2 border-t border-[#E8E2D8] flex items-center justify-between gap-2">
               {/* WhatsApp */}
               <a
                 href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
@@ -615,7 +617,7 @@ export default function CustomerGallery() {
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-[#25D366]/15 hover:bg-[#25D366]/25 border border-[#25D366]/30 py-2.5 text-xs font-semibold text-[#128C7E] transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 py-2.5 text-xs font-semibold text-emerald-800 transition-colors"
               >
                 <span>WhatsApp</span>
               </a>
@@ -627,7 +629,7 @@ export default function CustomerGallery() {
                 )}&url=${encodeURIComponent(window.location.href)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-cream hover:bg-surface border border-warm-beige py-2.5 text-xs font-semibold text-charcoal transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-ivory hover:bg-slate-100 border border-[#E8E2D8] py-2.5 text-xs font-semibold text-midnight transition-colors"
               >
                 <span>Twitter / X</span>
               </a>
@@ -639,7 +641,7 @@ export default function CustomerGallery() {
                 )}&body=${encodeURIComponent(
                   `Hi,\n\nHere are the photos from ${event.name}:\n${window.location.href}\n\nEnjoy!`
                 )}`}
-                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-cream hover:bg-surface border border-warm-beige py-2.5 text-xs font-semibold text-charcoal transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-ivory hover:bg-slate-100 border border-[#E8E2D8] py-2.5 text-xs font-semibold text-midnight transition-colors"
               >
                 <span>Email</span>
               </a>
@@ -665,38 +667,38 @@ export default function CustomerGallery() {
       {/* Guest Paywall Checkout Modal (Phase 9) */}
       {showPaywallModal && event && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-midnight/70 backdrop-blur-md animate-fade-in"
           onClick={() => setShowPaywallModal(false)}
         >
           <div
-            className="w-full max-w-md rounded-2xl bg-surface border border-warm-beige p-6 shadow-2xl space-y-5 text-charcoal"
+            className="w-full max-w-md rounded-2xl bg-white border border-[#E8E2D8] p-6 shadow-2xl space-y-5 text-midnight"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-3 border-b border-warm-beige">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E8E2D8]">
               <div className="flex items-center gap-2">
                 <span className="text-xl">💳</span>
                 <div>
-                  <h3 className="text-base font-serif font-bold text-charcoal">Unlock High-Resolution</h3>
-                  <p className="text-[11px] text-charcoal-muted">Unwatermarked Original Quality</p>
+                  <h3 className="text-base font-serif font-bold text-midnight">Unlock High-Resolution</h3>
+                  <p className="text-[11px] text-muted">Unwatermarked Original Quality</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowPaywallModal(false)}
-                className="h-7 w-7 rounded-lg bg-cream hover:bg-surface text-charcoal-muted hover:text-charcoal flex items-center justify-center cursor-pointer border border-warm-beige"
+                className="h-7 w-7 rounded-lg bg-ivory hover:bg-slate-100 text-muted hover:text-midnight flex items-center justify-center cursor-pointer border border-[#E8E2D8]"
               >
                 ✕
               </button>
             </div>
 
             {/* Option selector: Single Photo vs Full Gallery */}
-            <div className="grid grid-cols-2 gap-2 p-1 bg-cream rounded-xl border border-warm-beige text-xs">
+            <div className="grid grid-cols-2 gap-2 p-1 bg-ivory rounded-xl border border-[#E8E2D8] text-xs">
               <button
                 type="button"
                 onClick={() => setPaywallType("photo")}
                 className={`py-2 px-3 rounded-lg font-bold transition-all text-center cursor-pointer ${
                   paywallType === "photo"
-                    ? "bg-forest text-white shadow-sm font-semibold"
-                    : "text-charcoal-muted hover:text-charcoal"
+                    ? "bg-gold text-midnight shadow-sm font-semibold"
+                    : "text-muted hover:text-midnight"
                 }`}
               >
                 Single Photo ({event.currency} {event.photoPrice?.toFixed(2) || "4.99"})
@@ -706,8 +708,8 @@ export default function CustomerGallery() {
                 onClick={() => setPaywallType("gallery")}
                 className={`py-2 px-3 rounded-lg font-bold transition-all text-center cursor-pointer ${
                   paywallType === "gallery"
-                    ? "bg-forest text-white shadow-sm font-semibold"
-                    : "text-charcoal-muted hover:text-charcoal"
+                    ? "bg-gold text-midnight shadow-sm font-semibold"
+                    : "text-muted hover:text-midnight"
                 }`}
               >
                 All Photos ({event.currency} {event.galleryUnlockPrice?.toFixed(2) || "29.99"})
@@ -715,17 +717,17 @@ export default function CustomerGallery() {
             </div>
 
             {paywallType === "photo" && paywallTargetPhoto && (
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-cream border border-warm-beige">
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-ivory border border-[#E8E2D8]">
                 <img
                   src={paywallTargetPhoto.thumbnailUrl || paywallTargetPhoto.url}
                   alt={paywallTargetPhoto.filename}
-                  className="h-12 w-12 rounded-lg object-cover border border-warm-beige"
+                  className="h-12 w-12 rounded-lg object-cover border border-[#E8E2D8]"
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-charcoal truncate">
+                  <p className="text-xs font-semibold text-midnight truncate">
                     {paywallTargetPhoto.filename}
                   </p>
-                  <p className="text-[11px] text-forest font-mono font-bold">
+                  <p className="text-[11px] text-gold-darker font-mono font-bold">
                     Full Resolution Original • {event.currency} {event.photoPrice?.toFixed(2) || "4.99"}
                   </p>
                 </div>
@@ -733,9 +735,9 @@ export default function CustomerGallery() {
             )}
 
             {paywallType === "gallery" && (
-              <div className="p-3 rounded-xl bg-forest/10 border border-forest/20 text-xs space-y-1">
-                <p className="font-serif font-bold text-forest">⭐ Full Gallery VIP Pass</p>
-                <p className="text-charcoal-muted text-[11px]">
+              <div className="p-3 rounded-xl bg-gold/10 border border-gold/30 text-xs space-y-1">
+                <p className="font-serif font-bold text-gold-darker">⭐ Full Gallery VIP Pass</p>
+                <p className="text-muted text-[11px]">
                   Unlock unlimited high-resolution downloads for every photo in this entire event.
                 </p>
               </div>
@@ -744,7 +746,7 @@ export default function CustomerGallery() {
             {/* Checkout Form */}
             <form onSubmit={handleCompleteGuestCheckout} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-charcoal mb-1">
+                <label className="block text-xs font-medium text-midnight mb-1">
                   Email Address for Receipt & Downloads *
                 </label>
                 <input
@@ -753,7 +755,7 @@ export default function CustomerGallery() {
                   placeholder="your.email@example.com"
                   value={guestEmail}
                   onChange={(e) => setGuestEmail(e.target.value)}
-                  className="w-full rounded-xl bg-cream border border-warm-beige px-3.5 py-2.5 text-xs text-charcoal placeholder-charcoal-muted/60 focus:outline-none focus:border-forest"
+                  className="w-full rounded-xl bg-ivory border border-[#E8E2D8] px-3.5 py-2.5 text-xs text-midnight placeholder-muted/60 focus:outline-none focus:border-gold"
                 />
               </div>
 
@@ -775,8 +777,8 @@ export default function CustomerGallery() {
                 </Button>
               </div>
 
-              <div className="flex items-center justify-center gap-2 text-[10px] text-charcoal-muted">
-                <svg className="w-3.5 h-3.5 text-forest" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <div className="flex items-center justify-center gap-2 text-[10px] text-muted">
+                <svg className="w-3.5 h-3.5 text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                   <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                 </svg>

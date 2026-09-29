@@ -68,13 +68,13 @@ export default function Login() {
     <AuthLayout title="Welcome back" subtitle="Log in to your SnapFind AI dashboard">
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50/80 px-4 py-3 text-xs text-red-700">
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-xs text-red-400">
             {error}
           </div>
         )}
 
         <div>
-          <label className="block text-xs font-semibold text-studio-charcoal mb-1.5" htmlFor="email">
+          <label className="block text-xs font-medium text-soft-white/90 mb-1.5" htmlFor="email">
             Email address
           </label>
           <input
@@ -84,11 +84,11 @@ export default function Login() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="studio@example.com"
-            className="w-full rounded-xl border border-studio-sand bg-white px-3.5 py-2.5 text-sm text-studio-charcoal placeholder:text-studio-muted/60 outline-none transition-all focus:border-studio-forest focus:ring-1 focus:ring-studio-forest shadow-xs"
+            className="w-full rounded-xl border border-slate-700/80 bg-midnight/80 px-3.5 py-2.5 text-sm text-soft-white placeholder:text-muted/60 outline-none transition-all focus:border-gold focus:ring-1 focus:ring-gold/30 shadow-inner"
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-studio-charcoal mb-1.5" htmlFor="password">
+          <label className="block text-xs font-medium text-soft-white/90 mb-1.5" htmlFor="password">
             Password
           </label>
           <input
@@ -98,16 +98,16 @@ export default function Login() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            className="w-full rounded-xl border border-studio-sand bg-white px-3.5 py-2.5 text-sm text-studio-charcoal placeholder:text-studio-muted/60 outline-none transition-all focus:border-studio-forest focus:ring-1 focus:ring-studio-forest shadow-xs"
+            className="w-full rounded-xl border border-slate-700/80 bg-midnight/80 px-3.5 py-2.5 text-sm text-soft-white placeholder:text-muted/60 outline-none transition-all focus:border-gold focus:ring-1 focus:ring-gold/30 shadow-inner"
           />
         </div>
 
         <div className="flex items-center justify-between text-xs pt-0.5">
-          <label className="flex items-center gap-2 cursor-pointer text-studio-muted">
-            <input type="checkbox" className="rounded border-studio-sand text-studio-forest focus:ring-studio-forest" />
+          <label className="flex items-center gap-2 cursor-pointer text-muted">
+            <input type="checkbox" className="rounded border-slate-700 bg-midnight text-gold focus:ring-gold/30" />
             <span>Remember me</span>
           </label>
-          <Link to="/forgot-password" className="text-studio-forest font-medium hover:underline">
+          <Link to="/forgot-password" className="text-gold font-medium hover:underline">
             Forgot password?
           </Link>
         </div>
@@ -115,16 +115,16 @@ export default function Login() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-xl bg-studio-forest px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-studio-forest-light active:scale-[0.99] disabled:opacity-60 shadow-sm"
+          className="w-full rounded-xl bg-gold px-4 py-3 text-sm font-bold text-midnight transition-all hover:bg-gold-light active:scale-[0.99] disabled:opacity-60 shadow-md shadow-gold/20 cursor-pointer"
         >
           {loading ? "Signing in…" : "Sign In to Studio"}
         </button>
 
         <div className="relative my-5 flex items-center justify-center">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-studio-sand" />
+            <div className="w-full border-t border-slate-800" />
           </div>
-          <div className="relative bg-white px-3 text-[11px] font-medium uppercase tracking-wider text-studio-muted">
+          <div className="relative bg-slate-panel px-3 text-[11px] font-medium uppercase tracking-wider text-muted">
             Or continue with
           </div>
         </div>
@@ -137,9 +137,9 @@ export default function Login() {
         />
       </form>
 
-      <p className="mt-6 text-center text-xs text-studio-muted">
+      <p className="mt-6 text-center text-xs text-muted">
         Don't have an account?{" "}
-        <Link to="/register" className="font-semibold text-studio-forest hover:underline">
+        <Link to="/register" className="font-semibold text-gold hover:underline">
           Create a studio account
         </Link>
       </p>

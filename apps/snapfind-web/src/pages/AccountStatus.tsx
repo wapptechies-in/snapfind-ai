@@ -68,19 +68,19 @@ export default function AccountStatus() {
         {/* Status Indicator Icon */}
         <div className="flex justify-center">
           {isApproved ? (
-            <div className="h-16 w-16 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-3xl text-emerald-700 shadow-sm">
+            <div className="h-16 w-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-3xl text-emerald-400 shadow-sm">
               ✓
             </div>
           ) : isRejected ? (
-            <div className="h-16 w-16 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-3xl text-rose-700 shadow-sm">
+            <div className="h-16 w-16 rounded-2xl bg-coral/10 border border-coral/30 flex items-center justify-center text-3xl text-coral shadow-sm">
               ✕
             </div>
           ) : isSuspended ? (
-            <div className="h-16 w-16 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-3xl text-amber-700 shadow-sm">
+            <div className="h-16 w-16 rounded-2xl bg-coral/10 border border-coral/30 flex items-center justify-center text-3xl text-coral shadow-sm">
               ⏸
             </div>
           ) : (
-            <div className="h-16 w-16 rounded-2xl bg-studio-forest/10 border border-studio-forest/20 flex items-center justify-center text-3xl text-studio-forest shadow-sm animate-pulse">
+            <div className="h-16 w-16 rounded-2xl bg-gold/10 border border-gold/30 flex items-center justify-center text-3xl text-gold shadow-sm animate-pulse">
               ⏳
             </div>
           )}
@@ -89,12 +89,12 @@ export default function AccountStatus() {
         {/* Status Copy */}
         <div className="space-y-3">
           {email && (
-            <p className="text-xs font-mono text-studio-muted bg-studio-cream border border-studio-sand rounded-lg py-1 px-3 inline-block">
+            <p className="text-xs font-mono text-gold bg-midnight border border-slate-800 rounded-lg py-1 px-3 inline-block">
               {email}
             </p>
           )}
 
-          <p className="text-sm text-studio-charcoal/80 leading-relaxed max-w-sm mx-auto">
+          <p className="text-sm text-muted leading-relaxed max-w-sm mx-auto">
             {isApproved
               ? "Your photographer studio account is now fully approved! You have complete access to event creation, AI facial indexing, and client delivery."
               : isRejected
@@ -105,14 +105,14 @@ export default function AccountStatus() {
           </p>
 
           {rejectionReason && (
-            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 text-left space-y-1">
+            <div className="p-3.5 rounded-xl bg-coral/10 border border-coral/30 text-xs text-coral text-left space-y-1">
               <span className="font-semibold block">Reason for Rejection:</span>
               <p>{rejectionReason}</p>
             </div>
           )}
 
           {statusMessage && (
-            <p className="text-xs text-studio-forest font-medium pt-1">{statusMessage}</p>
+            <p className="text-xs text-gold font-medium pt-1">{statusMessage}</p>
           )}
         </div>
 
@@ -120,7 +120,7 @@ export default function AccountStatus() {
         <div className="space-y-3 pt-2">
           {isApproved ? (
             <Link to="/login" className="block w-full">
-              <button className="w-full rounded-xl bg-studio-forest px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-studio-forest-light transition-all">
+              <button className="w-full rounded-xl bg-gold px-4 py-3 text-sm font-bold text-midnight shadow-md shadow-gold/20 hover:bg-gold-light transition-all cursor-pointer">
                 Proceed to Sign In →
               </button>
             </Link>
@@ -131,14 +131,14 @@ export default function AccountStatus() {
                   type="button"
                   onClick={checkStatus}
                   disabled={checking}
-                  className="w-full rounded-xl bg-studio-forest px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-studio-forest-light transition-all disabled:opacity-60"
+                  className="w-full rounded-xl bg-gold px-4 py-3 text-sm font-bold text-midnight shadow-md shadow-gold/20 hover:bg-gold-light transition-all disabled:opacity-60 cursor-pointer"
                 >
                   {checking ? "Checking Approval Status…" : "Refresh Approval Status ↻"}
                 </button>
               )}
 
               <Link to="/login" className="block w-full">
-                <button className="w-full rounded-xl border border-studio-sand bg-studio-cream px-4 py-2.5 text-xs font-semibold text-studio-charcoal hover:border-studio-forest transition-colors shadow-xs">
+                <button className="w-full rounded-xl border border-slate-700 bg-midnight px-4 py-2.5 text-xs font-semibold text-soft-white hover:border-gold transition-colors shadow-sm cursor-pointer">
                   Return to Sign In
                 </button>
               </Link>
@@ -146,9 +146,9 @@ export default function AccountStatus() {
           )}
         </div>
 
-        <p className="text-[11px] text-studio-muted">
+        <p className="text-[11px] text-muted">
           Need immediate assistance? Contact{" "}
-          <a href="mailto:support@snapfind.ai" className="text-studio-forest font-medium underline">
+          <a href="mailto:support@snapfind.ai" className="text-gold font-medium underline">
             support@snapfind.ai
           </a>
         </p>

@@ -10,6 +10,11 @@ interface EventHeaderProps {
 
 export const EventHeader: React.FC<EventHeaderProps> = ({ event }) => {
   const location = useLocation();
+  const coverImage =
+    event.coverImage ??
+    (event as { cover_image?: string; cover_photo_url?: string }).cover_image ??
+    (event as { cover_image?: string; cover_photo_url?: string }).cover_photo_url ??
+    DEFAULT_EVENT_COVER;
 
   const tabs = [
     { label: "Overview", path: `/events/${event.id}` },
@@ -22,20 +27,20 @@ export const EventHeader: React.FC<EventHeaderProps> = ({ event }) => {
   return (
     <div className="space-y-6 mb-6">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-xs text-dim">
-        <Link to="/events" className="hover:text-cloud transition-colors">
+      <div className="flex items-center gap-2 text-xs text-muted">
+        <Link to="/events" className="hover:text-soft-white transition-colors">
           Events
         </Link>
         <span>/</span>
-        <span className="text-cloud font-medium truncate max-w-xs">{event.name}</span>
+        <span className="text-soft-white font-medium truncate max-w-xs">{event.name}</span>
       </div>
 
       {/* Main Banner Header */}
-      <div className="relative rounded-2xl border border-hairline bg-panel overflow-hidden">
+      <div className="relative rounded-2xl border border-slate-800 bg-slate-panel overflow-hidden">
         {/* Cover Backdrop with subtle blur */}
-        <div className="h-40 sm:h-52 w-full relative overflow-hidden bg-panel2">
+        <div className="h-40 sm:h-52 w-full relative overflow-hidden bg-midnight">
           <img
-            src={event.coverImage || (event as any).cover_image || (event as any).cover_photo_url || DEFAULT_EVENT_COVER}
+            src={coverImage}
             alt={event.name}
             className="h-full w-full object-cover object-center"
             onError={(e) => {
@@ -44,16 +49,16 @@ export const EventHeader: React.FC<EventHeaderProps> = ({ event }) => {
               }
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-panel via-panel/60 to-black/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-panel via-slate-panel/60 to-black/40" />
         </div>
 
         {/* Content Info Bar */}
         <div className="p-6 pt-0 relative -mt-16 sm:-mt-20 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="flex items-end gap-4">
             <img
-              src={event.coverImage || (event as any).cover_image || (event as any).cover_photo_url || DEFAULT_EVENT_COVER}
+              src={coverImage}
               alt=""
-              className="h-24 w-24 sm:h-28 sm:w-28 rounded-xl object-cover border-4 border-panel shadow-2xl bg-panel2"
+              className="h-24 w-24 sm:h-28 sm:w-28 rounded-xl object-cover border-4 border-slate-panel shadow-2xl bg-midnight"
               onError={(e) => {
                 if (e.currentTarget.src !== DEFAULT_EVENT_COVER) {
                   e.currentTarget.src = DEFAULT_EVENT_COVER;
@@ -63,17 +68,17 @@ export const EventHeader: React.FC<EventHeaderProps> = ({ event }) => {
             <div className="pb-1">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant={event.status}>{event.status}</Badge>
-                <span className="rounded-md bg-panel2 border border-hairline px-2 py-0.5 text-[11px] font-medium text-dim">
+                <span className="rounded-md bg-midnight border border-slate-700 px-2 py-0.5 text-[11px] font-medium text-muted">
                   {event.eventType}
                 </span>
-                <span className="text-xs font-mono text-violet-light bg-violet/10 border border-violet/20 px-2 py-0.5 rounded">
+                <span className="text-xs font-mono text-gold bg-gold/10 border border-gold/25 px-2 py-0.5 rounded">
                   Token: {event.token}
                 </span>
               </div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-cloud mt-1.5">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-soft-white mt-1.5 font-serif">
                 {event.name}
               </h1>
-              <p className="text-xs text-dim mt-0.5 flex items-center gap-2">
+              <p className="text-xs text-muted mt-0.5 flex items-center gap-2">
                 <span>📅 {event.date}</span>
                 <span>•</span>
                 <span>📍 {event.location}</span>
@@ -96,7 +101,7 @@ export const EventHeader: React.FC<EventHeaderProps> = ({ event }) => {
         </div>
 
         {/* Tab Navigation */}
-        <div className="border-t border-hairline px-6 flex items-center gap-1 overflow-x-auto">
+        <div className="border-t border-slate-800 px-6 flex items-center gap-1 overflow-x-auto">
           {tabs.map((tab) => {
             const isActive =
               tab.path === `/events/${event.id}`
@@ -109,15 +114,15 @@ export const EventHeader: React.FC<EventHeaderProps> = ({ event }) => {
                 to={tab.path}
                 className={`flex items-center gap-2 px-4 py-3.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
                   isActive
-                    ? "border-violet text-cloud font-semibold"
-                    : "border-transparent text-dim hover:text-cloud hover:border-hairline"
+                    ? "border-gold text-gold font-semibold"
+                    : "border-transparent text-muted hover:text-soft-white hover:border-slate-700"
                 }`}
               >
                 {tab.label}
                 {tab.count !== undefined && (
                   <span
                     className={`rounded-full px-2 py-0.5 text-[10px] ${
-                      isActive ? "bg-violet/20 text-violet-light font-bold" : "bg-panel2 text-dim"
+                      isActive ? "bg-gold/20 text-gold font-bold" : "bg-midnight text-muted"
                     }`}
                   >
                     {tab.count}
@@ -131,4 +136,3 @@ export const EventHeader: React.FC<EventHeaderProps> = ({ event }) => {
     </div>
   );
 };
-

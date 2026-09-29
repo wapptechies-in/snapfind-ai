@@ -94,9 +94,10 @@ export default function SearchResults() {
       setToast(`Packaging ${selectedIds.length} photos into a ZIP archive...`);
       await photosApi.downloadZip(selectedIds, "web");
       setToast(`Successfully downloaded ZIP with ${selectedIds.length} matched photos!`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("ZIP download failed:", err);
-      setToast(`Error creating ZIP download: ${err?.message || "Please try again."}`);
+      const msg = err instanceof Error ? err.message : "Please try again.";
+      setToast(`Error creating ZIP download: ${msg}`);
     } finally {
       setDownloading(false);
       setTimeout(() => setToast(null), 5000);
@@ -110,13 +111,13 @@ export default function SearchResults() {
 
         {/* WhatsApp Delivery Confirmation Banner */}
         {whatsAppSent && whatsAppPhone && (
-          <div className="p-4 rounded-2xl bg-forest/5 border border-forest/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs text-charcoal">
+          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs text-midnight">
             <div className="flex items-center gap-3">
               <span className="text-xl">📲</span>
               <div>
-                <strong className="text-forest font-semibold">Gallery link sent to WhatsApp!</strong>
-                <p className="text-[11px] text-warm-gray mt-0.5">
-                  A direct link to these results has been queued for <span className="font-mono text-charcoal font-semibold">{whatsAppPhone}</span>.
+                <strong className="text-emerald-800 font-semibold">Gallery link sent to WhatsApp!</strong>
+                <p className="text-[11px] text-muted mt-0.5">
+                  A direct link to these results has been queued for <span className="font-mono text-midnight font-semibold">{whatsAppPhone}</span>.
                 </p>
               </div>
             </div>
@@ -126,13 +127,13 @@ export default function SearchResults() {
                   href={directWaUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-forest hover:bg-forest-light text-cream font-semibold text-xs transition-colors shadow-sm"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs transition-colors shadow-sm"
                 >
                   <span>💬</span>
                   <span>Open in WhatsApp</span>
                 </a>
               )}
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-forest shrink-0 hidden sm:inline">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 shrink-0 hidden sm:inline">
                 Delivered ✓
               </span>
             </div>
@@ -140,28 +141,28 @@ export default function SearchResults() {
         )}
 
         {/* Results Hero Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-warm-beige">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#E8E2D8]">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-forest/10 text-forest px-3 py-0.5 text-xs font-semibold mb-2">
+            <div className="inline-flex items-center gap-2 rounded-full bg-gold/15 text-gold-darker px-3 py-0.5 text-xs font-semibold mb-2">
               <span>✓</span>
               <span>Search Complete</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-serif font-bold text-charcoal">
+            <h1 className="text-2xl sm:text-3xl font-serif font-bold text-midnight">
               We found {results.totalMatches ?? allPhotos.length} matched {(results.totalMatches ?? allPhotos.length) === 1 ? "photo" : "photos"}
             </h1>
-            <p className="text-xs text-warm-gray mt-1">
+            <p className="text-xs text-muted mt-1">
               Based on facial similarity matching from your uploaded selfie
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <Link to={`/event/${token}/search`}>
-              <Button size="sm" variant="secondary" className="border-warm-beige text-xs">
+              <Button size="sm" variant="secondary" className="border-[#E8E2D8] text-xs">
                 Take another selfie
               </Button>
             </Link>
             <Link to={`/event/${token}/gallery`}>
-              <Button size="sm" variant="outline" className="border-warm-beige text-xs">
+              <Button size="sm" variant="outline" className="border-[#E8E2D8] text-xs">
                 Full Gallery
               </Button>
             </Link>
@@ -170,18 +171,18 @@ export default function SearchResults() {
 
         {/* Zero Matches State */}
         {allPhotos.length === 0 ? (
-          <Card className="p-8 sm:p-12 bg-white border-warm-beige text-center space-y-4 max-w-lg mx-auto shadow-sm">
-            <div className="h-16 w-16 rounded-full bg-sand-light border border-warm-beige flex items-center justify-center text-3xl mx-auto text-forest">
+          <Card className="p-8 sm:p-12 bg-white border-[#E8E2D8] text-center space-y-4 max-w-lg mx-auto shadow-sm">
+            <div className="h-16 w-16 rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center text-3xl mx-auto text-gold">
               🔍
             </div>
             <div className="space-y-1">
-              <h2 className="text-lg font-serif font-bold text-charcoal">No Face Matches Found</h2>
-              <p className="text-xs text-warm-gray leading-relaxed">
+              <h2 className="text-lg font-serif font-bold text-midnight">No Face Matches Found</h2>
+              <p className="text-xs text-muted leading-relaxed">
                 We couldn't detect your face in the photos uploaded for this event so far.
               </p>
             </div>
-            <div className="p-3.5 rounded-xl bg-cream border border-warm-beige text-left text-xs text-warm-gray space-y-1">
-              <p className="font-semibold text-charcoal">Quick Tips:</p>
+            <div className="p-3.5 rounded-xl bg-ivory border border-[#E8E2D8] text-left text-xs text-muted space-y-1">
+              <p className="font-semibold text-midnight">Quick Tips:</p>
               <ul className="list-disc list-inside space-y-0.5 text-[11px]">
                 <li>Retake your selfie with brighter front-facing light.</li>
                 <li>Make sure dark sunglasses, masks, or hats are removed.</li>
@@ -195,7 +196,7 @@ export default function SearchResults() {
                 </Button>
               </Link>
               <Link to={`/event/${token}/gallery`}>
-                <Button variant="secondary" size="sm" className="w-full sm:w-auto border-warm-beige">
+                <Button variant="secondary" size="sm" className="w-full sm:w-auto border-[#E8E2D8]">
                   Browse All Photos ({event?.photoCount || 0})
                 </Button>
               </Link>
@@ -204,17 +205,17 @@ export default function SearchResults() {
         ) : (
           <>
             {/* Batch Actions Bar */}
-            <Card className="p-4 bg-white border-warm-beige flex flex-wrap items-center justify-between gap-3 shadow-sm">
+            <Card className="p-4 bg-white border-[#E8E2D8] flex flex-wrap items-center justify-between gap-3 shadow-sm">
               <div className="flex items-center gap-3">
                 <button
                   onClick={handleSelectAll}
-                  className="text-xs font-semibold text-forest hover:text-forest-light transition-colors"
+                  className="text-xs font-semibold text-gold-darker hover:text-gold transition-colors"
                 >
                   {selectedIds.length === allPhotos.length ? "Deselect All" : "Select All"}
                 </button>
-                <span className="text-warm-gray/40">•</span>
-                <span className="text-xs text-warm-gray">
-                  <strong className="text-charcoal">{selectedIds.length}</strong> of {allPhotos.length} selected
+                <span className="text-muted/40">•</span>
+                <span className="text-xs text-muted">
+                  <strong className="text-midnight">{selectedIds.length}</strong> of {allPhotos.length} selected
                 </span>
               </div>
 
@@ -228,7 +229,7 @@ export default function SearchResults() {
                 >
                   {downloading ? (
                     <>
-                      <svg className="animate-spin h-3.5 w-3.5 text-cream" viewBox="0 0 24 24" fill="none">
+                      <svg className="animate-spin h-3.5 w-3.5 text-midnight" viewBox="0 0 24 24" fill="none">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                       </svg>
@@ -250,8 +251,8 @@ export default function SearchResults() {
             {results.strongMatches && results.strongMatches.length > 0 && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-base font-serif font-bold text-charcoal">Strong Matches</h2>
-                  <span className="rounded-full bg-forest/10 text-forest border border-forest/20 px-2.5 py-0.5 text-[11px] font-semibold">
+                  <h2 className="text-base font-serif font-bold text-midnight">Strong Matches</h2>
+                  <span className="rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 text-[11px] font-semibold">
                     High Confidence ({results.strongMatches.length})
                   </span>
                 </div>
@@ -264,8 +265,8 @@ export default function SearchResults() {
                     return (
                       <div
                         key={photo.id}
-                        className={`group relative aspect-[4/3] rounded-xl overflow-hidden bg-sand-light border transition-all cursor-pointer shadow-sm ${
-                          isSelected ? "border-forest ring-2 ring-forest/30" : "border-warm-beige hover:border-forest/40"
+                        className={`group relative aspect-[4/3] rounded-2xl overflow-hidden bg-white border transition-all cursor-pointer shadow-sm ${
+                          isSelected ? "border-gold ring-2 ring-gold/40 shadow-gold/10" : "border-[#E8E2D8] hover:border-gold/50"
                         }`}
                       >
                         <img
@@ -282,10 +283,10 @@ export default function SearchResults() {
                             e.stopPropagation();
                             handleToggleSelect(photo.id);
                           }}
-                          className={`absolute top-2.5 right-2.5 h-6 w-6 rounded-md flex items-center justify-center cursor-pointer transition-colors ${
+                          className={`absolute top-2.5 right-2.5 h-6 w-6 rounded-md flex items-center justify-center cursor-pointer transition-colors shadow-sm ${
                             isSelected
-                              ? "bg-forest text-cream border border-forest"
-                              : "bg-white/80 backdrop-blur-sm border border-warm-beige hover:bg-white text-forest"
+                              ? "bg-gold text-midnight border border-gold font-bold"
+                              : "bg-white/90 backdrop-blur-sm border border-[#E8E2D8] hover:bg-white text-muted"
                           }`}
                         >
                           {isSelected && (
@@ -296,7 +297,7 @@ export default function SearchResults() {
                         {/* Match Confidence Badge */}
                         {photo.matchConfidence && (
                           <div className="absolute top-2.5 left-2.5">
-                            <span className="rounded-md bg-forest/90 backdrop-blur-sm text-cream px-2 py-0.5 text-[10px] font-semibold shadow-sm">
+                            <span className="rounded-md bg-midnight/80 backdrop-blur-sm text-gold border border-gold/30 px-2 py-0.5 text-[10px] font-semibold shadow-sm">
                               {photo.matchConfidence}% match
                             </span>
                           </div>
@@ -304,10 +305,10 @@ export default function SearchResults() {
 
                         <div
                           onClick={() => setViewerIndex(globalIdx)}
-                          className="absolute inset-x-0 bottom-0 p-2.5 bg-gradient-to-t from-charcoal/80 to-transparent flex items-end justify-between text-[11px] text-cream"
+                          className="absolute inset-x-0 bottom-0 p-2.5 bg-gradient-to-t from-midnight/85 to-transparent flex items-end justify-between text-[11px] text-soft-white"
                         >
                           <span className="truncate">{photo.filename}</span>
-                          <span className="text-champagne font-semibold text-[10px]">View</span>
+                          <span className="text-gold font-semibold text-[10px]">View</span>
                         </div>
                       </div>
                     );
@@ -318,10 +319,10 @@ export default function SearchResults() {
 
             {/* Section 2: Possible Matches */}
             {results.possibleMatches && results.possibleMatches.length > 0 && (
-              <div className="space-y-4 pt-4 border-t border-warm-beige">
+              <div className="space-y-4 pt-4 border-t border-[#E8E2D8]">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-base font-serif font-bold text-charcoal">Possible Matches</h2>
-                  <span className="rounded-full bg-sand-light text-warm-gray border border-warm-beige px-2.5 py-0.5 text-[11px] font-semibold">
+                  <h2 className="text-base font-serif font-bold text-midnight">Possible Matches</h2>
+                  <span className="rounded-full bg-slate-100 text-muted border border-[#E8E2D8] px-2.5 py-0.5 text-[11px] font-semibold">
                     Moderate Confidence ({results.possibleMatches.length})
                   </span>
                 </div>
@@ -334,8 +335,8 @@ export default function SearchResults() {
                     return (
                       <div
                         key={photo.id}
-                        className={`group relative aspect-[4/3] rounded-xl overflow-hidden bg-sand-light border transition-all cursor-pointer shadow-sm ${
-                          isSelected ? "border-forest ring-2 ring-forest/30" : "border-warm-beige hover:border-forest/40"
+                        className={`group relative aspect-[4/3] rounded-2xl overflow-hidden bg-white border transition-all cursor-pointer shadow-sm ${
+                          isSelected ? "border-gold ring-2 ring-gold/40 shadow-gold/10" : "border-[#E8E2D8] hover:border-gold/50"
                         }`}
                       >
                         <img
@@ -352,10 +353,10 @@ export default function SearchResults() {
                             e.stopPropagation();
                             handleToggleSelect(photo.id);
                           }}
-                          className={`absolute top-2.5 right-2.5 h-6 w-6 rounded-md flex items-center justify-center cursor-pointer transition-colors ${
+                          className={`absolute top-2.5 right-2.5 h-6 w-6 rounded-md flex items-center justify-center cursor-pointer transition-colors shadow-sm ${
                             isSelected
-                              ? "bg-forest text-cream border border-forest"
-                              : "bg-white/80 backdrop-blur-sm border border-warm-beige hover:bg-white text-forest"
+                              ? "bg-gold text-midnight border border-gold font-bold"
+                              : "bg-white/90 backdrop-blur-sm border border-[#E8E2D8] hover:bg-white text-muted"
                           }`}
                         >
                           {isSelected && (
@@ -365,7 +366,7 @@ export default function SearchResults() {
 
                         {photo.matchConfidence && (
                           <div className="absolute top-2.5 left-2.5">
-                            <span className="rounded-md bg-charcoal/80 backdrop-blur-sm text-sand-light px-2 py-0.5 text-[10px] font-semibold">
+                            <span className="rounded-md bg-midnight/80 backdrop-blur-sm text-soft-white px-2 py-0.5 text-[10px] font-semibold">
                               {photo.matchConfidence}% match
                             </span>
                           </div>
@@ -373,10 +374,10 @@ export default function SearchResults() {
 
                         <div
                           onClick={() => setViewerIndex(globalIdx)}
-                          className="absolute inset-x-0 bottom-0 p-2.5 bg-gradient-to-t from-charcoal/80 to-transparent flex items-end justify-between text-[11px] text-cream"
+                          className="absolute inset-x-0 bottom-0 p-2.5 bg-gradient-to-t from-midnight/85 to-transparent flex items-end justify-between text-[11px] text-soft-white"
                         >
                           <span className="truncate">{photo.filename}</span>
-                          <span className="text-champagne font-semibold text-[10px]">View</span>
+                          <span className="text-gold font-semibold text-[10px]">View</span>
                         </div>
                       </div>
                     );
@@ -389,10 +390,10 @@ export default function SearchResults() {
 
         {/* Photographer CTA Banner (Configurable via event.show_company_cta) */}
         {event?.show_company_cta && (
-          <div className="p-6 rounded-2xl bg-white border border-warm-beige flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+          <div className="p-6 rounded-2xl bg-white border border-[#E8E2D8] flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
             <div className="space-y-1 text-center sm:text-left">
-              <h3 className="text-base font-serif font-bold text-charcoal">Loving your event photos?</h3>
-              <p className="text-xs text-warm-gray">
+              <h3 className="text-base font-serif font-bold text-midnight">Loving your event photos?</h3>
+              <p className="text-xs text-muted">
                 Book this photographer for your next wedding, birthday, or corporate event!
               </p>
             </div>
@@ -412,11 +413,11 @@ export default function SearchResults() {
 
         {/* SnapFind Branding Footer (Configurable via event.show_snapfind_branding) */}
         {event?.show_snapfind_branding !== false && (
-          <div className="text-center pt-8 pb-4 space-y-1 border-t border-warm-beige">
-            <p className="text-xs text-warm-gray font-serif">
-              Powered by <strong className="text-charcoal font-sans">SnapFind Studio</strong>
+          <div className="text-center pt-8 pb-4 space-y-1 border-t border-[#E8E2D8]">
+            <p className="text-xs text-muted font-serif">
+              Powered by <strong className="text-midnight font-sans">SnapFind Studio</strong>
             </p>
-            <p className="text-[11px] text-warm-gray/70">Every Moment Finds You</p>
+            <p className="text-[11px] text-muted/70">Every Moment Finds You</p>
           </div>
         )}
       </div>

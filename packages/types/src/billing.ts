@@ -18,5 +18,9 @@ export interface BillingSummary {
   maxActiveEvents: number;
   totalPhotosCount: number;
   maxPhotosPerEvent: number;
+  used_storage_bytes?: number;
+  max_storage_bytes?: number;
+  is_trial_edition?: boolean;
 }
+
 

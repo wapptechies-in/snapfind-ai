@@ -72,34 +72,34 @@ export default function Profile() {
 
         {/* Subscription & Storage Metric Header */}
         <div className="grid gap-4 sm:grid-cols-3">
-          <Card className="p-5 space-y-1 bg-white border-warm-beige shadow-sm">
-            <span className="text-[11px] font-medium text-warm-gray uppercase tracking-wider">Account Plan</span>
+          <Card className="p-5 space-y-1 bg-slate-panel border-slate-800 shadow-sm">
+            <span className="text-[11px] font-medium text-muted uppercase tracking-wider">Account Plan</span>
             <div className="flex items-center gap-2">
-              <span className="text-xl font-serif font-bold text-charcoal">{planName}</span>
-              <span className="rounded-full bg-forest/10 text-forest px-2.5 py-0.5 text-[10px] font-bold border border-forest/20">
+              <span className="text-xl font-serif font-bold text-soft-white">{planName}</span>
+              <span className="rounded-full bg-gold/15 text-gold px-2.5 py-0.5 text-[10px] font-bold border border-gold/30">
                 Active
               </span>
             </div>
-            <p className="text-[11px] text-warm-gray">
+            <p className="text-[11px] text-muted">
               {user?.max_active_events != null
                 ? `${user.max_active_events} active events max`
                 : "Unlimited galleries & AI indexing"}
             </p>
           </Card>
 
-          <Card className="p-5 space-y-2 sm:col-span-2 bg-white border-warm-beige shadow-sm">
+          <Card className="p-5 space-y-2 sm:col-span-2 bg-slate-panel border-slate-800 shadow-sm">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-medium text-warm-gray">Photos Usage</span>
-              <span className="font-mono text-charcoal font-semibold">
+              <span className="font-medium text-muted">Photos Usage</span>
+              <span className="font-mono text-soft-white font-semibold">
                 {user?.max_photos_per_event != null
                   ? `${user.max_photos_per_event.toLocaleString()} photos / event`
                   : "Unlimited"}
               </span>
             </div>
-            <div className="h-2 w-full rounded-full bg-sand-light overflow-hidden border border-warm-beige">
-              <div className="h-full rounded-full bg-forest" style={{ width: "40%" }} />
+            <div className="h-2 w-full rounded-full bg-midnight overflow-hidden border border-slate-800">
+              <div className="h-full rounded-full bg-gold" style={{ width: "40%" }} />
             </div>
-            <p className="text-[10px] text-warm-gray">
+            <p className="text-[10px] text-muted">
               Local derivative thumbnails take 90% less cloud bandwidth.
             </p>
           </Card>
@@ -107,10 +107,10 @@ export default function Profile() {
 
         {/* Studio Details Form */}
         <form onSubmit={handleSave} className="space-y-6">
-          <Card className="p-6 sm:p-7 space-y-5 bg-white border-warm-beige shadow-sm">
-            <div className="border-b border-warm-beige pb-4">
-              <h3 className="text-base font-serif font-bold text-charcoal">Studio & Contact Information</h3>
-              <p className="text-xs text-warm-gray mt-0.5">
+          <Card className="p-6 sm:p-7 space-y-5 bg-slate-panel border-slate-800 shadow-sm">
+            <div className="border-b border-slate-800 pb-4">
+              <h3 className="text-base font-serif font-bold text-soft-white">Studio & Contact Information</h3>
+              <p className="text-xs text-muted mt-0.5">
                 This branding appears on your event gallery landing pages and client QR placards.
               </p>
             </div>
@@ -161,15 +161,15 @@ export default function Profile() {
           </Card>
 
           {/* Preferences Card */}
-          <Card className="p-6 sm:p-7 space-y-4 bg-white border-warm-beige shadow-sm">
-            <div className="border-b border-warm-beige pb-4">
-              <h3 className="text-base font-serif font-bold text-charcoal">Notification & Workflow Preferences</h3>
-              <p className="text-xs text-warm-gray mt-0.5">
+          <Card className="p-6 sm:p-7 space-y-4 bg-slate-panel border-slate-800 shadow-sm">
+            <div className="border-b border-slate-800 pb-4">
+              <h3 className="text-base font-serif font-bold text-soft-white">Notification & Workflow Preferences</h3>
+              <p className="text-xs text-muted mt-0.5">
                 Configure notifications and default event behaviors.
               </p>
             </div>
 
-            <div className="divide-y divide-warm-beige space-y-1">
+            <div className="divide-y divide-slate-800 space-y-1">
               <Toggle
                 label="Email Notifications on First Scan"
                 description="Receive an email notice when attendees first scan the QR code at an event."
@@ -192,7 +192,7 @@ export default function Profile() {
               />
             </div>
 
-            <div className="pt-4 border-t border-warm-beige flex items-center justify-end gap-3">
+            <div className="pt-4 border-t border-slate-800 flex items-center justify-end gap-3">
               <Button type="submit" loading={saving} variant="primary">
                 Save Profile Changes
               </Button>

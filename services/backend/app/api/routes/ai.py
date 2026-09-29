@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Uplo
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_current_photographer_or_default
+from app.api.dependencies import get_current_photographer
 from app.db.session import get_db
 from app.models.event import Event
 from app.models.photo import Photo
@@ -38,7 +38,7 @@ def get_ai_model_info() -> ModelInfoOut:
 @router.post("/photos/{photo_id}/process", response_model=PhotoProcessResponse)
 async def process_photo_endpoint(
     photo_id: str,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
     image_file: UploadFile | None = File(None),
 ) -> PhotoProcessResponse:

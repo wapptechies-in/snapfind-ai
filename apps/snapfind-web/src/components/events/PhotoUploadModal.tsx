@@ -266,18 +266,18 @@ export function PhotoUploadModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="relative w-full max-w-2xl bg-panel border border-hairline rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="relative w-full max-w-2xl bg-slate-panel border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-hairline bg-panel2/40">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-midnight/50">
           <div>
-            <h2 className="text-base font-semibold text-cloud">Upload Event Photos</h2>
-            <p className="text-xs text-dim">
-              Target Event: <span className="text-cloud font-medium">{eventName}</span>
+            <h2 className="text-base font-bold text-soft-white font-serif">Upload Event Photos</h2>
+            <p className="text-xs text-muted">
+              Target Event: <span className="text-soft-white font-medium">{eventName}</span>
             </p>
           </div>
           <button
             onClick={handleClose}
-            className="text-dim hover:text-cloud transition-colors p-1 text-lg rounded-md"
+            className="text-muted hover:text-soft-white transition-colors p-1.5 text-base rounded-lg hover:bg-midnight cursor-pointer"
             aria-label="Close"
           >
             ✕
@@ -288,12 +288,12 @@ export function PhotoUploadModal({
         <div className="p-6 overflow-y-auto flex-1 space-y-5">
           {/* Destination Folder Selector */}
           {folders && folders.length > 0 && (
-            <div className="flex items-center justify-between rounded-lg border border-hairline bg-panel2/60 px-3.5 py-2 text-xs">
-              <span className="text-dim font-medium">Destination Folder:</span>
+            <div className="flex items-center justify-between rounded-xl border border-slate-800 bg-midnight/70 px-3.5 py-2 text-xs">
+              <span className="text-muted font-medium">Destination Folder:</span>
               <select
                 value={selectedFolderId || ""}
                 onChange={(e) => setSelectedFolderId(e.target.value || null)}
-                className="rounded-md border border-hairline bg-panel px-2.5 py-1 text-xs font-semibold text-cloud focus:border-violet focus:outline-none"
+                className="rounded-lg border border-slate-700 bg-midnight px-2.5 py-1 text-xs font-semibold text-soft-white focus:border-gold focus:outline-none"
               >
                 <option value="">📁 Root / All Photos</option>
                 {folders.map((f) => (
@@ -311,10 +311,10 @@ export function PhotoUploadModal({
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
+            className={`border-2 border-dashed rounded-2xl p-7 text-center cursor-pointer transition-all ${
               isDragging
-                ? "border-violet bg-violet/10 scale-[0.99]"
-                : "border-hairline hover:border-violet/50 hover:bg-panel2/30"
+                ? "border-gold bg-gold/10 scale-[0.99]"
+                : "border-slate-700 hover:border-gold/60 bg-midnight/40 hover:bg-midnight/70"
             }`}
           >
             <input
@@ -333,7 +333,7 @@ export function PhotoUploadModal({
             <input
               type="file"
               ref={folderInputRef}
-              {...({ webkitdirectory: "", directory: "" } as any)}
+              {...({ webkitdirectory: "", directory: "" } as React.InputHTMLAttributes<HTMLInputElement> & Record<string, string>)}
               onChange={(e) => {
                 if (e.target.files && e.target.files.length > 0) {
                   addFiles(e.target.files);
@@ -343,12 +343,16 @@ export function PhotoUploadModal({
               multiple
               className="hidden"
             />
-            <div className="text-3xl mb-2 text-violet-light">📁</div>
-            <p className="text-sm font-medium text-cloud">
+            <div className="w-12 h-12 rounded-2xl bg-gold/10 border border-gold/20 text-gold flex items-center justify-center mx-auto mb-3">
+              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+            </div>
+            <p className="text-sm font-semibold text-soft-white">
               Drag &amp; drop photos here, or browse files and folders
             </p>
-            <p className="text-xs text-dim mt-1">
-              Supports JPEG, PNG, and WebP (up to 50MB each). Direct S3/MinIO upload.
+            <p className="text-xs text-muted mt-1">
+              Supports JPEG, PNG, and WebP (up to 50MB each). Direct high-speed object upload.
             </p>
 
             <div className="flex items-center justify-center gap-3 mt-4">
@@ -358,9 +362,9 @@ export function PhotoUploadModal({
                   e.stopPropagation();
                   fileInputRef.current?.click();
                 }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-semibold text-white transition-colors border border-white/10"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-soft-white transition-all border border-slate-700 cursor-pointer"
               >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-3.5 h-3.5 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 <span>Select Photos</span>
@@ -372,7 +376,7 @@ export function PhotoUploadModal({
                   e.stopPropagation();
                   folderInputRef.current?.click();
                 }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet/20 hover:bg-violet/30 border border-violet/40 text-xs font-semibold text-violet-light transition-colors"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gold/15 hover:bg-gold/25 border border-gold/30 text-xs font-semibold text-gold transition-all cursor-pointer"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
@@ -385,18 +389,18 @@ export function PhotoUploadModal({
           {/* Queue Items */}
           {items.length > 0 && (
             <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs text-dim px-1">
+              <div className="flex items-center justify-between text-xs text-muted px-1">
                 <span>
-                  Queue: <strong className="text-cloud">{completedCount}</strong> of{" "}
-                  <strong>{totalCount}</strong> uploaded
+                  Queue: <strong className="text-soft-white">{completedCount}</strong> of{" "}
+                  <strong className="text-soft-white">{totalCount}</strong> uploaded
                   {failedCount > 0 && (
-                    <span className="text-red-400 ml-2">({failedCount} failed)</span>
+                    <span className="text-coral ml-2">({failedCount} failed)</span>
                   )}
                 </span>
                 {completedCount > 0 && !isUploadingAny && (
                   <button
                     onClick={clearCompleted}
-                    className="text-violet-light hover:underline text-xs"
+                    className="text-gold hover:underline text-xs cursor-pointer font-medium"
                   >
                     Clear Completed
                   </button>
@@ -407,49 +411,49 @@ export function PhotoUploadModal({
                 {items.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center gap-3 p-2.5 rounded-lg border border-hairline bg-panel2/40 text-xs"
+                    className="flex items-center gap-3 p-3 rounded-xl border border-slate-800 bg-midnight/60 text-xs"
                   >
                     {/* Thumbnail */}
                     <img
                       src={item.previewUrl}
                       alt={item.name}
-                      className="w-10 h-10 object-cover rounded bg-black/40 border border-hairline shrink-0"
+                      className="w-10 h-10 object-cover rounded-lg bg-black/40 border border-slate-800 shrink-0"
                     />
 
                     {/* File info and progress bar */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="truncate font-medium text-cloud" title={item.name}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="truncate font-medium text-soft-white" title={item.name}>
                           {item.name}
                         </span>
-                        <span className="text-dim shrink-0 ml-2">{formatBytes(item.size)}</span>
+                        <span className="text-muted shrink-0 ml-2 font-mono text-[11px]">{formatBytes(item.size)}</span>
                       </div>
 
                       {/* Progress bar */}
-                      <div className="w-full bg-panel rounded-full h-1.5 overflow-hidden border border-hairline/50">
+                      <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
                         <div
                           className={`h-full transition-all duration-200 ${
                             item.status === "completed"
-                              ? "bg-emerald-500"
+                              ? "bg-sage"
                               : item.status === "failed"
-                              ? "bg-red-500"
-                              : "bg-violet"
+                              ? "bg-coral"
+                              : "bg-gold"
                           }`}
                           style={{ width: `${item.progress}%` }}
                         />
                       </div>
 
                       {/* Status indicator */}
-                      <div className="flex items-center justify-between mt-1 text-[11px]">
+                      <div className="flex items-center justify-between mt-1.5 text-[11px]">
                         <span
                           className={
                             item.status === "completed"
-                              ? "text-emerald-400"
+                              ? "text-sage font-medium"
                               : item.status === "failed"
-                              ? "text-red-400"
+                              ? "text-coral font-medium"
                               : item.status === "processing"
-                              ? "text-amber-400 animate-pulse"
-                              : "text-dim"
+                              ? "text-gold animate-pulse font-medium"
+                              : "text-muted"
                           }
                         >
                           {item.status === "queued" && "Queued"}
@@ -463,7 +467,7 @@ export function PhotoUploadModal({
                         {item.status === "failed" && (
                           <button
                             onClick={() => retryItem(item.id)}
-                            className="text-violet-light underline font-medium"
+                            className="text-gold underline font-medium cursor-pointer"
                           >
                             Retry
                           </button>
@@ -478,15 +482,15 @@ export function PhotoUploadModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-hairline bg-panel2/40">
-          <div className="text-xs text-dim">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-800 bg-midnight/50">
+          <div className="text-xs text-muted">
             {isUploadingAny ? (
-              <span className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-violet animate-ping" />
+              <span className="flex items-center gap-2 text-gold">
+                <span className="w-2 h-2 rounded-full bg-gold animate-ping" />
                 Uploading binaries to object storage...
               </span>
             ) : completedCount > 0 ? (
-              <span className="text-emerald-400 font-medium">
+              <span className="text-sage font-medium">
                 {completedCount} {completedCount === 1 ? "photo" : "photos"} ready
               </span>
             ) : (

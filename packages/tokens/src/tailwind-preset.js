@@ -6,25 +6,27 @@ module.exports = {
     extend: {
       colors,
       fontFamily: {
-        serif: ["Playfair Display", "Cormorant Garamond", "Lora", "Georgia", "serif"],
-        display: ["Playfair Display", "Cormorant Garamond", "Lora", "Georgia", "serif"],
         sans: ["Plus Jakarta Sans", "Inter", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
         body: ["Plus Jakarta Sans", "Inter", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
+        display: ["Plus Jakarta Sans", "Inter", "system-ui", "sans-serif"],
+        editorial: ["Playfair Display", "Cormorant Garamond", "Lora", "Georgia", "serif"],
+        serif: ["Playfair Display", "Cormorant Garamond", "Lora", "Georgia", "serif"],
         mono: ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "monospace"],
       },
       boxShadow: {
-        card: "0 2px 12px rgba(26, 28, 26, 0.04)",
-        "card-hover": "0 8px 24px rgba(26, 28, 26, 0.07)",
-        dropdown: "0 10px 30px rgba(26, 28, 26, 0.08)",
-        modal: "0 20px 50px rgba(26, 28, 26, 0.14)",
+        card: "0 4px 20px rgba(0, 0, 0, 0.35)",
+        "card-hover": "0 8px 30px rgba(0, 0, 0, 0.45)",
+        "gold-glow": "0 0 16px rgba(214, 168, 79, 0.25)",
+        dropdown: "0 10px 30px rgba(0, 0, 0, 0.5)",
+        modal: "0 20px 60px rgba(0, 0, 0, 0.7)",
       },
       borderRadius: {
         DEFAULT: "10px",
         sm: "6px",
         md: "10px",
-        lg: "16px",
-        xl: "22px",
-        "2xl": "28px",
+        lg: "14px",
+        xl: "18px",
+        "2xl": "24px",
       },
       keyframes: {
         "fade-in": {

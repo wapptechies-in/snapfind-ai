@@ -125,12 +125,12 @@ export default function AdminApprovals() {
   if (!isAdmin) {
     return (
       <DashboardLayout title="Access Denied">
-        <div className="mx-auto max-w-lg rounded-2xl border border-hairline bg-panel p-8 text-center mt-12">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-red-500/10 text-2xl text-red-400">
+        <div className="mx-auto max-w-lg rounded-2xl border border-slate-800 bg-slate-panel p-8 text-center mt-12">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-coral/10 text-2xl text-coral">
             🛡️
           </div>
-          <h2 className="text-lg font-bold text-cloud">Administrator Privileges Required</h2>
-          <p className="mt-2 text-xs text-dim">
+          <h2 className="text-lg font-serif font-bold text-soft-white">Administrator Privileges Required</h2>
+          <p className="mt-2 text-xs text-muted">
             You need Super Admin or Admin access rights to review and approve registrations.
           </p>
         </div>
@@ -146,15 +146,15 @@ export default function AdminApprovals() {
         {/* Header Description */}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-serif font-bold tracking-tight text-charcoal flex items-center gap-3">
+            <h1 className="text-2xl font-serif font-bold tracking-tight text-soft-white flex items-center gap-3">
               <span>Admin Approvals & Access</span>
               {pendingCount > 0 && (
-                <span className="inline-flex items-center rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-700 border border-amber-500/30">
+                <span className="inline-flex items-center rounded-full bg-gold/15 px-2.5 py-0.5 text-xs font-semibold text-gold border border-gold/30">
                   {pendingCount} Pending Review
                 </span>
               )}
             </h1>
-            <p className="text-xs text-warm-gray mt-1">
+            <p className="text-xs text-muted mt-1">
               Review new photographer sign-ups, grant access, and manage user roles across SnapFind Studio.
             </p>
           </div>
@@ -162,9 +162,9 @@ export default function AdminApprovals() {
           <button
             onClick={() => fetchData()}
             disabled={loading}
-            className="self-start inline-flex items-center gap-1.5 rounded-xl border border-warm-beige bg-white px-3.5 py-2 text-xs font-semibold text-charcoal hover:border-forest/40 transition-colors disabled:opacity-50 shadow-sm"
+            className="self-start inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-midnight px-3.5 py-2 text-xs font-semibold text-soft-white hover:border-gold transition-colors disabled:opacity-50 shadow-sm cursor-pointer"
           >
-            <svg className={`h-3.5 w-3.5 text-forest ${loading ? "animate-spin" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg className={`h-3.5 w-3.5 text-gold ${loading ? "animate-spin" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 2v6h-6" />
               <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
               <path d="M3 22v-6h6" />
@@ -176,59 +176,59 @@ export default function AdminApprovals() {
 
         {/* Feedback banners */}
         {error && (
-          <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-xs text-red-600 flex items-center justify-between">
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-xs text-red-400 flex items-center justify-between">
             <span>{error}</span>
-            <button onClick={() => setError(null)} className="text-xs underline hover:text-red-800">
+            <button onClick={() => setError(null)} className="text-xs underline hover:text-red-300">
               Dismiss
             </button>
           </div>
         )}
 
         {successMessage && (
-          <div className="rounded-xl border border-forest/30 bg-forest/10 px-4 py-3 text-xs text-forest font-semibold">
+          <div className="rounded-xl border border-gold/30 bg-gold/10 px-4 py-3 text-xs text-gold font-semibold">
             {successMessage}
           </div>
         )}
 
         {/* Summary Stat Cards */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div className="rounded-xl border border-warm-beige bg-white p-4 shadow-sm">
-            <div className="text-[11px] font-semibold text-warm-gray uppercase tracking-wider">Total Users</div>
-            <div className="mt-1.5 text-2xl font-serif font-bold text-charcoal">
+          <div className="rounded-xl border border-slate-800 bg-slate-panel p-4 shadow-sm">
+            <div className="text-[11px] font-semibold text-muted uppercase tracking-wider">Total Users</div>
+            <div className="mt-1.5 text-2xl font-serif font-bold text-soft-white">
               {summary?.total_users ?? 0}
             </div>
-            <div className="text-[10px] text-warm-gray mt-0.5">Across all roles</div>
+            <div className="text-[10px] text-muted mt-0.5">Across all roles</div>
           </div>
 
-          <div className="rounded-xl border border-amber-500/30 bg-amber-50/50 p-4 shadow-sm">
-            <div className="text-[11px] font-semibold text-amber-700 uppercase tracking-wider">Pending Review</div>
-            <div className="mt-1.5 text-2xl font-serif font-bold text-amber-700">
+          <div className="rounded-xl border border-gold/30 bg-gold/10 p-4 shadow-sm">
+            <div className="text-[11px] font-semibold text-gold uppercase tracking-wider">Pending Review</div>
+            <div className="mt-1.5 text-2xl font-serif font-bold text-gold">
               {summary?.pending_approvals ?? 0}
             </div>
-            <div className="text-[10px] text-amber-600/80 mt-0.5">Awaiting decision</div>
+            <div className="text-[10px] text-gold/80 mt-0.5">Awaiting decision</div>
           </div>
 
-          <div className="rounded-xl border border-forest/20 bg-forest/5 p-4 shadow-sm">
-            <div className="text-[11px] font-semibold text-forest uppercase tracking-wider">Active Approved</div>
-            <div className="mt-1.5 text-2xl font-serif font-bold text-forest">
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 shadow-sm">
+            <div className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">Active Approved</div>
+            <div className="mt-1.5 text-2xl font-serif font-bold text-emerald-400">
               {summary?.approved_users ?? 0}
             </div>
-            <div className="text-[10px] text-warm-gray mt-0.5">Can login & use studio</div>
+            <div className="text-[10px] text-muted mt-0.5">Can login & use studio</div>
           </div>
 
-          <div className="rounded-xl border border-warm-beige bg-white p-4 shadow-sm">
-            <div className="text-[11px] font-semibold text-warm-gray uppercase tracking-wider">Rejected / Suspended</div>
-            <div className="mt-1.5 text-2xl font-serif font-bold text-charcoal">
+          <div className="rounded-xl border border-slate-800 bg-slate-panel p-4 shadow-sm">
+            <div className="text-[11px] font-semibold text-muted uppercase tracking-wider">Rejected / Suspended</div>
+            <div className="mt-1.5 text-2xl font-serif font-bold text-soft-white">
               {(summary?.rejected_users ?? 0) + (summary?.suspended_users ?? 0)}
             </div>
-            <div className="text-[10px] text-warm-gray mt-0.5">Access blocked</div>
+            <div className="text-[10px] text-muted mt-0.5">Access blocked</div>
           </div>
         </div>
 
         {/* Filters and Search Bar */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           {/* Status Tabs */}
-          <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-warm-beige bg-white p-1 shadow-sm">
+          <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-panel p-1 shadow-sm">
             {[
               { id: "all", label: "All Users" },
               { id: "pending", label: `Pending (${summary?.pending_approvals ?? 0})` },
@@ -239,10 +239,10 @@ export default function AdminApprovals() {
               <button
                 key={tab.id}
                 onClick={() => setStatusFilter(tab.id)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
                   statusFilter === tab.id
-                    ? "bg-forest text-cream shadow-sm"
-                    : "text-warm-gray hover:text-charcoal hover:bg-sand-light"
+                    ? "bg-gold text-midnight font-bold shadow-sm"
+                    : "text-muted hover:text-soft-white hover:bg-midnight"
                 }`}
               >
                 {tab.label}
@@ -258,7 +258,7 @@ export default function AdminApprovals() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search email or studio..."
-                className="w-56 rounded-xl border border-warm-beige bg-white px-3.5 py-1.5 text-xs text-charcoal placeholder-warm-gray outline-none focus:border-forest shadow-sm"
+                className="w-56 rounded-xl border border-slate-700 bg-midnight px-3.5 py-1.5 text-xs text-soft-white placeholder-muted outline-none focus:border-gold shadow-sm"
               />
               {search && (
                 <button
@@ -267,7 +267,7 @@ export default function AdminApprovals() {
                     setSearch("");
                     fetchData();
                   }}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-warm-gray hover:text-charcoal"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-muted hover:text-soft-white"
                 >
                   ✕
                 </button>
@@ -275,7 +275,7 @@ export default function AdminApprovals() {
             </div>
             <button
               type="submit"
-              className="rounded-xl border border-warm-beige bg-white px-3 py-1.5 text-xs font-semibold text-charcoal hover:border-forest shadow-sm"
+              className="rounded-xl border border-slate-700 bg-midnight px-3 py-1.5 text-xs font-semibold text-soft-white hover:border-gold shadow-sm cursor-pointer"
             >
               Search
             </button>
@@ -283,10 +283,10 @@ export default function AdminApprovals() {
         </div>
 
         {/* Users Table */}
-        <div className="overflow-hidden rounded-2xl border border-warm-beige bg-white shadow-sm">
+        <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-panel shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="border-b border-warm-beige bg-sand-light/60 text-[11px] font-semibold text-warm-gray uppercase tracking-wider">
+              <thead className="border-b border-slate-800 bg-midnight/80 text-[11px] font-semibold text-muted uppercase tracking-wider">
                 <tr>
                   <th className="py-3 px-4">User / Studio</th>
                   <th className="py-3 px-4">Provider</th>
@@ -296,16 +296,16 @@ export default function AdminApprovals() {
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-warm-beige">
+              <tbody className="divide-y divide-slate-800">
                 {loading && users.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-warm-gray">
+                    <td colSpan={6} className="py-8 text-center text-muted">
                       Loading users...
                     </td>
                   </tr>
                 ) : users.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-warm-gray">
+                    <td colSpan={6} className="py-8 text-center text-muted">
                       No users match the selected filter.
                     </td>
                   </tr>
@@ -315,7 +315,7 @@ export default function AdminApprovals() {
                     const isSelf = currentUser?.id === u.id;
 
                     return (
-                      <tr key={u.id} className="hover:bg-sand-light/30 transition-colors">
+                      <tr key={u.id} className="hover:bg-midnight/40 transition-colors">
                         {/* User Details */}
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-3">
@@ -323,22 +323,22 @@ export default function AdminApprovals() {
                               <img
                                 src={u.avatar_url}
                                 alt={u.studio_name || u.email}
-                                className="h-8 w-8 rounded-full object-cover ring-1 ring-warm-beige"
+                                className="h-8 w-8 rounded-full object-cover ring-1 ring-slate-800"
                               />
                             ) : (
-                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-forest/10 font-bold text-forest ring-1 ring-forest/20">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gold/15 font-bold text-gold ring-1 ring-gold/30">
                                 {(u.studio_name || u.email).charAt(0).toUpperCase()}
                               </div>
                             )}
                             <div className="min-w-0">
-                              <div className="font-semibold text-charcoal truncate">
+                              <div className="font-semibold text-soft-white truncate">
                                 {u.studio_name || "Unnamed Studio"}
                               </div>
-                              <div className="text-[11px] text-warm-gray truncate font-mono">
+                              <div className="text-[11px] text-muted truncate font-mono">
                                 {u.email}
                               </div>
                               {u.rejection_reason && (
-                                <div className="mt-0.5 text-[10px] text-red-600 italic truncate max-w-xs">
+                                <div className="mt-0.5 text-[10px] text-coral italic truncate max-w-xs">
                                   Reason: {u.rejection_reason}
                                 </div>
                               )}
@@ -349,7 +349,7 @@ export default function AdminApprovals() {
                         {/* Provider */}
                         <td className="py-3.5 px-4">
                           {u.auth_provider === "google" ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-md bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-700 border border-blue-500/20">
+                            <span className="inline-flex items-center gap-1.5 rounded-md bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-400 border border-blue-500/20">
                               <svg className="h-3 w-3" viewBox="0 0 24 24">
                                 <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.65v3.03h3.88c2.27-2.09 3.66-5.17 3.66-9.12z" />
                                 <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.03c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.24v3.13C3.26 21.41 7.34 24 12 24z" />
@@ -359,7 +359,7 @@ export default function AdminApprovals() {
                               Google
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1.5 rounded-md bg-sand-light px-2 py-0.5 text-[10px] font-medium text-warm-gray border border-warm-beige">
+                            <span className="inline-flex items-center gap-1.5 rounded-md bg-midnight px-2 py-0.5 text-[10px] font-medium text-muted border border-slate-800">
                               <span>✉</span>
                               Email
                             </span>
@@ -373,7 +373,7 @@ export default function AdminApprovals() {
                               value={u.role || "photographer"}
                               onChange={(e) => handleRoleChange(u, e.target.value)}
                               disabled={isActing}
-                              className="rounded-lg border border-warm-beige bg-white px-2 py-1 text-[11px] text-charcoal outline-none focus:border-forest"
+                              className="rounded-lg border border-slate-700 bg-midnight px-2 py-1 text-[11px] text-soft-white outline-none focus:border-gold"
                             >
                               <option value="photographer">Photographer</option>
                               <option value="admin">Admin</option>
@@ -383,10 +383,10 @@ export default function AdminApprovals() {
                             <span
                               className={`inline-block rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
                                 u.role === "super_admin"
-                                  ? "bg-forest/15 text-forest border border-forest/30"
+                                  ? "bg-gold/15 text-gold border border-gold/30"
                                   : u.role === "admin"
-                                  ? "bg-sage/20 text-forest border border-sage/40"
-                                  : "bg-sand-light text-warm-gray border border-warm-beige"
+                                  ? "bg-sage/20 text-sage border border-sage/40"
+                                  : "bg-midnight text-muted border border-slate-800"
                               }`}
                             >
                               {u.role || "photographer"}
@@ -399,21 +399,21 @@ export default function AdminApprovals() {
                           <span
                             className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold capitalize ${
                               u.approval_status === "approved"
-                                ? "bg-forest/10 text-forest border border-forest/30"
+                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
                                 : u.approval_status === "pending"
-                                ? "bg-amber-500/15 text-amber-700 border border-amber-500/40"
+                                ? "bg-gold/15 text-gold border border-gold/40"
                                 : u.approval_status === "rejected"
-                                ? "bg-red-500/15 text-red-600 border border-red-500/30"
-                                : "bg-orange-500/15 text-orange-600 border border-orange-500/30"
+                                ? "bg-coral/15 text-coral border border-coral/30"
+                                : "bg-coral/15 text-coral border border-coral/30"
                             }`}
                           >
                             <span
                               className={`h-1.5 w-1.5 rounded-full ${
                                 u.approval_status === "approved"
-                                  ? "bg-forest"
+                                  ? "bg-emerald-400"
                                   : u.approval_status === "pending"
-                                  ? "bg-amber-500 animate-pulse"
-                                  : "bg-red-500"
+                                  ? "bg-gold animate-pulse"
+                                  : "bg-coral"
                               }`}
                             />
                             {u.approval_status || "approved"}
@@ -421,7 +421,7 @@ export default function AdminApprovals() {
                         </td>
 
                         {/* Registered Date */}
-                        <td className="py-3.5 px-4 text-warm-gray font-mono text-[11px]">
+                        <td className="py-3.5 px-4 text-muted font-mono text-[11px]">
                           {u.created_at ? new Date(u.created_at).toLocaleDateString() : "—"}
                         </td>
 
@@ -433,7 +433,7 @@ export default function AdminApprovals() {
                                 <button
                                   onClick={() => handleApprove(u)}
                                   disabled={isActing}
-                                  className="rounded-lg bg-forest hover:bg-forest-light px-2.5 py-1 text-[11px] font-semibold text-cream transition-colors disabled:opacity-50 shadow-sm"
+                                  className="rounded-lg bg-gold hover:bg-gold-light px-2.5 py-1 text-[11px] font-bold text-midnight transition-colors disabled:opacity-50 shadow-sm cursor-pointer"
                                 >
                                   {isActing ? "..." : "Approve"}
                                 </button>
@@ -443,7 +443,7 @@ export default function AdminApprovals() {
                                     setRejectionReason("");
                                   }}
                                   disabled={isActing}
-                                  className="rounded-lg bg-red-600 hover:bg-red-500 px-2.5 py-1 text-[11px] font-semibold text-white transition-colors disabled:opacity-50"
+                                  className="rounded-lg bg-coral hover:bg-coral-light px-2.5 py-1 text-[11px] font-semibold text-white transition-colors disabled:opacity-50 cursor-pointer"
                                 >
                                   Reject
                                 </button>
@@ -454,7 +454,7 @@ export default function AdminApprovals() {
                               <button
                                 onClick={() => handleSuspend(u)}
                                 disabled={isActing}
-                                className="rounded-lg border border-warm-beige bg-white hover:bg-amber-50 hover:text-amber-700 hover:border-amber-300 px-2.5 py-1 text-[11px] font-semibold text-warm-gray transition-colors disabled:opacity-50 shadow-sm"
+                                className="rounded-lg border border-slate-700 bg-midnight hover:border-coral hover:text-coral px-2.5 py-1 text-[11px] font-semibold text-muted transition-colors disabled:opacity-50 shadow-sm cursor-pointer"
                               >
                                 {isActing ? "..." : "Suspend"}
                               </button>
@@ -464,14 +464,14 @@ export default function AdminApprovals() {
                               <button
                                 onClick={() => handleApprove(u)}
                                 disabled={isActing}
-                                className="rounded-lg border border-forest/30 bg-forest/10 hover:bg-forest/20 px-2.5 py-1 text-[11px] font-semibold text-forest transition-colors disabled:opacity-50"
+                                className="rounded-lg border border-gold/30 bg-gold/10 hover:bg-gold/20 px-2.5 py-1 text-[11px] font-semibold text-gold transition-colors disabled:opacity-50 cursor-pointer"
                               >
                                 {isActing ? "..." : "Re-activate"}
                               </button>
                             )}
 
                             {isSelf && (
-                              <span className="text-[10px] text-warm-gray italic">Current user</span>
+                              <span className="text-[10px] text-muted italic">Current user</span>
                             )}
                           </div>
                         </td>
@@ -487,14 +487,14 @@ export default function AdminApprovals() {
 
       {/* Reject Modal */}
       {rejectingUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-warm-beige bg-white p-6 shadow-2xl">
-            <h3 className="text-base font-serif font-bold text-charcoal">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-midnight/80 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-panel p-6 shadow-2xl">
+            <h3 className="text-base font-serif font-bold text-soft-white">
               Reject Registration Request
             </h3>
-            <p className="mt-1 text-xs text-warm-gray">
+            <p className="mt-1 text-xs text-muted">
               Provide an optional reason for denying access to{" "}
-              <strong className="text-charcoal">
+              <strong className="text-soft-white">
                 {rejectingUser.studio_name || rejectingUser.email}
               </strong>
               . This will be shown to them when they attempt to sign in.
@@ -505,7 +505,7 @@ export default function AdminApprovals() {
               onChange={(e) => setRejectionReason(e.target.value)}
               placeholder="e.g. Incomplete business verification, outside service territory..."
               rows={3}
-              className="mt-3.5 w-full rounded-xl border border-warm-beige bg-sand-light/50 p-3 text-xs text-charcoal placeholder-warm-gray outline-none focus:border-red-500"
+              className="mt-3.5 w-full rounded-xl border border-slate-700 bg-midnight p-3 text-xs text-soft-white placeholder-muted outline-none focus:border-gold"
             />
 
             <div className="mt-5 flex items-center justify-end gap-2.5">
@@ -516,7 +516,7 @@ export default function AdminApprovals() {
                   setRejectionReason("");
                 }}
                 disabled={Boolean(actionLoadingId)}
-                className="rounded-xl border border-warm-beige bg-white px-3.5 py-2 text-xs font-semibold text-warm-gray hover:text-charcoal"
+                className="rounded-xl border border-slate-700 bg-midnight px-3.5 py-2 text-xs font-semibold text-muted hover:text-soft-white cursor-pointer"
               >
                 Cancel
               </button>
@@ -524,7 +524,7 @@ export default function AdminApprovals() {
                 type="button"
                 onClick={handleRejectConfirm}
                 disabled={Boolean(actionLoadingId)}
-                className="rounded-xl bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-500 disabled:opacity-50 shadow-sm"
+                className="rounded-xl bg-coral px-4 py-2 text-xs font-semibold text-white hover:bg-coral-light disabled:opacity-50 shadow-sm cursor-pointer"
               >
                 {actionLoadingId ? "Rejecting..." : "Confirm Rejection"}
               </button>

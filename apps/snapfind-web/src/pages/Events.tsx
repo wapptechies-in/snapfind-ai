@@ -105,15 +105,15 @@ export default function Events() {
       {/* Top Header & Actions */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
         <div>
-          <h1 className="font-serif text-2xl md:text-3xl font-semibold tracking-tight text-studio-charcoal">
-            Studio Galleries
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[#F7F5F0]">
+            Events & Galleries
           </h1>
-          <p className="text-xs md:text-sm text-studio-muted mt-1">
+          <p className="text-xs md:text-sm text-[#A8B0BE] mt-1">
             Manage your photoshoot collections, AI facial search indexing, and client QR access
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="champagne" onClick={() => setIsCreateModalOpen(true)} className="active:scale-95 transition-all shadow-sm font-semibold">
+          <Button variant="primary" onClick={() => setIsCreateModalOpen(true)} className="active:scale-95 transition-all shadow-sm font-bold">
             <span>+</span> Quick Add Event
           </Button>
           <Link to="/events/create">
@@ -139,7 +139,7 @@ export default function Events() {
       )}
 
       {/* Filter and Search Bar */}
-      <Card className="p-4 mb-8 space-y-3.5 bg-white border-studio-sand shadow-xs">
+      <Card className="p-4 mb-8 space-y-3.5 bg-[#151D2E] border-[#232F48] shadow-card">
         <div className="flex flex-col md:flex-row items-center gap-3">
           {/* Search Input */}
           <div className="w-full md:flex-1">
@@ -147,7 +147,7 @@ export default function Events() {
               placeholder="Search by event name, venue, or token..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="bg-studio-cream/40 border-studio-sand focus:border-studio-forest focus:ring-1 focus:ring-studio-forest text-studio-charcoal placeholder:text-studio-muted/60"
+              className="bg-[#0F1624] border-[#232F48] focus:border-[#D6A84F] focus:ring-1 focus:ring-[#D6A84F]/40 text-[#F7F5F0] placeholder-[#6E788B]"
             />
           </div>
 
@@ -160,7 +160,7 @@ export default function Events() {
                 value: t,
                 label: t === "all" ? "All Event Types" : t,
               }))}
-              className="bg-studio-cream/40 border-studio-sand text-studio-charcoal"
+              className="bg-[#0F1624] border-[#232F48] text-[#F7F5F0]"
             />
           </div>
 
@@ -177,16 +177,16 @@ export default function Events() {
                 { value: "photos-desc", label: "Most Photos" },
                 { value: "name-asc", label: "Name (A-Z)" },
               ]}
-              className="bg-studio-cream/40 border-studio-sand text-studio-charcoal"
+              className="bg-[#0F1624] border-[#232F48] text-[#F7F5F0]"
             />
           </div>
 
           {/* View Mode Toggle */}
-          <div className="hidden sm:flex items-center rounded-xl border border-studio-sand bg-studio-cream/50 p-1">
+          <div className="hidden sm:flex items-center rounded-xl border border-[#232F48] bg-[#0F1624] p-1">
             <button
               onClick={() => setViewMode("grid")}
               className={`rounded-lg p-1.5 transition-colors cursor-pointer ${
-                viewMode === "grid" ? "bg-studio-forest text-white shadow-xs" : "text-studio-muted hover:text-studio-charcoal"
+                viewMode === "grid" ? "bg-[#D6A84F] text-[#0B1220] shadow-xs" : "text-[#A8B0BE] hover:text-[#F7F5F0]"
               }`}
               title="Grid view"
             >
@@ -198,7 +198,7 @@ export default function Events() {
             <button
               onClick={() => setViewMode("table")}
               className={`rounded-lg p-1.5 transition-colors cursor-pointer ${
-                viewMode === "table" ? "bg-studio-forest text-white shadow-xs" : "text-studio-muted hover:text-studio-charcoal"
+                viewMode === "table" ? "bg-[#D6A84F] text-[#0B1220] shadow-xs" : "text-[#A8B0BE] hover:text-[#F7F5F0]"
               }`}
               title="Table view"
             >
@@ -210,16 +210,16 @@ export default function Events() {
         </div>
 
         {/* Status Filter Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pt-3 border-t border-studio-sand/70">
-          <span className="text-[11px] font-semibold text-studio-muted uppercase tracking-wider whitespace-nowrap">Filter:</span>
+        <div className="flex items-center gap-2 overflow-x-auto pt-3 border-t border-[#232F48]">
+          <span className="text-[11px] font-bold text-[#A8B0BE] uppercase tracking-wider whitespace-nowrap">Filter:</span>
           {eventStatuses.map((s) => (
             <button
               key={s}
               onClick={() => setSelectedStatus(s)}
               className={`rounded-full px-3 py-1 text-xs whitespace-nowrap transition-all cursor-pointer ${
                 selectedStatus === s
-                  ? "bg-studio-forest text-white font-medium shadow-xs"
-                  : "bg-studio-cream text-studio-muted hover:text-studio-charcoal hover:bg-studio-sand/50"
+                  ? "bg-[#D6A84F] text-[#0B1220] font-bold shadow-xs"
+                  : "bg-[#0F1624] text-[#A8B0BE] border border-[#232F48] hover:text-[#F7F5F0] hover:bg-[#1B253B]"
               }`}
             >
               {s === "all" ? "All Statuses" : s}
@@ -230,7 +230,7 @@ export default function Events() {
 
       {/* Events Presentation */}
       {loading ? (
-        <LoadingSpinner message="Filtering studio events..." />
+        <LoadingSpinner message="Filtering photography events..." />
       ) : events.length === 0 ? (
         <EmptyState
           title="No events match your criteria"
@@ -239,7 +239,7 @@ export default function Events() {
           onAction={() => setIsCreateModalOpen(true)}
         />
       ) : viewMode === "grid" ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {events.map((event) => (
             <EventCard
               key={event.id}
@@ -251,10 +251,10 @@ export default function Events() {
         </div>
       ) : (
         /* Table View */
-        <Card className="overflow-x-auto bg-white border-studio-sand shadow-xs">
-          <table className="w-full text-left text-sm">
+        <Card className="overflow-x-auto bg-[#151D2E] border-[#232F48] shadow-card">
+          <table className="w-full text-left text-sm font-sans">
             <thead>
-              <tr className="border-b border-studio-sand text-xs font-semibold text-studio-muted bg-studio-cream/60">
+              <tr className="border-b border-[#232F48] text-xs font-bold text-[#A8B0BE] bg-[#0F1624]">
                 <th className="px-5 py-3.5">Event</th>
                 <th className="px-5 py-3.5">Type</th>
                 <th className="px-5 py-3.5">Date</th>
@@ -264,15 +264,15 @@ export default function Events() {
                 <th className="px-5 py-3.5 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-studio-sand/60">
+            <tbody className="divide-y divide-[#232F48]">
               {events.map((event) => (
-                <tr key={event.id} className="hover:bg-studio-cream/40 transition-colors">
+                <tr key={event.id} className="hover:bg-[#1B253B] transition-colors">
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
                       <img
                         src={event.coverImage || DEFAULT_EVENT_COVER}
                         alt=""
-                        className="h-10 w-10 rounded-xl object-cover bg-studio-cream border border-studio-sand"
+                        className="h-10 w-10 rounded-lg object-cover bg-[#0B1220] border border-[#232F48]"
                         onError={(e) => {
                           if (e.currentTarget.src !== DEFAULT_EVENT_COVER) {
                             e.currentTarget.src = DEFAULT_EVENT_COVER;
@@ -280,21 +280,21 @@ export default function Events() {
                         }}
                       />
                       <div>
-                        <span className="font-serif font-semibold text-studio-charcoal">{event.name}</span>
-                        <p className="text-xs text-studio-muted truncate max-w-xs">{event.location}</p>
+                        <span className="font-bold text-[#F7F5F0]">{event.name}</span>
+                        <p className="text-xs text-[#A8B0BE] truncate max-w-xs">{event.location}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-5 py-4 text-studio-muted text-xs">{event.eventType}</td>
-                  <td className="px-5 py-4 text-studio-muted text-xs">{event.date}</td>
+                  <td className="px-5 py-4 text-[#A8B0BE] text-xs">{event.eventType}</td>
+                  <td className="px-5 py-4 text-[#A8B0BE] text-xs">{event.date}</td>
                   <td className="px-5 py-4">
                     <Badge variant={event.status}>{event.status}</Badge>
                   </td>
-                  <td className="px-5 py-4 text-studio-muted font-mono text-xs">
+                  <td className="px-5 py-4 text-[#A8B0BE] font-mono text-xs">
                     {event.photoCount.toLocaleString()}
                   </td>
                   <td className="px-5 py-4">
-                    <code className="px-2 py-0.5 rounded-lg bg-studio-cream border border-studio-sand text-[11px] text-studio-forest font-mono">
+                    <code className="px-2 py-0.5 rounded-lg bg-[#0F1624] border border-[#232F48] text-[11px] text-[#D6A84F] font-mono">
                       {event.token}
                     </code>
                   </td>
@@ -305,7 +305,7 @@ export default function Events() {
                         type="button"
                         onClick={() => setQrModalEvent(event)}
                         title="View QR Code"
-                        className="p-1.5 rounded-lg bg-studio-cream hover:bg-studio-forest/10 hover:text-studio-forest text-studio-muted transition-all cursor-pointer border border-studio-sand"
+                        className="p-1.5 rounded-lg bg-[#0F1624] hover:bg-[#D6A84F]/15 hover:text-[#D6A84F] text-[#A8B0BE] transition-all cursor-pointer border border-[#232F48]"
                       >
                         <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <rect x="3" y="3" width="7" height="7" rx="1" />
@@ -320,7 +320,7 @@ export default function Events() {
                         type="button"
                         onClick={() => handleDeleteEvent(event)}
                         title="Delete Event"
-                        className="p-1.5 rounded-lg bg-studio-cream hover:bg-red-50 hover:text-red-700 text-studio-muted transition-all cursor-pointer border border-studio-sand"
+                        className="p-1.5 rounded-lg bg-[#0F1624] hover:bg-[#E87961]/20 hover:text-[#E87961] text-[#A8B0BE] transition-all cursor-pointer border border-[#232F48]"
                       >
                         <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <polyline points="3 6 5 6 21 6" />
@@ -377,21 +377,21 @@ export default function Events() {
           maxWidth="md"
         >
           <div className="space-y-4">
-            <div className="flex items-center gap-3 p-3.5 bg-bad/10 border border-bad/20 rounded-xl text-bad">
+            <div className="flex items-center gap-3 p-3.5 bg-[#E87961]/15 border border-[#E87961]/30 rounded-xl text-[#E87961]">
               <svg className="w-6 h-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
               <div>
-                <p className="text-sm font-semibold">Permanent Deletion Warning</p>
-                <p className="text-xs text-bad/80 mt-0.5">This action cannot be undone and will permanently erase all associated data.</p>
+                <p className="text-sm font-bold">Permanent Deletion Warning</p>
+                <p className="text-xs text-[#E87961]/90 mt-0.5">This action cannot be undone and will permanently erase all associated data.</p>
               </div>
             </div>
 
-            <p className="text-sm text-dim leading-relaxed">
-              Are you sure you want to permanently delete <strong className="text-cloud font-semibold">{eventToDelete.name}</strong>? All uploaded photos, sub-folders, face recognition vectors, guest purchases, and QR access links will be purged immediately.
+            <p className="text-sm text-[#A8B0BE] leading-relaxed">
+              Are you sure you want to permanently delete <strong className="text-[#F7F5F0] font-bold">{eventToDelete.name}</strong>? All uploaded photos, sub-folders, face recognition vectors, guest purchases, and QR access links will be purged immediately.
             </p>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-hairline">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#232F48]">
               <Button
                 type="button"
                 variant="ghost"
@@ -405,7 +405,7 @@ export default function Events() {
                 variant="danger"
                 loading={isDeleting}
                 onClick={confirmDeleteEvent}
-                className="font-semibold shadow-lg shadow-bad/20"
+                className="font-bold shadow-lg"
               >
                 Permanently Delete Event
               </Button>

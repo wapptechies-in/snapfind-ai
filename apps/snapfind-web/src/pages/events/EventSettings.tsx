@@ -63,8 +63,8 @@ export default function EventSettings() {
   if (!event) {
     return (
       <DashboardLayout title="Event Not Found">
-        <Card className="p-12 text-center">
-          <p className="text-sm text-dim">Event not found.</p>
+        <Card className="p-12 text-center bg-slate-panel border border-slate-800">
+          <p className="text-sm text-muted">Event not found.</p>
           <Link to="/events" className="mt-4 inline-block">
             <Button size="sm">Back to Events</Button>
           </Link>
@@ -189,20 +189,20 @@ export default function EventSettings() {
 
       <div className="max-w-4xl space-y-6">
         {/* Event Status: Active / Inactive Card */}
-        <Card className={`p-6 border-l-4 transition-all bg-surface border-warm-beige shadow-sm ${isCurrentActive ? "border-l-forest" : "border-l-amber-500"}`}>
+        <Card className={`p-6 border-l-4 transition-all bg-slate-panel border-slate-800 shadow-sm ${isCurrentActive ? "border-l-gold" : "border-l-coral"}`}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2.5">
-                <h3 className="text-base font-serif font-bold text-charcoal">Event Status</h3>
+                <h3 className="text-base font-serif font-bold text-soft-white">Event Status</h3>
                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider ${
                   isCurrentActive
-                    ? "bg-forest/10 text-forest border border-forest/20"
-                    : "bg-amber-500/10 text-amber-700 border border-amber-500/20"
+                    ? "bg-gold/15 text-gold border border-gold/30"
+                    : "bg-coral/15 text-coral border border-coral/30"
                 }`}>
                   {isCurrentActive ? "● Active" : "⏸ Inactive"}
                 </span>
               </div>
-              <p className="text-xs text-charcoal-muted mt-1.5 max-w-xl leading-relaxed">
+              <p className="text-xs text-muted mt-1.5 max-w-xl leading-relaxed">
                 {isCurrentActive
                   ? "This event is currently Active. Attendees can scan the QR code, view the public gallery, and run selfie searches."
                   : "This event is currently Inactive. The public QR link displays 'This event is currently unavailable'. All photos remain safe and manageable in your dashboard."}
@@ -214,8 +214,8 @@ export default function EventSettings() {
               onClick={handleToggleStatus}
               className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer active:scale-95 ${
                 isCurrentActive
-                  ? "bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100"
-                  : "bg-forest text-white hover:bg-forest-light"
+                  ? "bg-slate-800 text-muted hover:text-soft-white border border-slate-700 hover:border-slate-600"
+                  : "bg-gold text-midnight hover:bg-gold-light"
               }`}
             >
               {togglingStatus ? (
@@ -234,178 +234,178 @@ export default function EventSettings() {
         </Card>
 
         <form onSubmit={handleSave} className="space-y-6">
-          <Card className="p-6 divide-y divide-warm-beige bg-surface border-warm-beige shadow-sm">
+          <Card className="p-6 divide-y divide-slate-800 bg-slate-panel border-slate-800 shadow-sm">
             <div className="pb-4">
-              <h3 className="text-base font-serif font-semibold text-charcoal">Gallery Controls & Policies</h3>
-              <p className="text-xs text-charcoal-muted mt-0.5">
+              <h3 className="text-base font-serif font-semibold text-soft-white">Gallery Controls & Policies</h3>
+              <p className="text-xs text-muted mt-0.5">
                 Customize attendee permissions, search availability, and protection rules.
               </p>
             </div>
 
-          <div className="py-4 space-y-2">
-            {toggleItems.map((item) => (
-              <Toggle
-                key={item.key}
-                label={item.label}
-                description={item.description}
-                checked={!!settings[item.key]}
-                onChange={(checked) => handleToggle(item.key, checked)}
-              />
-            ))}
-
-            {/* Conditional Expiry Date */}
-            {settings.eventExpiry && (
-              <div className="pt-3 pl-2 border-l-2 border-forest space-y-1.5 mt-2">
-                <label className="text-xs font-medium text-charcoal">
-                  Expiration Date
-                </label>
-                <input
-                  type="date"
-                  value={settings.expiryDate || ""}
-                  onChange={(e) =>
-                    setSettings((prev) => ({ ...prev, expiryDate: e.target.value }))
-                  }
-                  className="rounded-lg border border-warm-beige bg-cream px-3 py-2 text-xs text-charcoal outline-none focus:border-forest"
+            <div className="py-4 space-y-3">
+              {toggleItems.map((item) => (
+                <Toggle
+                  key={item.key}
+                  label={item.label}
+                  description={item.description}
+                  checked={!!settings[item.key]}
+                  onChange={(checked) => handleToggle(item.key, checked)}
                 />
-              </div>
-            )}
-          </div>
+              ))}
 
-          {/* Monetization & Guest Paywall (Phase 9) */}
-          <div className="py-4 space-y-4">
-            <div>
-              <h4 className="text-sm font-bold text-charcoal flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-amber-500" />
-                Monetization & Guest Paywall (Phase 9)
-              </h4>
-              <p className="text-xs text-charcoal-muted mt-0.5">
-                Earn revenue by selling full-resolution original downloads directly to guests.
-              </p>
+              {/* Conditional Expiry Date */}
+              {settings.eventExpiry && (
+                <div className="pt-3 pl-3 border-l-2 border-gold space-y-1.5 mt-2">
+                  <label className="text-xs font-medium text-soft-white">
+                    Expiration Date
+                  </label>
+                  <input
+                    type="date"
+                    value={settings.expiryDate || ""}
+                    onChange={(e) =>
+                      setSettings((prev) => ({ ...prev, expiryDate: e.target.value }))
+                    }
+                    className="rounded-lg border border-slate-700 bg-midnight px-3 py-2 text-xs text-soft-white outline-none focus:border-gold"
+                  />
+                </div>
+              )}
             </div>
 
-            <Toggle
-              label="Enable Guest Digital Paywall"
-              description="Require guests to purchase full-resolution unwatermarked photos. Web previews remain free to browse."
-              checked={settings.paywallEnabled || false}
-              onChange={(val) => handleToggle("paywallEnabled" as keyof SettingsType, val)}
-            />
-
-            {settings.paywallEnabled && (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 pb-1 border-t border-warm-beige">
-                <div>
-                  <label className="block text-xs text-charcoal-muted mb-1 font-medium">Price per Photo</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0.50"
-                    value={settings.photoPrice ?? 4.99}
-                    onChange={(e) =>
-                      setSettings((prev) => ({ ...prev, photoPrice: parseFloat(e.target.value) || 0 }))
-                    }
-                    className="w-full rounded-lg border border-warm-beige bg-cream px-3 py-2 text-xs text-charcoal focus:border-forest focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-charcoal-muted mb-1 font-medium">All Gallery Unlock Price</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="1.00"
-                    value={settings.galleryUnlockPrice ?? 29.99}
-                    onChange={(e) =>
-                      setSettings((prev) => ({ ...prev, galleryUnlockPrice: parseFloat(e.target.value) || 0 }))
-                    }
-                    className="w-full rounded-lg border border-warm-beige bg-cream px-3 py-2 text-xs text-charcoal focus:border-forest focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-charcoal-muted mb-1 font-medium">Currency</label>
-                  <select
-                    value={settings.currency || "USD"}
-                    onChange={(e) =>
-                      setSettings((prev) => ({ ...prev, currency: e.target.value }))
-                    }
-                    className="w-full rounded-lg border border-warm-beige bg-cream px-3 py-2 text-xs text-charcoal focus:border-forest focus:outline-none"
-                  >
-                    <option value="USD">USD ($)</option>
-                    <option value="INR">INR (₹)</option>
-                    <option value="EUR">EUR (€)</option>
-                    <option value="GBP">GBP (£)</option>
-                  </select>
-                </div>
+            {/* Monetization & Guest Paywall */}
+            <div className="py-4 space-y-4">
+              <div>
+                <h4 className="text-sm font-bold text-soft-white flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-gold" />
+                  Monetization & Guest Paywall
+                </h4>
+                <p className="text-xs text-muted mt-0.5">
+                  Earn revenue by selling full-resolution original downloads directly to guests.
+                </p>
               </div>
-            )}
-          </div>
 
-          <div className="pt-4 flex items-center justify-end gap-3">
-            <Link to={`/events/${event.id}`}>
-              <Button type="button" variant="ghost">
-                Discard Changes
+              <Toggle
+                label="Enable Guest Digital Paywall"
+                description="Require guests to purchase full-resolution unwatermarked photos. Web previews remain free to browse."
+                checked={settings.paywallEnabled || false}
+                onChange={(val) => handleToggle("paywallEnabled" as keyof SettingsType, val)}
+              />
+
+              {settings.paywallEnabled && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 pb-1 border-t border-slate-800">
+                  <div>
+                    <label className="block text-xs text-muted mb-1 font-medium">Price per Photo</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0.50"
+                      value={settings.photoPrice ?? 4.99}
+                      onChange={(e) =>
+                        setSettings((prev) => ({ ...prev, photoPrice: parseFloat(e.target.value) || 0 }))
+                      }
+                      className="w-full rounded-lg border border-slate-700 bg-midnight px-3 py-2 text-xs text-soft-white focus:border-gold focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-muted mb-1 font-medium">All Gallery Unlock Price</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="1.00"
+                      value={settings.galleryUnlockPrice ?? 29.99}
+                      onChange={(e) =>
+                        setSettings((prev) => ({ ...prev, galleryUnlockPrice: parseFloat(e.target.value) || 0 }))
+                      }
+                      className="w-full rounded-lg border border-slate-700 bg-midnight px-3 py-2 text-xs text-soft-white focus:border-gold focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-muted mb-1 font-medium">Currency</label>
+                    <select
+                      value={settings.currency || "USD"}
+                      onChange={(e) =>
+                        setSettings((prev) => ({ ...prev, currency: e.target.value }))
+                      }
+                      className="w-full rounded-lg border border-slate-700 bg-midnight px-3 py-2 text-xs text-soft-white focus:border-gold focus:outline-none"
+                    >
+                      <option value="USD">USD ($)</option>
+                      <option value="INR">INR (₹)</option>
+                      <option value="EUR">EUR (€)</option>
+                      <option value="GBP">GBP (£)</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="pt-4 flex items-center justify-end gap-3">
+              <Link to={`/events/${event.id}`}>
+                <Button type="button" variant="ghost">
+                  Discard Changes
+                </Button>
+              </Link>
+              <Button type="submit" loading={saving} variant="primary">
+                Save Settings
               </Button>
-            </Link>
-            <Button type="submit" loading={saving} variant="primary">
-              Save Settings
-            </Button>
+            </div>
+          </Card>
+        </form>
+
+        {/* Danger Zone: Permanent Deletion */}
+        <Card className="p-6 mt-8 border border-coral/30 bg-coral/5 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-base font-serif font-bold text-coral flex items-center gap-2">
+                <svg className="w-5 h-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Danger Zone — Delete Event
+              </h3>
+              <p className="text-xs text-muted mt-1 max-w-xl leading-relaxed">
+                Permanently remove this event from your studio. This deletes all uploaded photos, MinIO storage objects, web derivatives, thumbnails, and AI facial recognition indexes. This action cannot be reversed.
+              </p>
+            </div>
+            <div>
+              {!showDeleteConfirm ? (
+                <Button
+                  type="button"
+                  variant="danger"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="shrink-0 font-semibold active:scale-95 transition-all"
+                >
+                  Delete Event
+                </Button>
+              ) : (
+                <div className="flex flex-col sm:items-end gap-2">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setShowDeleteConfirm(false);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="danger"
+                      size="sm"
+                      loading={deleting}
+                      onClick={handleDelete}
+                      className="font-bold shadow-sm"
+                    >
+                      Confirm Permanent Delete
+                    </Button>
+                  </div>
+                  <span className="text-[11px] text-coral font-medium">
+                    Are you absolutely sure? Click confirm to proceed.
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         </Card>
-      </form>
-
-      {/* Danger Zone: Permanent Deletion */}
-      <Card className="p-6 mt-8 border border-danger/30 bg-danger/5 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h3 className="text-base font-serif font-bold text-danger flex items-center gap-2">
-              <svg className="w-5 h-5 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-              Danger Zone — Delete Event
-            </h3>
-            <p className="text-xs text-charcoal-muted mt-1 max-w-xl leading-relaxed">
-              Permanently remove this event from your studio. This deletes all uploaded photos, MinIO storage objects, web derivatives, thumbnails, and AI facial recognition indexes. This action cannot be reversed.
-            </p>
-          </div>
-          <div>
-            {!showDeleteConfirm ? (
-              <Button
-                type="button"
-                variant="danger"
-                onClick={() => setShowDeleteConfirm(true)}
-                className="shrink-0 font-semibold active:scale-95 transition-all"
-              >
-                Delete Event
-              </Button>
-            ) : (
-              <div className="flex flex-col sm:items-end gap-2">
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setShowDeleteConfirm(false);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="danger"
-                    size="sm"
-                    loading={deleting}
-                    onClick={handleDelete}
-                    className="font-bold shadow-sm"
-                  >
-                    Confirm Permanent Delete
-                  </Button>
-                </div>
-                <span className="text-[11px] text-danger font-medium">
-                  Are you absolutely sure? Click confirm to proceed.
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      </Card>
       </div>
     </DashboardLayout>
   );

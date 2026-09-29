@@ -3,6 +3,8 @@
  * Unified with @snapfind/types
  */
 
+import type { Photo, User } from "@snapfind/types";
+
 export * from "@snapfind/types";
 
 export interface ProcessingStage {
@@ -15,12 +17,12 @@ export interface SearchResult {
   token: string;
   selfiePreviewUrl?: string;
   totalMatches: number;
-  strongMatches: any[];
-  possibleMatches: any[];
+  strongMatches: Photo[];
+  possibleMatches: Photo[];
 }
 
 export interface AuthResponse {
   access_token: string;
   token_type: string;
-  user: any;
+  user: User;
 }

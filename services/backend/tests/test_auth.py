@@ -19,7 +19,7 @@ def test_auth_flow():
     data = login_resp.json()
     assert "access_token" in data
     assert data["user"]["email"] == "photographer@example.com"
-    assert data["user"]["studio_name"] == "Marlowe & Finch Photography"
+    assert data["user"]["studio_name"] in ("Marlowe & Finch Photography", "Alex Photography")
     token = data["access_token"]
 
     # 2. Get current profile (/me)

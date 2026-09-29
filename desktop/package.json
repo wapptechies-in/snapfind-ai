@@ -53,6 +53,7 @@
     "appId": "com.snapfind.desktop",
     "productName": "SnapFind Desktop",
     "electronVersion": "32.3.3",
+    "forceCodeSigning": false,
     "directories": {
       "output": "release"
     },
@@ -74,6 +75,8 @@
       "category": "public.app-category.photography"
     },
     "win": {
+      "sign": null,
+      "signAndEditExecutable": false,
       "target": [
         {
           "target": "nsis",

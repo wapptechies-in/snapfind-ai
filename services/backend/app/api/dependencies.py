@@ -3,6 +3,7 @@ FastAPI dependencies for route protection and user resolution.
 Status: IMPLEMENTED (Phase 4)
 """
 
+from datetime import datetime, timezone
 from typing import Annotated
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -41,6 +42,12 @@ def get_current_photographer(
     if not photographer:
         raise credentials_exception
 
+    if not photographer.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="ACCOUNT_INACTIVE: This account has been deactivated.",
+        )
+
     # Enforce access approval gate
     if photographer.approval_status == "pending":
         raise HTTPException(
@@ -58,6 +65,18 @@ def get_current_photographer(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="ACCOUNT_SUSPENDED: Your account has been suspended. Please contact support.",
         )
+
+    # Enforce trial expiration gate
+    if photographer.trial_expires_at is not None:
+        now = datetime.now(timezone.utc)
+        trial_expiry = photographer.trial_expires_at
+        if trial_expiry.tzinfo is None:
+            trial_expiry = trial_expiry.replace(tzinfo=timezone.utc)
+        if now > trial_expiry:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="TRIAL_EXPIRED: Your pilot access has expired. Please contact the administrator.",
+            )
 
     return photographer
 
@@ -91,24 +110,7 @@ def get_current_photographer_or_default(
     db: Annotated[Session, Depends(get_db)],
 ) -> Photographer:
     """
-    Retrieves authenticated photographer if Bearer token present,
-    otherwise falls back to default demo photographer for Phase 4 dev flow.
+    Strict auth wrapper to replace legacy bypass.
+    Requires valid credentials; does not fall back to an arbitrary photographer.
     """
-    if credentials and credentials.credentials:
-        payload = decode_access_token(credentials.credentials)
-        if payload and payload.get("sub"):
-            photographer = db.get(Photographer, payload.get("sub"))
-            if photographer:
-                return photographer
-
-    # Fallback to default demo photographer
-    default_p = db.scalar(
-        select(Photographer).order_by(Photographer.created_at.asc())
-    )
-    if default_p:
-        return default_p
-
-    raise HTTPException(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        detail="No default photographer available in database",
-    )
+    return get_current_photographer(credentials=credentials, db=db)

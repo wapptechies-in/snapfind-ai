@@ -1,38 +1,46 @@
 import React, { useCallback, useEffect, useState } from "react";
 import type { Photo } from "../types";
 
-export interface PhotoViewerProps {
+interface PhotoViewerProps {
   photos: Photo[];
-  currentIndex: number;
-  isOpen: boolean;
+  currentIndex?: number;
+  initialIndex?: number;
+  isOpen?: boolean;
   onClose: () => void;
-  onNavigate: (newIndex: number) => void;
+  onNavigate?: (newIdx: number) => void;
   onDownload?: (photo: Photo) => void;
-  onDelete?: (photo: Photo) => Promise<void> | void;
+  onDelete?: (photo: Photo) => Promise<void>;
 }
 
 export const PhotoViewer: React.FC<PhotoViewerProps> = ({
   photos,
-  currentIndex,
-  isOpen,
+  currentIndex: controlledIndex,
+  initialIndex = 0,
+  isOpen = true,
   onClose,
   onNavigate,
   onDownload,
   onDelete,
 }) => {
+  const [internalIndex, setInternalIndex] = useState(initialIndex);
+  const activeIndex = controlledIndex !== undefined ? controlledIndex : internalIndex;
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const currentPhoto = photos[activeIndex];
+
   const handlePrev = useCallback(() => {
-    onNavigate((currentIndex - 1 + photos.length) % photos.length);
-  }, [currentIndex, onNavigate, photos.length]);
+    const nextIdx = activeIndex > 0 ? activeIndex - 1 : photos.length - 1;
+    setInternalIndex(nextIdx);
+    onNavigate?.(nextIdx);
+  }, [activeIndex, photos.length, onNavigate]);
 
   const handleNext = useCallback(() => {
-    onNavigate((currentIndex + 1) % photos.length);
-  }, [currentIndex, onNavigate, photos.length]);
+    const nextIdx = activeIndex < photos.length - 1 ? activeIndex + 1 : 0;
+    setInternalIndex(nextIdx);
+    onNavigate?.(nextIdx);
+  }, [activeIndex, photos.length, onNavigate]);
 
   useEffect(() => {
-    if (!isOpen) return;
-
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
       if (e.key === "ArrowLeft") handlePrev();
@@ -41,23 +49,20 @@ export const PhotoViewer: React.FC<PhotoViewerProps> = ({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose, handlePrev, handleNext]);
+  }, [handleNext, handlePrev, onClose]);
 
-  if (!isOpen || !photos.length) return null;
-
-  const currentPhoto = photos[currentIndex];
-  if (!currentPhoto) return null;
+  if (!isOpen || !currentPhoto) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-black/95 select-none animate-fade-in">
+    <div className="fixed inset-0 z-50 flex flex-col bg-midnight/95 select-none animate-fade-in">
       {/* Top Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-hairline/60 bg-panel/80 backdrop-blur-md">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-panel/90 backdrop-blur-md">
         <div className="flex items-center gap-3">
-          <p className="text-sm font-semibold text-cloud truncate max-w-sm">
+          <p className="text-sm font-semibold text-soft-white truncate max-w-sm">
             {currentPhoto.filename}
           </p>
-          <span className="text-xs font-mono text-dim">
-            {currentIndex + 1} / {photos.length}
+          <span className="text-xs font-mono text-muted">
+            {activeIndex + 1} / {photos.length}
           </span>
         </div>
 
@@ -65,7 +70,7 @@ export const PhotoViewer: React.FC<PhotoViewerProps> = ({
           {onDownload && (
             <button
               onClick={() => onDownload(currentPhoto)}
-              className="p-2 rounded-lg bg-panel2 text-dim hover:text-cloud transition-colors cursor-pointer"
+              className="p-2 rounded-lg bg-midnight text-muted hover:text-gold hover:border-gold/30 border border-slate-700 transition-colors cursor-pointer"
               title="Download photo"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -89,7 +94,7 @@ export const PhotoViewer: React.FC<PhotoViewerProps> = ({
                   }
                 }
               }}
-              className="p-2 rounded-lg bg-bad/10 text-bad hover:bg-bad/20 transition-colors cursor-pointer"
+              className="p-2 rounded-lg bg-coral/10 text-coral hover:bg-coral/20 border border-coral/30 transition-colors cursor-pointer"
               title="Delete photo"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -101,7 +106,7 @@ export const PhotoViewer: React.FC<PhotoViewerProps> = ({
 
           <button
             onClick={onClose}
-            className="p-2 rounded-lg bg-panel2 text-dim hover:text-cloud transition-colors cursor-pointer text-base leading-none"
+            className="p-2 rounded-lg bg-midnight text-muted hover:text-soft-white border border-slate-700 transition-colors cursor-pointer text-base leading-none"
             title="Close viewer (Esc)"
           >
             ✕
@@ -114,7 +119,7 @@ export const PhotoViewer: React.FC<PhotoViewerProps> = ({
         {photos.length > 1 && (
           <button
             onClick={handlePrev}
-            className="absolute left-6 z-10 p-3 rounded-full bg-black/60 hover:bg-black/80 text-white transition-all cursor-pointer backdrop-blur-sm border border-hairline/40 hover:scale-105 active:scale-95"
+            className="absolute left-6 z-10 p-3 rounded-full bg-slate-panel/80 hover:bg-slate-panel text-soft-white hover:text-gold transition-all cursor-pointer backdrop-blur-sm border border-slate-700 hover:scale-105 active:scale-95"
             title="Previous (Left Arrow)"
           >
             <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -132,7 +137,7 @@ export const PhotoViewer: React.FC<PhotoViewerProps> = ({
         {photos.length > 1 && (
           <button
             onClick={handleNext}
-            className="absolute right-6 z-10 p-3 rounded-full bg-black/60 hover:bg-black/80 text-white transition-all cursor-pointer backdrop-blur-sm border border-hairline/40 hover:scale-105 active:scale-95"
+            className="absolute right-6 z-10 p-3 rounded-full bg-slate-panel/80 hover:bg-slate-panel text-soft-white hover:text-gold transition-all cursor-pointer backdrop-blur-sm border border-slate-700 hover:scale-105 active:scale-95"
             title="Next (Right Arrow)"
           >
             <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -143,11 +148,10 @@ export const PhotoViewer: React.FC<PhotoViewerProps> = ({
       </div>
 
       {/* Bottom Info */}
-      <div className="px-6 py-3 border-t border-hairline/60 bg-panel/80 flex items-center justify-between text-xs text-dim">
+      <div className="px-6 py-3 border-t border-slate-800 bg-slate-panel/90 flex items-center justify-between text-xs text-muted">
         <span>Uploaded to cloud storage</span>
         <span>Keyboard: ← / → Navigate, Esc Close</span>
       </div>
     </div>
   );
 };
-

@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_current_photographer_or_default
+from app.api.dependencies import get_current_photographer
 from app.db.session import get_db
 from app.models.booking import Booking
 from app.models.photographer import Photographer
@@ -57,7 +57,7 @@ def create_booking(
 
 @router.get("", response_model=list[BookingOut])
 def list_bookings(
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
     status_filter: Annotated[str | None, Query(alias="status")] = None,
 ) -> list[BookingOut]:
@@ -97,7 +97,7 @@ def get_booking(
 def update_booking_status(
     booking_id: str,
     update_in: BookingUpdate,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> BookingOut:
     """Update status of a booking (e.g., pending -> confirmed / cancelled)."""
@@ -106,6 +106,12 @@ def update_booking_status(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Booking '{booking_id}' not found",
+        )
+
+    if booking.photographer_id and booking.photographer_id != photographer.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to manage this booking.",
         )
 
     booking.status = update_in.status.lower()

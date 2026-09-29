@@ -16,17 +16,17 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
 }) => {
   return (
     <div
-      className={`mx-auto flex max-w-md flex-col items-center justify-center rounded-2xl border border-danger-border bg-danger-bg/50 p-6 text-center ${className}`}
+      className={`mx-auto flex max-w-md flex-col items-center justify-center rounded-xl border border-[#E87961]/30 bg-[#151D2E] p-6 text-center shadow-card ${className}`}
     >
-      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-danger/10 text-danger">
+      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#E87961]/15 text-[#E87961] border border-[#E87961]/30">
         <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <circle cx="12" cy="12" r="10" />
           <line x1="12" y1="8" x2="12" y2="12" />
           <line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
       </div>
-      <h4 className="font-serif text-base font-bold text-danger">{title}</h4>
-      <p className="mt-1 text-xs text-charcoal font-body">{message}</p>
+      <h4 className="font-sans text-base font-bold text-[#E87961]">{title}</h4>
+      <p className="mt-1 text-xs text-[#A8B0BE] font-sans">{message}</p>
       {onRetry && (
         <div className="mt-4">
           <Button variant="outline" size="sm" onClick={onRetry}>

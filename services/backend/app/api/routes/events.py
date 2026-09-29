@@ -10,7 +10,10 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Upl
 from sqlalchemy import delete, func, or_, select
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_current_photographer_or_default
+from app.api.dependencies import get_current_photographer, security
+from app.core.config import settings
+from app.core.security import decode_access_token
+from fastapi.security import HTTPAuthorizationCredentials
 from app.db.session import get_db
 from app.models.billing import GuestPurchase
 from app.models.download_log import DownloadLog
@@ -105,7 +108,7 @@ def _to_event_out(event: Event, photo_count: int) -> EventOut:
 
 @router.get("", response_model=list[EventOut])
 def list_events(
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
     status_filter: Annotated[str | None, Query(alias="status")] = None,
     event_type: Annotated[str | None, Query(alias="eventType")] = None,
@@ -153,23 +156,24 @@ def list_events(
 @router.post("", response_model=EventOut, status_code=status.HTTP_201_CREATED)
 def create_event(
     event_in: EventCreate,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> EventOut:
     """Create a new event, generate secure random public token, and store in PostgreSQL."""
-    # Check subscription quota
-    active_events_count = db.scalar(
-        select(func.count(Event.id)).where(
-            Event.photographer_id == photographer.id,
-            Event.status.ilike("active"),
-        )
-    ) or 0
-    max_events = getattr(photographer, "max_active_events", 50)
-    if active_events_count >= max_events:
-        raise HTTPException(
-            status_code=status.HTTP_402_PAYMENT_REQUIRED,
-            detail=f"Active event limit ({max_events}) reached for your {getattr(photographer, 'subscription_tier', 'free').upper()} plan. Please upgrade your subscription to create more events.",
-        )
+    # Check subscription quota (unlimited events granted in trial edition mode)
+    if not settings.TRIAL_EDITION_MODE:
+        active_events_count = db.scalar(
+            select(func.count(Event.id)).where(
+                Event.photographer_id == photographer.id,
+                Event.status.ilike("active"),
+            )
+        ) or 0
+        max_events = getattr(photographer, "max_active_events", 50)
+        if active_events_count >= max_events:
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail=f"Active event limit ({max_events}) reached for your {getattr(photographer, 'subscription_tier', 'free').upper()} plan. Please upgrade your subscription to create more events.",
+            )
 
     # Ensure unique token
     token = generate_public_token()
@@ -227,7 +231,7 @@ def create_event(
 @router.post("/upload-cover")
 async def upload_cover_image(
     file: UploadFile = File(...),
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)] = None,
+    photographer: Annotated[Photographer, Depends(get_current_photographer)] = None,
 ) -> dict[str, str]:
     """Upload a custom event cover photo directly to storage."""
     allowed_types = ["image/jpeg", "image/png", "image/webp"]
@@ -252,6 +256,7 @@ async def upload_cover_image(
 def get_event(
     id_or_token: str,
     db: Annotated[Session, Depends(get_db)],
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security)] = None,
 ) -> EventOut:
     """Retrieve an event by database ID or by public token (allows customer gallery access)."""
     result = db.execute(
@@ -273,6 +278,30 @@ def get_event(
         )
 
     event, photo_count = result
+
+    # When accessed by internal event ID (not public token), enforce photographer ownership if auth header is present
+    if id_or_token == event.id and id_or_token != event.public_token and credentials and credentials.credentials:
+        payload = decode_access_token(credentials.credentials)
+        if payload and payload.get("sub") and payload.get("sub") != event.photographer_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to view this event.",
+            )
+
+    # Inactive or draft events can only be viewed by the owner photographer
+    if not getattr(event, "is_active", True) or event.status.lower() in ("inactive", "draft"):
+        if not credentials or not credentials.credentials:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="This event is currently unavailable.",
+            )
+        payload = decode_access_token(credentials.credentials)
+        if not payload or payload.get("sub") != event.photographer_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="This event is currently unavailable.",
+            )
+
     return _to_event_out(event, photo_count)
 
 
@@ -280,7 +309,7 @@ def get_event(
 def patch_event(
     event_id: str,
     event_in: EventUpdate,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> EventOut:
     """Partially update event fields or policy toggles."""
@@ -362,7 +391,7 @@ def patch_event(
 @router.post("/{event_id}/regenerate-token", response_model=EventOut)
 def regenerate_event_token(
     event_id: str,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> EventOut:
     """Regenerates a secure new public access token for the event, invalidating prior links."""
@@ -393,7 +422,7 @@ def regenerate_event_token(
 def update_event(
     event_id: str,
     event_in: EventUpdate,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> EventOut:
     """Full update for backward compatibility."""
@@ -408,7 +437,7 @@ def update_event(
 @router.delete("/{event_id}", status_code=status.HTTP_200_OK)
 def delete_event(
     event_id: str,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict[str, bool]:
     """
@@ -470,6 +499,7 @@ def delete_event(
 
 
 @router.get("/{id_or_token}/public-photos")
+@router.get("/{id_or_token}/gallery")
 def get_public_event_photos(
     id_or_token: str,
     request: Request,

@@ -5,6 +5,29 @@
 
 export * from "@snapfind/types";
 
+export interface ScannedFile {
+  filename: string;
+  path: string;
+  size: number;
+  extension: string;
+  modifiedTime: number;
+  checksum: string;
+  isSupported: boolean;
+  isDuplicate: boolean;
+}
+
+export interface ScanResult {
+  folderPath: string;
+  folderName: string;
+  totalFiles: number;
+  supportedCount: number;
+  unsupportedCount: number;
+  duplicateCount: number;
+  readyCount: number;
+  totalBytes: number;
+  files: ScannedFile[];
+}
+
 export interface ScanProgress {
   scanned: number;
   supported: number;
@@ -20,7 +43,7 @@ export interface DesktopAPI {
   scanFolder: (
     folderPath: string,
     onProgress?: (progress: ScanProgress) => void
-  ) => Promise<any>;
+  ) => Promise<ScanResult>;
   cancelScan: () => Promise<void>;
   uploadBinaryStream: (
     filePath: string,

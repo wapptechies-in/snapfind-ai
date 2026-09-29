@@ -3,7 +3,7 @@ import type { Photo, SearchResult } from "@snapfind/types";
 
 interface ApiMatch {
   id: string;
-  eventId: string;
+  eventId?: string;
   filename: string;
   url?: string;
   thumbnailUrl?: string;

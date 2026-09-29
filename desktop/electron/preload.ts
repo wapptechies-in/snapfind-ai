@@ -1,4 +1,3 @@
-type IpcRendererEvent = Electron.IpcRendererEvent;
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { contextBridge, ipcRenderer } = require("electron");
 

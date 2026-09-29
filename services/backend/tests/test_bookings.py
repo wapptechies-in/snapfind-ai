@@ -9,7 +9,17 @@ from app.main import app
 client = TestClient(app)
 
 
+def get_auth_headers():
+    login_resp = client.post(
+        "/api/v1/auth/login",
+        json={"email": "photographer@example.com", "password": "password123"},
+    )
+    token = login_resp.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
+
+
 def test_create_booking_success():
+    headers = get_auth_headers()
     payload = {
         "name": "Jane & John Doe",
         "phone": "+1 555-0199",
@@ -41,6 +51,7 @@ def test_create_booking_success():
     patch_resp = client.patch(
         f"/api/v1/bookings/{booking_id}",
         json={"status": "confirmed"},
+        headers=headers,
     )
     assert patch_resp.status_code == 200
     assert patch_resp.json()["status"] == "confirmed"
@@ -72,7 +83,8 @@ def test_create_booking_validation_error():
 
 
 def test_list_bookings():
-    resp = client.get("/api/v1/bookings")
+    headers = get_auth_headers()
+    resp = client.get("/api/v1/bookings", headers=headers)
     assert resp.status_code == 200
     bookings = resp.json()
     assert isinstance(bookings, list)

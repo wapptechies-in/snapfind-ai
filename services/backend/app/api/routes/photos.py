@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_current_photographer_or_default
+from app.api.dependencies import get_current_photographer
 from app.core.config import get_settings
 from app.db.session import get_db
 from app.models.audit_log import AuditLog
@@ -129,7 +129,7 @@ def _enrich_photo_urls(
 def upload_init(
     event_id: str,
     payload: UploadInitRequest,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> UploadInitResponse:
     """
@@ -138,10 +138,29 @@ def upload_init(
     and returns a short-lived presigned PUT URL for direct-to-storage upload.
     """
     event = _resolve_event(event_id, db)
+    if event.photographer_id != photographer.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to upload photos to this event.",
+        )
 
-    # Enforce photographer subscription photo limit
-    photographer = db.get(Photographer, event.photographer_id)
-    if photographer:
+    # Enforce 9.0 GB hard storage limit
+    current_storage_bytes = db.scalar(
+        select(func.coalesce(func.sum(Photo.file_size), 0))
+        .join(Event, Event.id == Photo.event_id)
+        .where(Event.photographer_id == photographer.id)
+    ) or 0
+    max_storage_limit = settings.TRIAL_STORAGE_LIMIT_BYTES if settings.TRIAL_EDITION_MODE else 50 * 1024 * 1024 * 1024
+    if current_storage_bytes + payload.file_size > max_storage_limit:
+        used_gb = round(current_storage_bytes / (1024 ** 3), 2)
+        limit_gb = round(max_storage_limit / (1024 ** 3), 1)
+        raise HTTPException(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            detail=f"Trial storage limit reached ({limit_gb} GB): You have used {used_gb} GB. Upload stopped to prevent cloud overage charges on Cloudflare R2.",
+        )
+
+    # Enforce photographer subscription photo limit (bypassed in trial edition mode)
+    if not settings.TRIAL_EDITION_MODE:
         current_photos = db.scalar(
             select(func.count(Photo.id)).where(Photo.event_id == event.id)
         ) or 0
@@ -213,7 +232,7 @@ def upload_init(
 def upload_complete(
     photo_id: str,
     payload: UploadCompleteRequest,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
     background_tasks: BackgroundTasks = None,
 ) -> PhotoOut:
@@ -231,6 +250,13 @@ def upload_complete(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Photo '{photo_id}' not found",
+        )
+
+    event = db.get(Event, photo.event_id)
+    if not event or event.photographer_id != photographer.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to modify photos for this event.",
         )
 
     storage = StorageService()
@@ -454,11 +480,16 @@ def list_event_photos(
 def create_event_photo(
     event_id: str,
     photo_in: PhotoCreate,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> PhotoOut:
     """Create metadata record for a photo in the specified event (Phase 4 compatibility)."""
     event = _resolve_event(event_id, db)
+    if event.photographer_id != photographer.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to create photos in this event.",
+        )
     storage = StorageService()
 
     photo = Photo(
@@ -503,7 +534,7 @@ def get_photo(
 @router.delete("/photos/{photo_id}")
 def delete_photo(
     photo_id: str,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict[str, bool | str]:
     """Delete photo objects from storage and remove record from PostgreSQL."""
@@ -512,6 +543,13 @@ def delete_photo(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Photo '{photo_id}' not found",
+        )
+
+    event = db.get(Event, photo.event_id)
+    if not event or event.photographer_id != photographer.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to delete this photo.",
         )
 
     storage = StorageService()
@@ -539,7 +577,7 @@ class BulkDeletePhotosRequest(BaseModel):
 @router.post("/photos/bulk-delete")
 def bulk_delete_photos(
     payload: BulkDeletePhotosRequest,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict[str, Any]:
     """Delete multiple photos and their storage objects in one batch."""
@@ -547,7 +585,12 @@ def bulk_delete_photos(
         return {"ok": True, "deleted_count": 0, "deleted_ids": []}
 
     photos = db.scalars(
-        select(Photo).where(Photo.id.in_(payload.photo_ids))
+        select(Photo)
+        .join(Event, Event.id == Photo.event_id)
+        .where(
+            Photo.id.in_(payload.photo_ids),
+            Event.photographer_id == photographer.id,
+        )
     ).all()
 
     storage = StorageService()

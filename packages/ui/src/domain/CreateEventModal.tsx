@@ -187,7 +187,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Create New Event" maxWidth="lg">
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 font-sans">
         {error && (
           <Alert type="error" onClose={() => setError(null)}>
             {error}
@@ -196,8 +196,8 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
         {/* Event Name */}
         <div>
-          <label className="block text-xs font-semibold text-charcoal mb-1">
-            Event Title <span className="text-forest">*</span>
+          <label className="block text-xs font-semibold text-[#F7F5F0] mb-1">
+            Event Title <span className="text-[#D6A84F]">*</span>
           </label>
           <input
             type="text"
@@ -205,21 +205,21 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
             placeholder="e.g. Maya & Arjun Wedding Gala"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-3.5 py-2.5 rounded-xl border border-warm-beige bg-cream text-sm text-charcoal focus:border-forest focus:outline-none transition-colors"
+            className="w-full px-3.5 py-2.5 rounded-xl border border-[#232F48] bg-[#0F1624] text-sm text-[#F7F5F0] placeholder-[#6E788B] focus:border-[#D6A84F] focus:ring-1 focus:ring-[#D6A84F]/40 focus:outline-none transition-colors"
           />
         </div>
 
         {/* Event Type & Date */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-semibold text-charcoal mb-1">Event Category</label>
+            <label className="block text-xs font-semibold text-[#F7F5F0] mb-1">Event Category</label>
             <select
               value={eventType}
               onChange={(e) => handleTypeSelect(e.target.value as EventType)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-warm-beige bg-cream text-sm text-charcoal focus:border-forest focus:outline-none transition-colors cursor-pointer"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-[#232F48] bg-[#0F1624] text-sm text-[#F7F5F0] focus:border-[#D6A84F] focus:ring-1 focus:ring-[#D6A84F]/40 focus:outline-none transition-colors cursor-pointer"
             >
               {defaultEventTypes.map((t) => (
-                <option key={t} value={t} className="bg-surface text-charcoal">
+                <option key={t} value={t} className="bg-[#151D2E] text-[#F7F5F0]">
                   {t}
                 </option>
               ))}
@@ -227,42 +227,42 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-charcoal mb-1">Event Date</label>
+            <label className="block text-xs font-semibold text-[#F7F5F0] mb-1">Event Date</label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-warm-beige bg-cream text-sm text-charcoal focus:border-forest focus:outline-none transition-colors"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-[#232F48] bg-[#0F1624] text-sm text-[#F7F5F0] focus:border-[#D6A84F] focus:ring-1 focus:ring-[#D6A84F]/40 focus:outline-none transition-colors"
             />
           </div>
         </div>
 
         {/* Location */}
         <div>
-          <label className="block text-xs font-semibold text-charcoal mb-1">Location / Venue</label>
+          <label className="block text-xs font-semibold text-[#F7F5F0] mb-1">Location / Venue</label>
           <input
             type="text"
             placeholder="e.g. Grand Palace Convention Centre, Mumbai"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            className="w-full px-3.5 py-2.5 rounded-xl border border-warm-beige bg-cream text-sm text-charcoal focus:border-forest focus:outline-none transition-colors"
+            className="w-full px-3.5 py-2.5 rounded-xl border border-[#232F48] bg-[#0F1624] text-sm text-[#F7F5F0] placeholder-[#6E788B] focus:border-[#D6A84F] focus:ring-1 focus:ring-[#D6A84F]/40 focus:outline-none transition-colors"
           />
         </div>
 
         {/* Cover Photo: Preset vs Upload Switch */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <label className="block text-xs font-semibold text-charcoal">
+            <label className="block text-xs font-semibold text-[#F7F5F0]">
               Event Cover Photo
             </label>
-            <div className="flex items-center bg-cream border border-warm-beige rounded-lg p-0.5 text-xs">
+            <div className="flex items-center bg-[#0F1624] border border-[#232F48] rounded-lg p-0.5 text-xs">
               <button
                 type="button"
                 onClick={() => setCoverSource("preset")}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
+                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
                   coverSource === "preset"
-                    ? "bg-forest text-white shadow-sm font-semibold"
-                    : "text-charcoal-muted hover:text-charcoal"
+                    ? "bg-[#D6A84F] text-[#0B1220] shadow-sm"
+                    : "text-[#A8B0BE] hover:text-[#F7F5F0]"
                 }`}
               >
                 Presets
@@ -270,10 +270,10 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
               <button
                 type="button"
                 onClick={() => setCoverSource("upload")}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
+                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all ${
                   coverSource === "upload"
-                    ? "bg-forest text-white shadow-sm font-semibold"
-                    : "text-charcoal-muted hover:text-charcoal"
+                    ? "bg-[#D6A84F] text-[#0B1220] shadow-sm"
+                    : "text-[#A8B0BE] hover:text-[#F7F5F0]"
                 }`}
               >
                 Custom Upload
@@ -295,8 +295,8 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                     }}
                     className={`relative group rounded-xl overflow-hidden aspect-video border transition-all cursor-pointer ${
                       isSelected
-                        ? "border-forest ring-2 ring-forest/40 scale-102"
-                        : "border-warm-beige hover:border-forest/60 opacity-80 hover:opacity-100"
+                        ? "border-[#D6A84F] ring-2 ring-[#D6A84F]/40 scale-102"
+                        : "border-[#232F48] hover:border-[#D6A84F]/60 opacity-80 hover:opacity-100"
                     }`}
                   >
                     <img
@@ -304,7 +304,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                       alt={preset.label}
                       className="w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-black/40 flex items-end p-1 text-[9px] font-semibold text-white truncate">
+                    <div className="absolute inset-0 bg-[#0B1220]/60 flex items-end p-1 text-[9px] font-semibold text-[#F7F5F0] truncate">
                       {preset.type}
                     </div>
                   </button>
@@ -314,35 +314,35 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
           ) : (
             <div className="space-y-2">
               {customCoverUrl ? (
-                <div className="relative rounded-xl border border-forest/30 bg-cream p-2.5 flex items-center gap-3">
+                <div className="relative rounded-xl border border-[#D6A84F]/40 bg-[#0F1624] p-2.5 flex items-center gap-3">
                   <img
                     src={customCoverUrl}
                     alt="Custom Cover"
-                    className="w-20 h-14 object-cover rounded-lg border border-warm-beige flex-shrink-0"
+                    className="w-20 h-14 object-cover rounded-lg border border-[#232F48] flex-shrink-0"
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-semibold text-charcoal truncate">
+                      <span className="text-xs font-semibold text-[#F7F5F0] truncate">
                         {coverFileName || "Custom Cover Image"}
                       </span>
-                      <span className="px-1.5 py-0.5 rounded bg-forest/10 text-forest font-mono text-[9px] font-medium">
+                      <span className="px-1.5 py-0.5 rounded bg-[#5FA58B]/15 text-[#5FA58B] border border-[#5FA58B]/30 font-mono text-[9px] font-medium">
                         ✓ Selected
                       </span>
                     </div>
-                    <p className="text-[11px] text-charcoal-muted truncate mt-0.5">
+                    <p className="text-[11px] text-[#A8B0BE] truncate mt-0.5">
                       This custom photo will be set as the main cover of this event gallery.
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={handleRemoveCustomCover}
-                    className="px-2.5 py-1 text-xs text-danger hover:underline cursor-pointer transition-colors"
+                    className="px-2.5 py-1 text-xs text-[#E87961] hover:underline cursor-pointer transition-colors"
                   >
                     Remove
                   </button>
                 </div>
               ) : (
-                <label className="flex flex-col items-center justify-center border-2 border-dashed border-warm-beige hover:border-forest rounded-xl p-4 cursor-pointer bg-cream/50 hover:bg-cream transition-all text-center group">
+                <label className="flex flex-col items-center justify-center border-2 border-dashed border-[#232F48] hover:border-[#D6A84F] rounded-xl p-5 cursor-pointer bg-[#0F1624] hover:bg-[#151D2E] transition-all text-center group">
                   <input
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
@@ -351,7 +351,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                     disabled={uploadingCover}
                   />
                   {uploadingCover ? (
-                    <div className="flex items-center gap-2 text-forest text-xs py-2">
+                    <div className="flex items-center gap-2 text-[#D6A84F] text-xs py-2">
                       <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <circle cx="12" cy="12" r="10" strokeDasharray="32" strokeDashoffset="12" />
                       </svg>
@@ -359,17 +359,17 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
                     </div>
                   ) : (
                     <>
-                      <div className="w-8 h-8 rounded-full bg-forest/10 text-forest flex items-center justify-center mb-1 group-hover:scale-110 transition-transform">
+                      <div className="w-9 h-9 rounded-full bg-[#D6A84F]/10 text-[#D6A84F] border border-[#D6A84F]/20 flex items-center justify-center mb-1.5 group-hover:scale-110 transition-transform">
                         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                           <circle cx="8.5" cy="8.5" r="1.5" />
                           <polyline points="21 15 16 10 5 21" />
                         </svg>
                       </div>
-                      <span className="text-xs font-semibold text-charcoal">
+                      <span className="text-xs font-semibold text-[#F7F5F0]">
                         Click or drag cover image here
                       </span>
-                      <span className="text-[10px] text-charcoal-muted mt-0.5">
+                      <span className="text-[10px] text-[#A8B0BE] mt-0.5">
                         Supports JPEG, PNG, or WebP (max 10MB)
                       </span>
                     </>
@@ -382,20 +382,20 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
         {/* Description */}
         <div>
-          <label className="block text-xs font-semibold text-charcoal mb-1">
-            Description <span className="text-charcoal-muted font-normal">(Optional)</span>
+          <label className="block text-xs font-semibold text-[#F7F5F0] mb-1">
+            Description <span className="text-[#A8B0BE] font-normal">(Optional)</span>
           </label>
           <textarea
             rows={2}
             placeholder="Notes about ceremony timing, access PIN, or photographer team..."
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full px-3.5 py-2 rounded-xl border border-warm-beige bg-cream text-xs text-charcoal focus:border-forest focus:outline-none transition-colors resize-none"
+            className="w-full px-3.5 py-2 rounded-xl border border-[#232F48] bg-[#0F1624] text-xs text-[#F7F5F0] placeholder-[#6E788B] focus:border-[#D6A84F] focus:ring-1 focus:ring-[#D6A84F]/40 focus:outline-none transition-colors resize-none"
           />
         </div>
 
         {/* Modal Actions */}
-        <div className="flex items-center justify-end gap-3 pt-3 border-t border-warm-beige">
+        <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#232F48]">
           <Button type="button" variant="ghost" size="sm" onClick={onClose} disabled={loading}>
             Cancel
           </Button>

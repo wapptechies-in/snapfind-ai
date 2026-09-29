@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_current_photographer_or_default
+from app.api.dependencies import get_current_photographer
 from app.db.session import get_db
 from app.models.event import Event
 from app.models.folder import Folder, generate_folder_id
@@ -87,13 +87,18 @@ def list_event_folders(
 def create_event_folder(
     event_id: str,
     payload: FolderCreate,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> FolderOut:
     """
     Create a new sub-folder inside an event (e.g. 'Ceremony', 'Reception').
     """
     event = _resolve_event(event_id, db)
+    if event.photographer_id != photographer.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to manage folders for this event.",
+        )
     clean_name = payload.name.strip()
     if not clean_name:
         raise HTTPException(
@@ -139,7 +144,7 @@ def create_event_folder(
 def delete_event_folder(
     event_id: str,
     folder_id: str,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict[str, str]:
     """
@@ -147,6 +152,11 @@ def delete_event_folder(
     set to null (moved to root) rather than being deleted.
     """
     event = _resolve_event(event_id, db)
+    if event.photographer_id != photographer.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to manage folders for this event.",
+        )
 
     folder = db.scalar(
         select(Folder).where(

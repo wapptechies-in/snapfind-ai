@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_current_photographer_or_default
+from app.api.dependencies import get_current_photographer
 from app.core.config import get_settings
 from app.db.session import get_db
 from app.models.event import Event
@@ -285,7 +285,7 @@ def send_whatsapp_to_guest(
 @router.get("/events/{id_or_token}/list", response_model=list[GuestOut])
 def list_event_guests(
     id_or_token: str,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> list[GuestOut]:
     """Photographer admin endpoint: Lists all attendees registered for this event."""
@@ -325,7 +325,7 @@ def list_event_guests(
 @router.get("/events/{id_or_token}/leads", response_model=list[MarketingLeadOut])
 def list_event_leads(
     id_or_token: str,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> list[MarketingLeadOut]:
     """Photographer admin endpoint: Lists explicit marketing opt-in leads for this event."""

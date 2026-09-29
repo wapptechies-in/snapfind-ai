@@ -9,13 +9,15 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_current_photographer, get_current_photographer_or_default
+from app.api.dependencies import get_current_photographer
+from app.core.config import get_settings
 from app.db.session import get_db
 from app.models.billing import GuestPurchase, generate_download_token
 from app.models.event import Event
 from app.models.photo import Photo
 from app.models.photographer import Photographer
 
+settings = get_settings()
 router = APIRouter(prefix="/billing", tags=["billing"])
 
 
@@ -47,6 +49,9 @@ class SubscriptionOut(BaseModel):
     max_photos_per_event: int
     custom_branding: bool
     guest_paywall_enabled: bool
+    used_storage_bytes: int = 0
+    max_storage_bytes: int = 9 * 1024 * 1024 * 1024
+    is_trial_edition: bool = True
 
 
 class UpgradeRequest(BaseModel):
@@ -145,7 +150,7 @@ def get_plans() -> list[PlanTier]:
 
 @router.get("/subscription", response_model=SubscriptionOut)
 def get_current_subscription(
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> SubscriptionOut:
     """Return current photographer's active subscription status and resource quotas."""
@@ -162,10 +167,25 @@ def get_current_subscription(
         .where(Event.photographer_id == photographer.id)
     ) or 0
 
-    tier = getattr(photographer, "subscription_tier", "pro")
+    used_storage_bytes = db.scalar(
+        select(func.coalesce(func.sum(Photo.file_size), 0))
+        .join(Event, Event.id == Photo.event_id)
+        .where(Event.photographer_id == photographer.id)
+    ) or 0
+
+    tier = getattr(photographer, "subscription_tier", "trial")
     status_str = getattr(photographer, "subscription_status", "active")
-    max_events = getattr(photographer, "max_active_events", 50)
-    max_photos = getattr(photographer, "max_photos_per_event", 5000)
+
+    if settings.TRIAL_EDITION_MODE or tier in ("free", "trial"):
+        max_events = 99999  # Unlimited events for trial edition
+        max_photos = getattr(photographer, "max_photos_per_event", 1000) or 1000
+        max_storage = settings.TRIAL_STORAGE_LIMIT_BYTES  # 9.0 GB hard limit
+        is_trial = True
+    else:
+        max_events = getattr(photographer, "max_active_events", 50)
+        max_photos = getattr(photographer, "max_photos_per_event", 5000)
+        max_storage = 50 * 1024 * 1024 * 1024
+        is_trial = False
 
     return SubscriptionOut(
         tier=tier,
@@ -174,8 +194,11 @@ def get_current_subscription(
         max_active_events=max_events,
         total_photos_count=total_photos,
         max_photos_per_event=max_photos,
-        custom_branding=(tier in ("pro", "studio")),
+        custom_branding=True,
         guest_paywall_enabled=(tier in ("pro", "studio")),
+        used_storage_bytes=int(used_storage_bytes),
+        max_storage_bytes=max_storage,
+        is_trial_edition=is_trial,
     )
 
 
@@ -190,7 +213,7 @@ TIER_QUOTAS = {
 @router.post("/upgrade", response_model=SubscriptionOut)
 def upgrade_subscription(
     body: UpgradeRequest,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> SubscriptionOut:
     """
@@ -231,7 +254,7 @@ def confirm_payment_webhook(
     photographer_id: str,
     tier: str,
     payment_id: str,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> SubscriptionOut:
     """
@@ -256,7 +279,7 @@ def confirm_payment_webhook(
 @router.post("/create-checkout-session")
 def create_checkout_session(
     payload: CreateCheckoutSessionRequest,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
 ) -> dict[str, Any]:
     """
     Creates a Stripe/Razorpay checkout session for subscription tier upgrade.

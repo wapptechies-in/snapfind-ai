@@ -49,10 +49,14 @@ export const UploadProgress: React.FC = () => {
   if (!uploadManager || !session || !stats) {
     return (
       <div className="max-w-xl mx-auto py-12 text-center">
-        <Card className="p-8 bg-white border-studio-sand shadow-sm">
-          <div className="text-3xl mb-3">🚀</div>
-          <h3 className="text-base font-serif font-bold text-charcoal">No Active Upload Session</h3>
-          <p className="text-xs text-charcoal-muted mt-1">
+        <Card className="p-8 bg-slate border-slate-800 shadow-sm">
+          <div className="w-12 h-12 rounded-2xl bg-gold/10 text-gold flex items-center justify-center mx-auto mb-3">
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+          </div>
+          <h3 className="text-base font-bold text-soft-white">No Active Upload Session</h3>
+          <p className="text-xs text-cool-gray mt-1">
             There is currently no upload running. Select an event and scan a photo folder to start uploading.
           </p>
           <div className="mt-5 flex justify-center gap-3">
@@ -84,11 +88,11 @@ export const UploadProgress: React.FC = () => {
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       {/* Upload Header Overview Card */}
-      <Card className="p-6 bg-surface border-warm-beige shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-warm-beige">
+      <Card className="p-6 bg-slate border-slate-800 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-800">
           <div>
             <div className="flex items-center gap-2.5">
-              <h2 className="text-base font-serif font-bold text-charcoal">{session.eventName}</h2>
+              <h2 className="text-base font-bold text-soft-white">{session.eventName}</h2>
               <Badge
                 variant={
                   stats.isFinished
@@ -109,7 +113,7 @@ export const UploadProgress: React.FC = () => {
                   : "UPLOADING"}
               </Badge>
             </div>
-            <p className="text-xs text-charcoal-muted font-mono mt-0.5 truncate max-w-xl">
+            <p className="text-xs text-cool-gray font-mono mt-0.5 truncate max-w-xl">
               Source: {session.folderPath}
             </p>
           </div>
@@ -152,38 +156,38 @@ export const UploadProgress: React.FC = () => {
 
         {/* Counts Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 my-6">
-          <div className="p-4 rounded-xl border border-warm-beige bg-cream text-center">
-            <p className="text-xs text-charcoal-muted font-medium">Uploaded Photos</p>
-            <p className="text-2xl font-bold text-forest font-mono mt-1">
+          <div className="p-4 rounded-xl border border-slate-800 bg-midnight text-center">
+            <p className="text-xs text-cool-gray font-medium">Uploaded Photos</p>
+            <p className="text-2xl font-bold text-sage font-mono mt-1">
               {stats.uploadedCount.toLocaleString()}
             </p>
-            <p className="text-[11px] text-charcoal-muted mt-0.5">
+            <p className="text-[11px] text-cool-gray mt-0.5">
               of {stats.totalCount.toLocaleString()}
             </p>
           </div>
 
-          <div className="p-4 rounded-xl border border-warm-beige bg-cream text-center">
-            <p className="text-xs text-charcoal-muted font-medium">Remaining Queue</p>
-            <p className="text-2xl font-bold text-charcoal-muted font-mono mt-1">
+          <div className="p-4 rounded-xl border border-slate-800 bg-midnight text-center">
+            <p className="text-xs text-cool-gray font-medium">Remaining Queue</p>
+            <p className="text-2xl font-bold text-cool-gray font-mono mt-1">
               {stats.remainingCount.toLocaleString()}
             </p>
-            <p className="text-[11px] text-charcoal-muted mt-0.5">pending streams</p>
+            <p className="text-[11px] text-cool-gray mt-0.5">pending streams</p>
           </div>
 
-          <div className="p-4 rounded-xl border border-warm-beige bg-cream text-center">
-            <p className="text-xs text-charcoal-muted font-medium">Current Speed</p>
-            <p className="text-2xl font-bold text-forest font-mono mt-1">
+          <div className="p-4 rounded-xl border border-slate-800 bg-midnight text-center">
+            <p className="text-xs text-cool-gray font-medium">Current Speed</p>
+            <p className="text-2xl font-bold text-gold font-mono mt-1">
               {stats.speedMBps} MB/s
             </p>
-            <p className="text-[11px] text-charcoal-muted mt-0.5">Direct Storage PUT</p>
+            <p className="text-[11px] text-cool-gray mt-0.5">Direct Storage PUT</p>
           </div>
 
-          <div className="p-4 rounded-xl border border-warm-beige bg-cream text-center">
-            <p className="text-xs text-charcoal-muted font-medium">Estimated Remaining</p>
-            <p className="text-2xl font-bold text-charcoal font-mono mt-1">
+          <div className="p-4 rounded-xl border border-slate-800 bg-midnight text-center">
+            <p className="text-xs text-cool-gray font-medium">Estimated Remaining</p>
+            <p className="text-2xl font-bold text-soft-white font-mono mt-1">
               {formatEta(stats.estimatedRemainingSeconds)}
             </p>
-            <p className="text-[11px] text-charcoal-muted mt-0.5">
+            <p className="text-[11px] text-cool-gray mt-0.5">
               {formatBytes(stats.uploadedBytes)} / {formatBytes(stats.totalBytes)}
             </p>
           </div>
@@ -192,10 +196,10 @@ export const UploadProgress: React.FC = () => {
         {/* Progress Bar & Current File */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-semibold text-charcoal">
+            <span className="font-semibold text-soft-white">
               {stats.currentFilename ? `Streaming: ${stats.currentFilename}` : "Upload Progress"}
             </span>
-            <span className="font-mono text-forest font-bold">
+            <span className="font-mono text-gold font-bold">
               {stats.overallPercent}%
             </span>
           </div>
@@ -207,15 +211,15 @@ export const UploadProgress: React.FC = () => {
       </Card>
 
       {/* Queue Table */}
-      <Card className="p-5 bg-surface border-warm-beige shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-warm-beige">
-          <h4 className="text-sm font-serif font-semibold text-charcoal">Upload Queue Items</h4>
+      <Card className="p-5 bg-slate border-slate-800 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
+          <h4 className="text-sm font-bold text-soft-white">Upload Queue Items</h4>
 
-          <div className="flex items-center gap-1 bg-cream p-1 rounded-lg border border-warm-beige text-xs">
+          <div className="flex items-center gap-1 bg-midnight p-1 rounded-lg border border-slate-800 text-xs">
             <button
               onClick={() => setFilter("all")}
               className={`px-2.5 py-1 rounded font-medium cursor-pointer transition-colors ${
-                filter === "all" ? "bg-forest text-white" : "text-charcoal-muted hover:text-charcoal"
+                filter === "all" ? "bg-gold text-midnight font-bold" : "text-cool-gray hover:text-soft-white"
               }`}
             >
               All ({items.length})
@@ -223,7 +227,7 @@ export const UploadProgress: React.FC = () => {
             <button
               onClick={() => setFilter("uploading")}
               className={`px-2.5 py-1 rounded font-medium cursor-pointer transition-colors ${
-                filter === "uploading" ? "bg-forest text-white" : "text-charcoal-muted hover:text-charcoal"
+                filter === "uploading" ? "bg-gold text-midnight font-bold" : "text-cool-gray hover:text-soft-white"
               }`}
             >
               Uploading
@@ -231,7 +235,7 @@ export const UploadProgress: React.FC = () => {
             <button
               onClick={() => setFilter("pending")}
               className={`px-2.5 py-1 rounded font-medium cursor-pointer transition-colors ${
-                filter === "pending" ? "bg-forest text-white" : "text-charcoal-muted hover:text-charcoal"
+                filter === "pending" ? "bg-gold text-midnight font-bold" : "text-cool-gray hover:text-soft-white"
               }`}
             >
               Waiting
@@ -239,7 +243,7 @@ export const UploadProgress: React.FC = () => {
             <button
               onClick={() => setFilter("uploaded")}
               className={`px-2.5 py-1 rounded font-medium cursor-pointer transition-colors ${
-                filter === "uploaded" ? "bg-forest text-white" : "text-charcoal-muted hover:text-charcoal"
+                filter === "uploaded" ? "bg-gold text-midnight font-bold" : "text-cool-gray hover:text-soft-white"
               }`}
             >
               Uploaded ({stats.uploadedCount})
@@ -247,7 +251,7 @@ export const UploadProgress: React.FC = () => {
             <button
               onClick={() => setFilter("failed")}
               className={`px-2.5 py-1 rounded font-medium cursor-pointer transition-colors ${
-                filter === "failed" ? "bg-forest text-white" : "text-charcoal-muted hover:text-charcoal"
+                filter === "failed" ? "bg-gold text-midnight font-bold" : "text-cool-gray hover:text-soft-white"
               }`}
             >
               Failed ({stats.failedCount})
@@ -255,7 +259,7 @@ export const UploadProgress: React.FC = () => {
           </div>
         </div>
 
-        <div className="max-h-96 overflow-y-auto divide-y divide-warm-beige mt-2">
+        <div className="max-h-96 overflow-y-auto divide-y divide-hairline mt-2">
           {filteredItems.slice(0, 100).map((item) => {
             return (
               <div
@@ -264,47 +268,47 @@ export const UploadProgress: React.FC = () => {
               >
                 <div className="overflow-hidden flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-charcoal font-medium truncate">
+                    <span className="font-mono text-soft-white font-medium truncate">
                       {item.filename}
                     </span>
                     {item.retryCount > 0 && (
-                      <span className="text-[10px] text-charcoal-muted font-mono">
+                      <span className="text-[10px] text-cool-gray font-mono">
                         (attempt {item.retryCount + 1})
                       </span>
                     )}
                   </div>
                   {item.errorMessage && (
-                    <p className="text-[10px] text-danger mt-0.5 truncate">{item.errorMessage}</p>
+                    <p className="text-[10px] text-coral mt-0.5 truncate">{item.errorMessage}</p>
                   )}
                 </div>
 
                 <div className="flex items-center gap-3 flex-shrink-0">
-                  <span className="font-mono text-charcoal-muted">{formatBytes(item.fileSize)}</span>
+                  <span className="font-mono text-cool-gray">{formatBytes(item.fileSize)}</span>
 
                   {item.status === "uploaded" && (
-                    <span className="inline-flex items-center gap-1 text-forest font-semibold">
+                    <span className="inline-flex items-center gap-1 text-sage font-semibold">
                       <span>✓</span> Uploaded
                     </span>
                   )}
                   {item.status === "uploading" && (
-                    <span className="inline-flex items-center gap-1.5 text-forest font-semibold animate-pulse">
-                      <span className="h-1.5 w-1.5 rounded-full bg-forest animate-ping" />
+                    <span className="inline-flex items-center gap-1.5 text-gold font-semibold animate-pulse">
+                      <span className="h-1.5 w-1.5 rounded-full bg-gold animate-ping" />
                       {item.progressPercent}%
                     </span>
                   )}
                   {item.status === "pending" && (
-                    <span className="text-charcoal-muted">Waiting</span>
+                    <span className="text-cool-gray">Waiting</span>
                   )}
                   {item.status === "failed" && (
-                    <span className="text-danger font-semibold">✕ Failed</span>
+                    <span className="text-coral font-semibold">✕ Failed</span>
                   )}
                 </div>
               </div>
             );
           })}
           {filteredItems.length > 100 && (
-            <div className="py-3 text-center text-xs text-charcoal-muted font-mono">
-              + {filteredItems.length - 100} more items
+            <div className="py-3 text-center text-xs text-cool-gray font-mono">
+              + {filteredItems.length - 100} more files
             </div>
           )}
         </div>

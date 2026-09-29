@@ -111,8 +111,9 @@ export const QRPanel: React.FC<QRPanelProps> = ({
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       showToast(`Downloaded vector SVG QR code for "${event.name}"!`);
-    } catch (err: any) {
-      showToast(`Failed to generate SVG QR: ${err?.message || "Error"}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Error";
+      showToast(`Failed to generate SVG QR: ${msg}`);
     }
   };
 
@@ -132,9 +133,15 @@ export const QRPanel: React.FC<QRPanelProps> = ({
         onRegenerateToken(res.token);
       }
       showToast(`New secure QR token activated: ${res.token}`);
-    } catch (err: any) {
-      showToast(`Token regeneration failed: ${err?.message || "Unknown error"}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      showToast(`Token regeneration failed: ${msg}`);
     }
+  };
+
+  const handleShareWhatsApp = () => {
+    const text = encodeURIComponent(`Find your photos from ${event.name} with AI selfie search here: ${galleryUrl}`);
+    window.open(`https://api.whatsapp.com/send?text=${text}`, "_blank");
   };
 
   return (
@@ -146,28 +153,28 @@ export const QRPanel: React.FC<QRPanelProps> = ({
       )}
 
       {/* Network Alert Banner for Mobile Phone Testing */}
-      <div className="rounded-2xl border border-studio-sand bg-studio-cream/60 p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xs">
+      <div className="rounded-xl border border-hairline bg-slate p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
         <div className="flex items-start gap-3">
-          <div className="p-2 rounded-xl bg-studio-forest/10 text-studio-forest shrink-0">
+          <div className="p-2 rounded-lg bg-gold/10 text-gold shrink-0">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
             </svg>
           </div>
           <div>
-            <h4 className="text-xs font-bold text-studio-charcoal uppercase tracking-wider flex items-center gap-2">
+            <h4 className="text-xs font-bold text-soft-white uppercase tracking-wider flex items-center gap-2">
               <span>Mobile Phone Scanning Ready</span>
-              <span className="px-2 py-0.5 rounded-full bg-[#DCE9D1] text-studio-forest text-[10px] font-mono font-bold">
+              <span className="px-2 py-0.5 rounded-full bg-gold/20 text-gold text-[10px] font-mono font-bold">
                 ACTIVE WI-FI: 192.168.1.4
               </span>
             </h4>
-            <p className="text-xs text-studio-muted mt-0.5 max-w-2xl">
-              To scan this QR code using a real smartphone camera, both your computer and phone must be on the same Wi-Fi network. The QR code below encodes <span className="font-mono text-studio-forest font-semibold">{baseUrl}</span>.
+            <p className="text-xs text-cool-gray mt-0.5 max-w-2xl">
+              To scan this QR code using a real smartphone camera, both your computer and phone must be on the same Wi-Fi network. The QR code below encodes <span className="font-mono text-gold font-semibold">{baseUrl}</span>.
             </p>
           </div>
         </div>
 
         {/* Host Mode Toggles */}
-        <div className="flex items-center gap-1.5 p-1 bg-white rounded-xl border border-studio-sand shrink-0 text-xs shadow-xs">
+        <div className="flex items-center gap-1.5 p-1 bg-midnight rounded-xl border border-hairline shrink-0 text-xs shadow-xs">
           <button
             type="button"
             onClick={() => {
@@ -176,8 +183,8 @@ export const QRPanel: React.FC<QRPanelProps> = ({
             }}
             className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
               hostMode === "wifi"
-                ? "bg-studio-forest text-white shadow-xs font-semibold"
-                : "text-studio-muted hover:text-studio-charcoal"
+                ? "bg-gold text-midnight shadow-xs font-bold"
+                : "text-cool-gray hover:text-soft-white"
             }`}
           >
             Wi-Fi (Phones)
@@ -187,8 +194,8 @@ export const QRPanel: React.FC<QRPanelProps> = ({
             onClick={() => setHostMode("localhost")}
             className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
               hostMode === "localhost"
-                ? "bg-studio-forest text-white shadow-xs font-semibold"
-                : "text-studio-muted hover:text-studio-charcoal"
+                ? "bg-gold text-midnight shadow-xs font-bold"
+                : "text-cool-gray hover:text-soft-white"
             }`}
           >
             Localhost
@@ -198,8 +205,8 @@ export const QRPanel: React.FC<QRPanelProps> = ({
             onClick={() => setHostMode("custom")}
             className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
               hostMode === "custom"
-                ? "bg-studio-forest text-white shadow-xs font-semibold"
-                : "text-studio-muted hover:text-studio-charcoal"
+                ? "bg-gold text-midnight shadow-xs font-bold"
+                : "text-cool-gray hover:text-soft-white"
             }`}
           >
             Custom IP/Domain
@@ -209,26 +216,26 @@ export const QRPanel: React.FC<QRPanelProps> = ({
 
       <div className="grid gap-6 lg:grid-cols-12 items-start">
         {/* Left Column: Printable QR Card (6 cols) */}
-        <Card className="p-8 lg:col-span-6 flex flex-col items-center text-center space-y-6 bg-white border-studio-sand shadow-xs">
+        <Card className="p-8 lg:col-span-6 flex flex-col items-center text-center space-y-6 bg-slate border-hairline shadow-sm">
           {/* Printable Event QR Sign Board */}
-          <div className="w-full max-w-sm rounded-3xl bg-[#FAF8F5] p-8 text-studio-charcoal shadow-md space-y-5 border-2 border-studio-sand print:m-0 print:shadow-none">
+          <div className="w-full max-w-sm rounded-2xl bg-midnight p-8 text-soft-white shadow-xl space-y-5 border border-gold/30 print:m-0 print:shadow-none">
             <div className="space-y-1">
-              <span className="text-[11px] font-bold uppercase tracking-widest text-studio-forest">
-                🌿 SnapFind Studio • Live Event
+              <span className="text-[11px] font-bold uppercase tracking-widest text-gold">
+                ✦ SnapFind AI • Live Event
               </span>
-              <h3 className="text-2xl font-serif font-bold text-studio-charcoal leading-tight">
+              <h3 className="text-2xl font-bold text-soft-white leading-tight">
                 {event.name}
               </h3>
-              <p className="text-xs text-studio-muted">
+              <p className="text-xs text-cool-gray">
                 Scan with your phone camera to find all your photos with a selfie
               </p>
             </div>
 
             {/* High-Resolution Verified Scannable QR Code Image */}
-            <div className="relative mx-auto w-56 h-56 bg-white p-3 rounded-2xl border-2 border-studio-sand shadow-inner flex items-center justify-center">
+            <div className="relative mx-auto w-56 h-56 bg-white p-3 rounded-xl border border-hairline shadow-inner flex items-center justify-center">
               {isGenerating || !qrDataUrl ? (
-                <div className="flex flex-col items-center justify-center text-xs text-studio-muted gap-2">
-                  <div className="h-6 w-6 border-2 border-studio-forest border-t-transparent rounded-full animate-spin" />
+                <div className="flex flex-col items-center justify-center text-xs text-cool-gray gap-2">
+                  <div className="h-6 w-6 border-2 border-gold border-t-transparent rounded-full animate-spin" />
                   <span>Generating QR...</span>
                 </div>
               ) : (
@@ -240,12 +247,12 @@ export const QRPanel: React.FC<QRPanelProps> = ({
               )}
             </div>
 
-            <div className="pt-3 border-t border-studio-sand">
-              <p className="text-[11px] font-semibold text-studio-muted">Event Shortcode</p>
-              <p className="font-mono text-xl font-extrabold text-studio-forest tracking-widest mt-0.5">
+            <div className="pt-3 border-t border-hairline">
+              <p className="text-[11px] font-semibold text-cool-gray">Event Shortcode</p>
+              <p className="font-mono text-xl font-extrabold text-gold tracking-widest mt-0.5">
                 {event.token}
               </p>
-              <p className="text-[10px] text-studio-muted mt-1 truncate font-mono select-all">
+              <p className="text-[10px] text-cool-gray mt-1 truncate font-mono select-all">
                 {galleryUrl}
               </p>
             </div>
@@ -254,18 +261,18 @@ export const QRPanel: React.FC<QRPanelProps> = ({
 
         {/* Right Column: QR Details & Actions (6 cols) */}
         <div className="lg:col-span-6 space-y-6">
-          <Card className="p-6 space-y-5 bg-white border-studio-sand shadow-xs">
+          <Card className="p-6 space-y-5 bg-slate border-hairline shadow-sm">
             <div>
-              <h3 className="text-base font-serif font-semibold text-studio-charcoal">Gallery Access Details</h3>
-              <p className="text-xs text-studio-muted mt-0.5">
+              <h3 className="text-base font-bold text-soft-white">Gallery Access Details</h3>
+              <p className="text-xs text-cool-gray mt-0.5">
                 Guests can access this gallery either by scanning the QR code or visiting the URL.
               </p>
             </div>
 
             {/* Custom host input (if custom mode is selected) */}
             {hostMode === "custom" && (
-              <div className="space-y-1.5 p-3 rounded-xl bg-studio-cream border border-studio-sand animate-fade-in">
-                <label className="text-xs font-semibold text-studio-charcoal">
+              <div className="space-y-1.5 p-3 rounded-xl bg-midnight border border-hairline animate-fade-in">
+                <label className="text-xs font-semibold text-soft-white">
                   Custom Base URL or Tunnel (e.g. ngrok / domain)
                 </label>
                 <input
@@ -273,9 +280,9 @@ export const QRPanel: React.FC<QRPanelProps> = ({
                   value={customHost}
                   onChange={(e) => setCustomHost(e.target.value)}
                   placeholder="https://gallery.yourdomain.com"
-                  className="w-full rounded-xl border border-studio-sand bg-white px-3.5 py-2 text-xs font-mono text-studio-charcoal outline-none focus:border-studio-forest"
+                  className="w-full rounded-xl border border-hairline bg-slate px-3.5 py-2 text-xs font-mono text-soft-white outline-none focus:border-gold"
                 />
-                <p className="text-[11px] text-studio-muted">
+                <p className="text-[11px] text-cool-gray">
                   Enter your production domain or ngrok public tunnel to test from external mobile networks.
                 </p>
               </div>
@@ -283,13 +290,13 @@ export const QRPanel: React.FC<QRPanelProps> = ({
 
             {/* URL Input */}
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-studio-muted">Encoded Gallery URL</label>
+              <label className="text-xs font-medium text-cool-gray">Encoded Gallery URL</label>
               <div className="flex items-center gap-2">
                 <input
                   type="text"
                   readOnly
                   value={galleryUrl}
-                  className="flex-1 rounded-xl border border-studio-sand bg-studio-cream/40 px-3.5 py-2 text-xs font-mono text-studio-charcoal outline-none"
+                  className="flex-1 rounded-xl border border-hairline bg-midnight px-3.5 py-2 text-xs font-mono text-soft-white outline-none"
                 />
                 <Button size="sm" variant="secondary" onClick={handleCopy}>
                   {copied ? "Copied!" : "Copy Link"}
@@ -298,7 +305,7 @@ export const QRPanel: React.FC<QRPanelProps> = ({
             </div>
 
             {/* Action Buttons */}
-            <div className="pt-4 border-t border-studio-sand grid grid-cols-2 gap-3">
+            <div className="pt-4 border-t border-hairline grid grid-cols-2 gap-3">
               <Button variant="primary" onClick={handleDownloadQR} className="active:scale-95 transition-all shadow-sm">
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -317,24 +324,28 @@ export const QRPanel: React.FC<QRPanelProps> = ({
                 </svg>
                 Print Sign Board
               </Button>
+              <Button variant="secondary" onClick={handleShareWhatsApp} className="active:scale-95 transition-all text-emerald-400 hover:text-emerald-300">
+                <span>💬</span>
+                Share on WhatsApp
+              </Button>
               <Button variant="secondary" onClick={handleRegenerateQR} className="active:scale-95 transition-all">
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
                 Regenerate Token
               </Button>
-              <Link to={`/event/${event.token}`} target="_blank" className="w-full col-span-2">
-                <Button variant="secondary" className="w-full border border-studio-sand active:scale-95 transition-all">
-                  Open Event Guest Landing ↗
+              <Link to={`/event/${event.token}`} target="_blank" className="w-full">
+                <Button variant="secondary" className="w-full active:scale-95 transition-all">
+                  Open Guest Landing ↗
                 </Button>
               </Link>
             </div>
           </Card>
 
           {/* Placard Pro-Tips */}
-          <Card className="p-6 text-xs text-studio-muted space-y-3 bg-white border-studio-sand shadow-xs">
-            <h4 className="font-semibold text-studio-charcoal flex items-center gap-2">
-              <span className="text-sm">💡</span> Photographer Event Placards
+          <Card className="p-6 text-xs text-cool-gray space-y-3 bg-slate border-hairline shadow-sm">
+            <h4 className="font-bold text-soft-white flex items-center gap-2">
+              <span className="text-gold">✦</span> Photographer Event Placards
             </h4>
             <p className="leading-relaxed">
               Print this QR code card and place it on event dining tables, welcome banners, or guest cards.

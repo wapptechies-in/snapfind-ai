@@ -1,193 +1,175 @@
+/* SnapFind AI — Luxury Gold Photography Design System */
 :root {
-  /* SnapFind Studio Luxury Semantic Tokens */
-  --sf-bg: #FBF9F4;
-  --sf-surface: #FFFFFF;
-  --sf-surface-soft: #F5EFEB;
-  --sf-surface-hover: #FAF7F2;
-  
-  --sf-primary: #163E2B;
-  --sf-primary-hover: #1E5139;
-  --sf-primary-tint: #EAF4EE;
+  /* Official Core Palette */
+  --sf-midnight: #0B1220;
+  --sf-midnight-dark: #070C16;
+  --sf-midnight-light: #0F182A;
 
-  --sf-secondary: #4A6B56;
-  --sf-secondary-light: #7D9D89;
-  --sf-secondary-soft: #E2EDE0;
+  --sf-slate: #151D2E;
+  --sf-slate-hover: #1B253B;
+  --sf-slate-active: #202C45;
+  --sf-slate-border: #232F48;
+  --sf-slate-border-light: #2D3B59;
+  --sf-slate-inset: #0F1624;
 
-  --sf-accent: #C8A874;
-  --sf-accent-light: #E2CEAD;
-  --sf-accent-soft: #FAF4EB;
+  --sf-gold: #D6A84F;
+  --sf-gold-hover: #C5963E;
+  --sf-gold-dark: #A87C2B;
+  --sf-gold-light: #E4BE72;
+  --sf-gold-subtle: rgba(214, 168, 79, 0.12);
+  --sf-gold-border: rgba(214, 168, 79, 0.35);
 
-  --sf-text: #152019;
-  --sf-text-muted: #556057;
-  --sf-text-subtle: #7C867E;
+  --sf-coral: #E87961;
+  --sf-coral-hover: #D66750;
+  --sf-coral-subtle: rgba(232, 121, 97, 0.15);
+  --sf-coral-border: rgba(232, 121, 97, 0.35);
 
-  --sf-border: #E8E2D5;
-  --sf-border-light: #F2ECE2;
+  --sf-sage: #5FA58B;
+  --sf-sage-hover: #4E9279;
+  --sf-sage-subtle: rgba(95, 165, 139, 0.15);
+  --sf-sage-border: rgba(95, 165, 139, 0.35);
 
-  --sf-success: #226B43;
-  --sf-success-bg: #EAF5EE;
-  --sf-warning: #B87814;
-  --sf-warning-bg: #FEF7EB;
-  --sf-danger: #B83832;
-  --sf-danger-bg: #FDF2F1;
+  --sf-white: #F7F5F0;
+  --sf-gray: #A8B0BE;
+  --sf-gray-light: #C4CAD4;
+  --sf-gray-muted: #6E788B;
+
+  --sf-ivory: #FAF8F3;
+
+  /* Semantic Default Tokens */
+  --sf-bg: #0B1220;
+  --sf-surface: #151D2E;
+  --sf-surface-soft: #0F1624;
+  --sf-surface-hover: #1B253B;
+
+  --sf-primary: #D6A84F;
+  --sf-primary-hover: #C5963E;
+  --sf-primary-tint: rgba(214, 168, 79, 0.12);
+
+  --sf-secondary: #151D2E;
+  --sf-secondary-light: #232F48;
+
+  --sf-accent: #D6A84F;
+  --sf-accent-light: #E4BE72;
+
+  --sf-text: #F7F5F0;
+  --sf-text-muted: #A8B0BE;
+  --sf-text-subtle: #6E788B;
+
+  --sf-border: #232F48;
+  --sf-border-light: #1B253B;
+
+  --sf-success: #5FA58B;
+  --sf-success-bg: rgba(95, 165, 139, 0.15);
+  --sf-warning: #D6A84F;
+  --sf-warning-bg: rgba(214, 168, 79, 0.15);
+  --sf-danger: #E87961;
+  --sf-danger-bg: rgba(232, 121, 97, 0.15);
 
   --sf-radius-sm: 8px;
-  --sf-radius-md: 14px;
-  --sf-radius-lg: 20px;
-  --sf-radius-xl: 28px;
+  --sf-radius-md: 12px;
+  --sf-radius-lg: 16px;
 
-  --sf-shadow-card: 0 2px 10px rgba(22, 62, 43, 0.03);
-  --sf-shadow-hover: 0 10px 28px rgba(22, 62, 43, 0.06);
+  --sf-shadow-card: 0 4px 20px rgba(0, 0, 0, 0.35);
+  --sf-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.45);
 
-  /* Compatibility CSS vars */
-  --sf-color-base: #FBF9F4;
-  --sf-color-panel: #FFFFFF;
-  --sf-color-panel2: #F5EFEB;
-  --sf-color-hairline: #E8E2D5;
-  --sf-color-cloud: #152019;
-  --sf-color-dim: #556057;
-  --sf-color-violet: #163E2B;
-  --sf-color-violet-light: #4A6B56;
-  --sf-color-good: #226B43;
-  --sf-color-bad: #B83832;
+  /* Legacy CSS var bridges */
+  --sf-color-base: #0B1220;
+  --sf-color-panel: #151D2E;
+  --sf-color-panel2: #0F1624;
+  --sf-color-hairline: #232F48;
+  --sf-color-cloud: #F7F5F0;
+  --sf-color-dim: #A8B0BE;
+  --sf-color-violet: #D6A84F;
+  --sf-color-violet-light: #E4BE72;
+  --sf-color-good: #5FA58B;
+  --sf-color-bad: #E87961;
 }
 
-/* Warm Ivory Ambient Atmosphere with Botanical Light Gradients */
+/* Background Atmosphere */
 .sf-ambient-bg {
-  background-color: #FBF9F4;
+  background-color: #0B1220;
   background-image: 
-    radial-gradient(circle at 10% 10%, rgba(74, 107, 86, 0.05), transparent 45%),
-    radial-gradient(circle at 90% 90%, rgba(200, 168, 116, 0.07), transparent 45%);
+    radial-gradient(ellipse at 80% -10%, rgba(214, 168, 79, 0.05), transparent 50%),
+    radial-gradient(ellipse at 15% 100%, rgba(21, 29, 46, 0.8), transparent 60%);
 }
 
-/* Luxury Card Shadow & Hover */
+/* Luxury Slate Card */
 .sf-card {
-  background-color: #FFFFFF;
-  border: 1px solid #E8E2D5;
-  box-shadow: 0 2px 10px rgba(22, 62, 43, 0.03);
+  background-color: #151D2E;
+  border: 1px solid #232F48;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
   transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1), border-color 180ms ease;
 }
 
 .sf-card-hover:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(22, 62, 43, 0.07);
-  border-color: #C8A874;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  border-color: rgba(214, 168, 79, 0.4);
 }
 
-/* Editorial Serif & Clean Sans helper utilities */
+/* Gold Glow Focus / Selection */
+.sf-gold-glow {
+  box-shadow: 0 0 0 1px #D6A84F, 0 0 16px rgba(214, 168, 79, 0.25);
+}
+
+/* Selected photo luxury border */
+.sf-photo-selected {
+  outline: 2px solid #D6A84F;
+  outline-offset: -2px;
+}
+
+/* Buttons */
+.btn-gold {
+  background-color: #D6A84F;
+  color: #0B1220;
+  font-weight: 700;
+  transition: all 150ms ease;
+}
+.btn-gold:hover {
+  background-color: #C5963E;
+  box-shadow: 0 4px 14px rgba(214, 168, 79, 0.28);
+}
+.btn-gold:active {
+  transform: scale(0.98);
+}
+
+.btn-luxury-forest {
+  background-color: #D6A84F;
+  color: #0B1220;
+  font-weight: 700;
+  transition: all 150ms ease;
+}
+.btn-luxury-forest:hover {
+  background-color: #C5963E;
+  box-shadow: 0 4px 14px rgba(214, 168, 79, 0.28);
+}
+
+/* Typography Helpers */
 .font-display {
-  font-family: "Playfair Display", "Cormorant Garamond", Lora, Georgia, serif;
+  font-family: "Plus Jakarta Sans", Inter, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .font-editorial {
-  font-family: "Playfair Display", "Cormorant Garamond", Lora, Georgia, serif;
-  letter-spacing: -0.015em;
-}
-
-.font-poetic {
-  font-family: "Cormorant Garamond", "Playfair Display", Georgia, serif;
-  font-style: italic;
+  font-family: "Playfair Display", "Cormorant Garamond", Georgia, serif;
 }
 
 .font-body {
   font-family: "Plus Jakarta Sans", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* Elegant Scrollbars */
+/* Elegant Dark Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
-
 ::-webkit-scrollbar-track {
-  background: #FBF9F4;
+  background: #0B1220;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: #DDD7CB;
-  border-radius: 9999px;
+  background: #232F48;
+  border-radius: 4px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: #BCB4A4;
-}
-
-/* Interactive Click & Tactile Micro-Interactions */
-.interactive-click {
-  transition: transform 140ms cubic-bezier(0.34, 1.56, 0.64, 1), background-color 140ms ease, box-shadow 140ms ease;
-}
-
-.interactive-click:active {
-  transform: scale(0.96);
-}
-
-.btn-luxury {
-  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.btn-luxury:hover {
-  transform: translateY(-1px);
-}
-
-.btn-luxury:active {
-  transform: scale(0.97) translateY(0);
-}
-
-.btn-luxury-forest {
-  background-color: #163E2B;
-  color: #FFFFFF;
-  font-weight: 600;
-  box-shadow: 0 4px 14px rgba(22, 62, 43, 0.18);
-  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.btn-luxury-forest:hover {
-  background-color: #1E5139;
-  box-shadow: 0 6px 20px rgba(22, 62, 43, 0.26);
-  transform: translateY(-1px);
-}
-
-.btn-luxury-forest:active {
-  transform: scale(0.97);
-  box-shadow: 0 2px 6px rgba(22, 62, 43, 0.14);
-}
-
-.btn-luxury-champagne {
-  background-color: #C8A874;
-  color: #152019;
-  font-weight: 600;
-  box-shadow: 0 4px 14px rgba(200, 168, 116, 0.22);
-  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.btn-luxury-champagne:hover {
-  background-color: #D4B785;
-  box-shadow: 0 6px 20px rgba(200, 168, 116, 0.32);
-  transform: translateY(-1px);
-}
-
-.btn-luxury-champagne:active {
-  transform: scale(0.97);
-}
-
-.nav-active-pill {
-  background-color: #E2EDE0 !important;
-  color: #163E2B !important;
-  font-weight: 600 !important;
-  border: 1px solid #C7D8C4 !important;
-}
-
-.botanical-leaves-bg {
-  background-image: 
-    radial-gradient(circle at 100% 100%, rgba(74, 107, 86, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 0% 0%, rgba(200, 168, 116, 0.07) 0%, transparent 40%);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
+  background: #3B4B6E;
 }

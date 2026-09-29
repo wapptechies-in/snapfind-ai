@@ -17,6 +17,11 @@ class Settings(BaseSettings):
     # --- General ---
     APP_NAME: str = "SnapFind AI API"
     ENVIRONMENT: str = "development"
+    SEED_DEV_DATA: bool | None = None  # None = True in development only, False in production/staging
+
+    # --- Trial Deliverable Edition Configuration ---
+    TRIAL_EDITION_MODE: bool = True
+    TRIAL_STORAGE_LIMIT_BYTES: int = 9 * 1024 * 1024 * 1024  # 9.0 GB hard limit (prevents Cloudflare R2 charges)
 
     # --- Server ---
     API_HOST: str = "0.0.0.0"
@@ -90,8 +95,17 @@ class Settings(BaseSettings):
     def cors_origins_list(self) -> list[str]:
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
 
+    @property
+    def should_seed_dev_data(self) -> bool:
+        if self.SEED_DEV_DATA is not None:
+            return self.SEED_DEV_DATA
+        return self.ENVIRONMENT.lower() == "development"
+
 
 @lru_cache
 def get_settings() -> Settings:
     """Cached settings instance — import this, not Settings() directly."""
     return Settings()
+
+
+settings = get_settings()

@@ -1,10 +1,11 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { authApi } from "../api/auth";
+import { billingApi } from "../api";
 import { eventsApi } from "../api/events";
 import { getAuthToken, setApiBaseUrl } from "../api/client";
 import { sessionStorage } from "../storage/sessionStorage";
-import type { AppSettings, CreateEventPayload, LocalUploadSession, ScanResult, SnapEvent, User } from "../types";
+import type { AppSettings, CreateEventPayload, LocalUploadSession, ScanResult, SnapEvent, SubscriptionStatus, User } from "../types";
 import type { UploadManager } from "../upload/uploadManager";
 
 interface AppContextType {
@@ -29,6 +30,8 @@ interface AppContextType {
   updateSettings: (s: Partial<AppSettings>) => void;
   recentSessions: LocalUploadSession[];
   refreshRecentSessions: () => Promise<void>;
+  subscription: SubscriptionStatus | null;
+  refreshSubscription: () => Promise<SubscriptionStatus | null>;
 }
 
 
@@ -36,6 +39,7 @@ const AppContext = createContext<AppContextType | null>(null);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [events, setEvents] = useState<SnapEvent[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<SnapEvent | null>(null);
@@ -44,11 +48,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [recentSessions, setRecentSessions] = useState<LocalUploadSession[]>([]);
 
   const [settings, setSettings] = useState<AppSettings>(() => {
+    const isProd = Boolean((import.meta as any).env?.PROD);
+    const defaultProductionUrl = (import.meta as any).env?.VITE_API_URL || "https://staging-api.snapfind.ai";
+    const defaultDevelopmentUrl = "http://127.0.0.1:8000";
+    const defaultUrl = isProd ? defaultProductionUrl : defaultDevelopmentUrl;
+
     const raw = localStorage.getItem("snapfind_desktop_settings");
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
-        if (parsed.apiBaseUrl === "http://localhost:8000") {
+        if (isProd && (parsed.apiBaseUrl === "http://localhost:8000" || parsed.apiBaseUrl === "http://127.0.0.1:8000")) {
+          parsed.apiBaseUrl = defaultProductionUrl;
+        } else if (!isProd && parsed.apiBaseUrl === "http://localhost:8000") {
           parsed.apiBaseUrl = "http://127.0.0.1:8000";
         }
         return parsed;
@@ -57,7 +68,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }
     const savedUrl = localStorage.getItem("snapfind_desktop_api_url");
-    const activeUrl = (!savedUrl || savedUrl === "http://localhost:8000") ? "http://127.0.0.1:8000" : savedUrl;
+    let activeUrl = savedUrl || defaultUrl;
+    if (isProd && (!savedUrl || savedUrl === "http://localhost:8000" || savedUrl === "http://127.0.0.1:8000")) {
+      activeUrl = defaultProductionUrl;
+    }
     return {
       apiBaseUrl: activeUrl,
       concurrency: 4,
@@ -107,6 +121,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
 
+  const refreshSubscription = async (): Promise<SubscriptionStatus | null> => {
+    try {
+      const sub = await billingApi.getSubscription();
+      setSubscription(sub);
+      return sub;
+    } catch {
+      return null;
+    }
+  };
+
   // Restore user session on mount
   useEffect(() => {
     async function initAuth() {
@@ -115,7 +139,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         try {
           const me = await authApi.getMe();
           setUser(me);
-          await loadEvents();
+          await Promise.all([loadEvents(), refreshSubscription()]);
         } catch {
           authApi.logout();
           setUser(null);
@@ -137,21 +161,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const login = async (email: string, pass: string) => {
     const res = await authApi.login(email, pass);
     setUser(res.user);
-    await loadEvents();
-    await refreshRecentSessions();
+    await Promise.all([loadEvents(), refreshSubscription(), refreshRecentSessions()]);
   };
 
   const loginWithGoogle = async (credential: string, studioName?: string) => {
     const res = await authApi.loginWithGoogle(credential, studioName);
     setUser(res.user);
-    await loadEvents();
-    await refreshRecentSessions();
+    await Promise.all([loadEvents(), refreshSubscription(), refreshRecentSessions()]);
   };
 
   const refreshProfile = async () => {
     try {
       const me = await authApi.getMe();
       setUser(me);
+      await refreshSubscription();
     } catch (err) {
       console.error("Failed to refresh profile:", err);
     }
@@ -168,6 +191,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setSelectedEvent(null);
     setScanResult(null);
     setUploadManager(null);
+    setSubscription(null);
   };
 
   return (
@@ -194,6 +218,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateSettings,
         recentSessions,
         refreshRecentSessions,
+        subscription,
+        refreshSubscription,
       }}
     >
       {children}

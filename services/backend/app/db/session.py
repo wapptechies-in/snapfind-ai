@@ -36,14 +36,19 @@ BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
 CANONICAL_SQLITE_PATH = BACKEND_DIR / "snapfind_local.db"
 
 use_sqlite = False
+is_prod = settings.ENVIRONMENT.lower() in ("production", "staging")
+
 if "postgresql" in db_url:
     try:
         parsed = urlparse(db_url)
         host = parsed.hostname or "localhost"
         port = parsed.port or 5432
-        if not _is_host_reachable(host, port):
+        is_local = host in ("localhost", "127.0.0.1", "::1")
+        # For local dev, 0.05s fails fast to SQLite. For remote cloud DBs (Supabase), give 5s for WAN handshake.
+        check_timeout = 0.05 if is_local else 5.0
+        if not is_prod and is_local and not _is_host_reachable(host, port, timeout=check_timeout):
             use_sqlite = True
-            logger.info("Configured PostgreSQL at %s:%s is unreachable. Falling back immediately to SQLite.", host, port)
+            logger.info("Local PostgreSQL at %s:%s is unreachable. Falling back to SQLite for local development.", host, port)
     except Exception:
         pass
 
@@ -61,18 +66,21 @@ def _configure_sqlite_engine(eng):
         except Exception:
             pass
 
-if use_sqlite or db_url.startswith("sqlite"):
+if use_sqlite or (db_url.startswith("sqlite") and not is_prod):
     db_url = f"sqlite:///{CANONICAL_SQLITE_PATH.as_posix()}"
     connect_args = {"check_same_thread": False, "timeout": 30}
     engine = create_engine(db_url, pool_pre_ping=True, connect_args=connect_args)
     _configure_sqlite_engine(engine)
 else:
-    connect_args = {"connect_timeout": 2}
+    connect_args = {"connect_timeout": 10}
     try:
         engine = create_engine(db_url, pool_pre_ping=True, connect_args=connect_args)
         with engine.connect() as conn:
             pass
     except Exception as e:
+        if is_prod:
+            logger.error("FATAL: Could not connect to production DATABASE_URL (%s).", e)
+            raise
         logger.warning(
             "Could not connect to configured DATABASE_URL (%s). Falling back to SQLite at %s.",
             e,
@@ -102,12 +110,18 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def init_db() -> None:
-    """Create all tables and seed initial test fixtures if the database is empty."""
+    """Create all tables and seed initial test fixtures if the database is empty in development."""
     from app.db.base import Base as AppBase
     from app.db.seed import seed_dev_data
 
     # Ensure tables exist (also covered by Alembic migrations)
     AppBase.metadata.create_all(bind=engine)
 
-    with SessionLocal() as db:
-        seed_dev_data(db)
+    from app.db.migrate_trial_expiration import run_trial_expiration_migrations
+    run_trial_expiration_migrations()
+
+    if settings.should_seed_dev_data:
+        with SessionLocal() as db:
+            seed_dev_data(db)
+    else:
+        logger.info("Automatic seed data disabled (ENVIRONMENT=%s).", settings.ENVIRONMENT)

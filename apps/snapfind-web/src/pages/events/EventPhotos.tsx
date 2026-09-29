@@ -138,8 +138,9 @@ export default function EventPhotos() {
       setNotice(newVal ? `"${photo.filename}" is now published to Public Gallery ✓` : `"${photo.filename}" hidden from Public Gallery.`);
       setTimeout(() => setNotice(null), 3000);
       await loadData();
-    } catch (err: any) {
-      setNotice(`Failed to update visibility: ${err?.message || String(err)}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setNotice(`Failed to update visibility: ${msg}`);
       setTimeout(() => setNotice(null), 4000);
     }
   };
@@ -154,8 +155,9 @@ export default function EventPhotos() {
       setSelectedIds([]);
       setTimeout(() => setNotice(null), 3500);
       await loadData();
-    } catch (err: any) {
-      setNotice(`Bulk update failed: ${err?.message || String(err)}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setNotice(`Bulk update failed: ${msg}`);
       setTimeout(() => setNotice(null), 4000);
     } finally {
       setUpdatingVisibility(false);
@@ -177,8 +179,9 @@ export default function EventPhotos() {
       setNotice(`Sub-folder "${created.name}" created.`);
       setTimeout(() => setNotice(null), 3000);
       await loadData();
-    } catch (err: any) {
-      setFolderError(err?.message || "Failed to create folder");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to create folder";
+      setFolderError(msg);
     } finally {
       setCreatingFolder(false);
     }
@@ -221,9 +224,9 @@ export default function EventPhotos() {
       <EventHeader event={event} />
 
       {/* Storage & Folder Relationship Info */}
-      <div className="mb-6 flex items-center justify-between rounded-2xl border border-studio-sand bg-studio-cream/50 p-3.5 text-xs text-studio-muted">
+      <div className="mb-6 flex items-center justify-between rounded-xl border border-gold/20 bg-slate/60 p-3.5 text-xs text-cool-gray">
         <div className="flex items-center gap-2.5">
-          <span className="rounded-full bg-studio-cream border border-studio-sand px-2 py-0.5 text-[10px] font-semibold text-studio-forest uppercase tracking-wider">
+          <span className="rounded-md bg-gold/15 border border-gold/30 px-2 py-0.5 text-[10px] font-semibold text-gold uppercase tracking-wider">
             1 EVENT : 1 QR : N FOLDERS
           </span>
           <span>
@@ -241,7 +244,7 @@ export default function EventPhotos() {
       )}
 
       {/* Sub-Folders & Gallery Tabs Navigation Bar */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-studio-sand pb-4">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-hairline pb-4">
         <div className="flex flex-wrap items-center gap-2">
           {/* All Photos Tab */}
           <button
@@ -252,14 +255,14 @@ export default function EventPhotos() {
             }}
             className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all cursor-pointer ${
               activeFolderId === null && activeTab === "all"
-                ? "bg-studio-forest text-white shadow-xs"
-                : "bg-studio-cream border border-studio-sand text-studio-muted hover:text-studio-charcoal"
+                ? "bg-gold text-midnight font-bold shadow-md shadow-gold/10"
+                : "bg-slate border border-hairline text-cool-gray hover:text-soft-white hover:border-gold/30"
             }`}
           >
             <span>🖼️ All Photos</span>
             <span
               className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                activeFolderId === null && activeTab === "all" ? "bg-white/20 text-white" : "bg-white text-studio-muted"
+                activeFolderId === null && activeTab === "all" ? "bg-midnight/20 text-midnight" : "bg-panel2 text-cool-gray"
               }`}
             >
               {photos.length}
@@ -275,14 +278,14 @@ export default function EventPhotos() {
             }}
             className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all cursor-pointer ${
               activeFolderId === null && activeTab === "public"
-                ? "bg-studio-forest text-white shadow-xs"
-                : "bg-studio-cream border border-studio-sand text-studio-muted hover:text-studio-charcoal"
+                ? "bg-gold text-midnight font-bold shadow-md shadow-gold/10"
+                : "bg-slate border border-hairline text-cool-gray hover:text-soft-white hover:border-gold/30"
             }`}
           >
             <span>🌐 Public Gallery</span>
             <span
               className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                activeFolderId === null && activeTab === "public" ? "bg-white/20 text-white" : "bg-white text-studio-muted"
+                activeFolderId === null && activeTab === "public" ? "bg-midnight/20 text-midnight" : "bg-panel2 text-cool-gray"
               }`}
             >
               {publicPhotosCount}
@@ -302,14 +305,14 @@ export default function EventPhotos() {
                   }}
                   className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all cursor-pointer ${
                     isActive
-                      ? "bg-studio-forest text-white shadow-xs"
-                      : "bg-studio-cream border border-studio-sand text-studio-muted hover:text-studio-charcoal"
+                      ? "bg-gold text-midnight font-bold shadow-md shadow-gold/10"
+                      : "bg-slate border border-hairline text-cool-gray hover:text-soft-white hover:border-gold/30"
                   }`}
                 >
                   <span>📁 {folder.name}</span>
                   <span
                     className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                      isActive ? "bg-white/20 text-white" : "bg-white text-studio-muted"
+                      isActive ? "bg-midnight/20 text-midnight" : "bg-panel2 text-cool-gray"
                     }`}
                   >
                     {folder.photoCount}
@@ -323,7 +326,7 @@ export default function EventPhotos() {
                     handleDeleteFolder(folder);
                   }}
                   title={`Delete folder "${folder.name}"`}
-                  className="ml-1 hidden rounded-lg p-1 text-studio-muted hover:bg-red-50 hover:text-red-700 group-hover:inline-flex transition-colors cursor-pointer"
+                  className="ml-1 hidden rounded-lg p-1 text-cool-gray hover:bg-coral/20 hover:text-coral group-hover:inline-flex transition-colors cursor-pointer"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -352,14 +355,14 @@ export default function EventPhotos() {
 
       {/* Batch Selection Action Bar */}
       {selectedIds.length > 0 && (
-        <Card className="p-3 mb-6 bg-violet/10 border-violet/30 flex flex-wrap items-center justify-between gap-3 animate-fade-in">
+        <Card className="p-3 mb-6 bg-slate border-gold/40 flex flex-wrap items-center justify-between gap-3 animate-fade-in shadow-lg">
           <div className="flex items-center gap-3">
-            <span className="text-xs font-semibold text-studio-charcoal">
-              <strong className="text-studio-forest">{selectedIds.length}</strong> of {filteredPhotos.length} selected
+            <span className="text-xs font-semibold text-soft-white">
+              <strong className="text-gold font-bold">{selectedIds.length}</strong> of {filteredPhotos.length} selected
             </span>
             <button
               onClick={handleSelectAll}
-              className="text-xs text-studio-forest hover:underline font-semibold cursor-pointer"
+              className="text-xs text-gold hover:underline font-semibold cursor-pointer"
             >
               {selectedIds.length === filteredPhotos.length ? "Deselect All" : "Select All"}
             </button>
@@ -389,31 +392,30 @@ export default function EventPhotos() {
       )}
 
       {/* Photo Toolbar */}
-      <Card className="p-4 mb-6 flex flex-col sm:flex-row items-center justify-between gap-3 bg-white border-studio-sand shadow-xs">
+      <Card className="p-4 mb-6 flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate border-hairline shadow-xs">
         <div className="w-full sm:w-72">
           <Input
             placeholder={`Search ${activeTab === "public" ? "public gallery" : activeFolder ? activeFolder.name : "all"} photos...`}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="bg-studio-cream/40 border-studio-sand text-studio-charcoal placeholder:text-studio-muted/60"
           />
         </div>
 
-        <div className="flex items-center justify-between w-full sm:w-auto gap-4 text-xs text-studio-muted font-medium">
+        <div className="flex items-center justify-between w-full sm:w-auto gap-4 text-xs text-cool-gray font-medium">
           <span>
             {activeTab === "public" ? (
               <>
-                Showing <strong className="text-studio-forest font-semibold">{filteredPhotos.length}</strong> of{" "}
+                Showing <strong className="text-gold font-semibold">{filteredPhotos.length}</strong> of{" "}
                 {publicPhotosCount} Public Gallery photos
               </>
             ) : activeFolder ? (
               <>
-                Folder: <strong className="text-studio-charcoal font-semibold">{activeFolder.name}</strong> •{" "}
-                Showing <strong className="text-studio-charcoal font-semibold">{filteredPhotos.length}</strong> of {displayedPhotos.length}
+                Folder: <strong className="text-soft-white font-semibold">{activeFolder.name}</strong> •{" "}
+                Showing <strong className="text-soft-white font-semibold">{filteredPhotos.length}</strong> of {displayedPhotos.length}
               </>
             ) : (
               <>
-                Showing <strong className="text-studio-charcoal font-semibold">{filteredPhotos.length}</strong> of{" "}
+                Showing <strong className="text-soft-white font-semibold">{filteredPhotos.length}</strong> of{" "}
                 {photos.length} photos across all folders
               </>
             )}

@@ -13,8 +13,8 @@ declare global {
     google?: {
       accounts: {
         id: {
-          initialize: (config: any) => void;
-          renderButton: (parent: HTMLElement, options: any) => void;
+          initialize: (config: Record<string, unknown>) => void;
+          renderButton: (parent: HTMLElement, options: Record<string, unknown>) => void;
           prompt: () => void;
         };
       };
@@ -34,7 +34,7 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
   const [devEmail, setDevEmail] = useState("photographer@google.com");
   const [devName, setDevName] = useState("Alex Studio");
 
-  const clientId = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || "";
+  const clientId = (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_GOOGLE_CLIENT_ID || "";
 
   useEffect(() => {
     if (!clientId) return;

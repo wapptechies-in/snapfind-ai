@@ -6,7 +6,11 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import SplashScreen from "./components/SplashScreen";
 import { Dashboard } from "./pages/Dashboard";
 import { EventSelect } from "./pages/EventSelect";
+import { EventDetails } from "./pages/events/EventDetails";
 import { EventPhotos } from "./pages/events/EventPhotos";
+import { EventProcessing } from "./pages/events/EventProcessing";
+import { EventQR } from "./pages/events/EventQR";
+import { EventSettings } from "./pages/events/EventSettings";
 import { Bookings } from "./pages/Bookings";
 import { Subscription } from "./pages/Subscription";
 import { FolderScan } from "./pages/FolderScan";
@@ -57,10 +61,42 @@ const AppRoutes: React.FC = () => {
         }
       />
       <Route
+        path="/events/:id"
+        element={
+          <Layout title="Event Details">
+            <EventDetails />
+          </Layout>
+        }
+      />
+      <Route
         path="/events/:id/photos"
         element={
           <Layout title="Event Photos">
             <EventPhotos />
+          </Layout>
+        }
+      />
+      <Route
+        path="/events/:id/processing"
+        element={
+          <Layout title="Event Processing">
+            <EventProcessing />
+          </Layout>
+        }
+      />
+      <Route
+        path="/events/:id/qr"
+        element={
+          <Layout title="QR Management">
+            <EventQR />
+          </Layout>
+        }
+      />
+      <Route
+        path="/events/:id/settings"
+        element={
+          <Layout title="Event Settings">
+            <EventSettings />
           </Layout>
         }
       />

@@ -37,23 +37,23 @@ export const Modal: React.FC<ModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in select-none">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in select-none">
       <div
         className="fixed inset-0"
         onClick={onClose}
         aria-hidden="true"
       />
       <div
-        className={`relative w-full ${maxWidthStyles[maxWidth]} rounded-2xl border border-hairline bg-panel p-6 shadow-2xl z-10 animate-zoom-in-95 ${className}`}
+        className={`relative w-full ${maxWidthStyles[maxWidth]} rounded-xl border border-[#232F48] bg-[#151D2E] text-[#F7F5F0] p-6 shadow-2xl z-10 animate-scale-in ${className}`}
         role="dialog"
         aria-modal="true"
       >
         {title && (
-          <div className="flex items-center justify-between pb-4 border-b border-hairline mb-4">
-            <h3 className="text-base font-semibold text-cloud tracking-tight">{title}</h3>
+          <div className="flex items-center justify-between pb-4 border-b border-[#232F48] mb-5">
+            <h3 className="text-base font-bold text-[#F7F5F0] tracking-tight">{title}</h3>
             <button
               onClick={onClose}
-              className="rounded-lg p-1.5 text-dim hover:text-cloud hover:bg-panel2 transition-colors cursor-pointer"
+              className="rounded-lg p-1.5 text-[#A8B0BE] hover:text-[#D6A84F] hover:bg-[#1B253B] transition-colors cursor-pointer"
               aria-label="Close modal"
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -67,4 +67,3 @@ export const Modal: React.FC<ModalProps> = ({
     </div>
   );
 };
-

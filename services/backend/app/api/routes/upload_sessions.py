@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_current_photographer_or_default
+from app.api.dependencies import get_current_photographer
 from app.core.config import get_settings
 from app.db.session import get_db
 from app.models.event import Event
@@ -60,7 +60,7 @@ def _resolve_event(event_id_or_token: str, db: Session) -> Event:
 )
 def create_upload_session(
     payload: UploadSessionCreate,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> UploadSession:
     """
@@ -68,7 +68,7 @@ def create_upload_session(
     Verifies event existence and photographer ownership.
     """
     event = _resolve_event(payload.event_id, db)
-    if event.photographer_id != photographer.id and photographer.id != "ph_demo_1":
+    if event.photographer_id != photographer.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to upload to this event",
@@ -97,7 +97,7 @@ def create_upload_session(
 )
 def get_upload_session(
     session_id: str,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> UploadSession:
     """
@@ -110,7 +110,7 @@ def get_upload_session(
             detail=f"Upload session '{session_id}' not found",
         )
 
-    if session.photographer_id != photographer.id and photographer.id != "ph_demo_1":
+    if session.photographer_id != photographer.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to view this upload session",
@@ -126,7 +126,7 @@ def get_upload_session(
 def batch_upload_init(
     session_id: str,
     payload: BatchUploadInitRequest,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> BatchUploadInitResponse:
     """
@@ -140,6 +140,12 @@ def batch_upload_init(
             detail=f"Upload session '{session_id}' not found",
         )
 
+    if session.photographer_id != photographer.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to manage this upload session",
+        )
+
     if session.status != "active":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -150,6 +156,28 @@ def batch_upload_init(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Maximum batch size is 100 items per request",
+        )
+
+    # Enforce 9.0 GB hard storage limit (protects Cloudflare R2 free tier from charges)
+    current_storage_bytes = db.scalar(
+        select(func.coalesce(func.sum(Photo.file_size), 0))
+        .join(Event, Event.id == Photo.event_id)
+        .where(Event.photographer_id == photographer.id)
+    ) or 0
+    batch_incoming_bytes = sum(item.file_size for item in payload.items)
+    max_storage_limit = settings.TRIAL_STORAGE_LIMIT_BYTES if settings.TRIAL_EDITION_MODE else 50 * 1024 * 1024 * 1024
+
+    if current_storage_bytes + batch_incoming_bytes > max_storage_limit:
+        used_gb = round(current_storage_bytes / (1024 ** 3), 2)
+        batch_gb = round(batch_incoming_bytes / (1024 ** 3), 2)
+        limit_gb = round(max_storage_limit / (1024 ** 3), 1)
+        raise HTTPException(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            detail=(
+                f"Trial storage limit reached ({limit_gb} GB): You have used {used_gb} GB. "
+                f"Adding this batch ({batch_gb} GB) would exceed the 9.0 GB ceiling. "
+                f"Uploads blocked to ensure zero overage charges on Cloudflare R2."
+            ),
         )
 
     storage = StorageService()
@@ -227,7 +255,7 @@ def batch_upload_init(
 )
 def complete_upload_session(
     session_id: str,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> UploadSession:
     """
@@ -238,6 +266,12 @@ def complete_upload_session(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Upload session '{session_id}' not found",
+        )
+
+    if session.photographer_id != photographer.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to complete this upload session",
         )
 
     # Calculate real-time counts from items
@@ -276,7 +310,7 @@ def complete_upload_session(
 )
 def cancel_upload_session(
     session_id: str,
-    photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> UploadSession:
     """
@@ -288,6 +322,12 @@ def cancel_upload_session(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Upload session '{session_id}' not found",
+        )
+
+    if session.photographer_id != photographer.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to cancel this upload session",
         )
 
     session.status = "cancelled"

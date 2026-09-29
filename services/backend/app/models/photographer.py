@@ -64,6 +64,7 @@ class Photographer(Base):
     approved_by: Mapped[str | None] = mapped_column(String(64), nullable=True)
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     rejection_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    trial_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Onboarding state — true after wizard is completed
     onboarding_completed: Mapped[bool] = mapped_column(default=False, nullable=False)
@@ -86,6 +87,17 @@ class Photographer(Base):
     razorpay_subscription_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     max_active_events: Mapped[int] = mapped_column(default=2, nullable=False)
     max_photos_per_event: Mapped[int] = mapped_column(default=500, nullable=False)
+
+    @property
+    def is_active(self) -> bool:
+        return self.approval_status not in ("suspended", "rejected")
+
+    @is_active.setter
+    def is_active(self, value: bool) -> None:
+        if not value:
+            self.approval_status = "suspended"
+        elif self.approval_status in ("suspended", "rejected"):
+            self.approval_status = "approved"
 
     # Relationships
     user = relationship("User", back_populates="photographer")

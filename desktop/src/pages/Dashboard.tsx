@@ -4,7 +4,8 @@ import { CreateEventModal } from "../components/CreateEventModal";
 import { useApp } from "../state/store";
 import { UploadManager } from "../upload/uploadManager";
 import { dashboardApi } from "../api";
-import { BotanicalLeaves } from "@snapfind/ui";
+import { MetricCard } from "@snapfind/ui";
+import { EventCard } from "@snapfind/ui";
 import type { DashboardStats, SnapEvent } from "../types";
 
 export const Dashboard: React.FC = () => {
@@ -46,214 +47,200 @@ export const Dashboard: React.FC = () => {
 
   const displayName = user?.display_name || user?.studio_name || "Jebastin";
 
-  // Showcase events fallback matching reference image
+  // Showcase events fallback
   const showcaseEvents = safeEvents.length > 0 ? safeEvents.slice(0, 4) : [
     {
       id: "demo-1",
       name: "Arun & Priya Wedding",
       date: "24 Sep 2026",
       location: "Chennai",
-      photo_count: 2458,
+      photo_count: 12450,
       guestsCount: 684,
       viewsCount: 3127,
-      status: "Completed",
-      coverUrl: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=600&q=80",
-    },
+      status: "Active",
+      coverUrl: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80",
+    } as unknown as SnapEvent,
     {
       id: "demo-2",
-      name: "College Day 2026",
+      name: "Autumn Fashion Editorial",
       date: "18 Sep 2026",
-      location: "Trichy",
-      photo_count: 1245,
-      guestsCount: 420,
+      location: "Bangalore",
+      photo_count: 4280,
+      guestsCount: 120,
       viewsCount: 890,
       status: "Completed",
-      coverUrl: "https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=600&q=80",
-    },
+      coverUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1200&q=80",
+    } as unknown as SnapEvent,
     {
       id: "demo-3",
-      name: "Baptism Ceremony",
+      name: "Summit Corporate Gala",
       date: "10 Sep 2026",
-      location: "Nagercoil",
-      photo_count: 892,
-      guestsCount: 310,
-      viewsCount: 540,
+      location: "Mumbai",
+      photo_count: 3890,
+      guestsCount: 450,
+      viewsCount: 1540,
       status: "Processing",
-      coverUrl: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=600&q=80",
-    },
+      coverUrl: "https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80",
+    } as unknown as SnapEvent,
     {
       id: "demo-4",
-      name: "Corporate Event",
+      name: "Highland Portrait Session",
       date: "05 Sep 2026",
-      location: "Chennai",
-      photo_count: 3125,
-      guestsCount: 960,
-      viewsCount: 2450,
+      location: "Ooty",
+      photo_count: 1450,
+      guestsCount: 45,
+      viewsCount: 620,
       status: "Completed",
-      coverUrl: "https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=600&q=80",
-    },
+      coverUrl: "https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=1200&q=80",
+    } as unknown as SnapEvent,
   ];
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto font-sans">
-      {/* Top Greeting & Action Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-charcoal tracking-tight">
-            Good Morning, {displayName} 👋
-          </h1>
-          <p className="text-xs sm:text-sm text-warm-gray mt-1 flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-forest animate-pulse" />
-            <span>Let's preserve beautiful memories together.</span>
-          </p>
-        </div>
-
-        <button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="btn-luxury-forest inline-flex items-center gap-2 px-4.5 py-2.5 rounded-xl text-xs font-semibold shadow-md active:scale-95 cursor-pointer"
-        >
-          <span className="text-base leading-none font-bold">+</span>
-          <span>New Event</span>
-        </button>
-      </div>
-
-      {/* 4 Metric Cards Row (Matching Reference) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-        {/* Metric 1: Active Events */}
-        <div className="bg-white rounded-2xl p-5 border border-warm-border shadow-card hover:-translate-y-1 hover:shadow-hover hover:border-champagne/40 transition-all duration-200">
-          <div className="flex items-center gap-3.5">
-            <div className="h-12 w-12 rounded-xl bg-[#D9F2E6] text-[#165B3B] border border-[#BEE5D3] flex items-center justify-center flex-shrink-0 shadow-xs">
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-2xl sm:text-3xl font-serif font-bold text-charcoal leading-none">
-                {liveStats?.activeEvents ?? 12}
-              </p>
-              <p className="text-xs text-warm-gray font-medium mt-1">Active Events</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Metric 2: Photos */}
-        <div className="bg-white rounded-2xl p-5 border border-warm-border shadow-card hover:-translate-y-1 hover:shadow-hover hover:border-champagne/40 transition-all duration-200">
-          <div className="flex items-center gap-3.5">
-            <div className="h-12 w-12 rounded-xl bg-[#FCECDD] text-[#9E5926] border border-[#F5D5BA] flex items-center justify-center flex-shrink-0 shadow-xs">
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="3" width="18" height="18" rx="2" />
-                <circle cx="8.5" cy="8.5" r="1.5" />
-                <polyline points="21 15 16 10 5 21" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-2xl sm:text-3xl font-serif font-bold text-charcoal leading-none">
-                {liveStats?.totalPhotos ? liveStats.totalPhotos.toLocaleString() : "8,452"}
-              </p>
-              <p className="text-xs text-warm-gray font-medium mt-1">Photos</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Metric 3: Guest Views */}
-        <div className="bg-white rounded-2xl p-5 border border-warm-border shadow-card hover:-translate-y-1 hover:shadow-hover hover:border-champagne/40 transition-all duration-200">
-          <div className="flex items-center gap-3.5">
-            <div className="h-12 w-12 rounded-xl bg-[#EDE8F8] text-[#5B4C8A] border border-[#D8CFEE] flex items-center justify-center flex-shrink-0 shadow-xs">
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-2xl sm:text-3xl font-serif font-bold text-charcoal leading-none">
-                {liveStats?.photoSearches ? liveStats.photoSearches.toLocaleString() : "3,127"}
-              </p>
-              <p className="text-xs text-warm-gray font-medium mt-1">Guest Views</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Metric 4: Happy Clients */}
-        <div className="bg-white rounded-2xl p-5 border border-warm-border shadow-card hover:-translate-y-1 hover:shadow-hover hover:border-champagne/40 transition-all duration-200">
-          <div className="flex items-center gap-3.5">
-            <div className="h-12 w-12 rounded-xl bg-[#FAF4EB] text-[#8F6E3B] border border-[#E2CEAD] flex items-center justify-center flex-shrink-0 shadow-xs">
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M8 14s1.5 2 4 2 4-2 4-2" />
-                <line x1="9" y1="9" x2="9.01" y2="9" />
-                <line x1="15" y1="9" x2="15.01" y2="9" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-2xl sm:text-3xl font-serif font-bold text-charcoal leading-none">86%</p>
-              <p className="text-xs text-warm-gray font-medium mt-1">Happy Clients</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Featured Promotional Banner Card (Matching Reference: "Capture Share Cherish Every Moment") */}
-      <div className="relative overflow-hidden rounded-3xl border border-warm-border bg-[#FAF6EE] shadow-card flex flex-col md:flex-row items-stretch justify-between min-h-[200px]">
-        {/* Left Decorative Botanical Leaves */}
-        <div className="absolute left-0 bottom-0 pointer-events-none opacity-40">
-          <BotanicalLeaves width={220} height={190} />
-        </div>
-
-        {/* Left Text Column */}
-        <div className="relative z-10 p-7 sm:p-9 flex flex-col justify-center max-w-md">
-          <div className="space-y-0.5">
-            <h2 className="font-serif text-2xl sm:text-3xl text-charcoal font-medium leading-tight">
-              Capture
-            </h2>
-            <h2 className="font-serif text-2xl sm:text-3xl text-charcoal font-medium leading-tight">
-              Share
-            </h2>
-            <h2 className="font-serif text-2xl sm:text-3xl text-charcoal font-medium leading-tight">
-              Cherish
-            </h2>
-            <p className="font-serif italic text-lg sm:text-xl text-forest font-semibold pt-1">
-              Every Moment
-            </p>
-          </div>
-        </div>
-
-        {/* Right Photography Image */}
-        <div className="relative md:w-1/2 min-h-[170px] md:min-h-full overflow-hidden">
+    <div className="space-y-8 max-w-7xl mx-auto font-sans">
+      {/* Section 10: Hero Section - Dark Cinematic Command Center */}
+      <div className="relative overflow-hidden rounded-2xl border border-[#232F48] bg-[#151D2E] shadow-2xl min-h-[250px] flex items-center">
+        {/* Cinematic Background Photography Image with dark gradient overlay */}
+        <div className="absolute inset-0 pointer-events-none">
           <img
-            src="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80"
-            alt="Romantic wedding couple smiling"
-            className="h-full w-full object-cover object-center"
+            src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=1600&q=80"
+            alt="Cinematic photography atmosphere"
+            className="h-full w-full object-cover object-center opacity-30 mix-blend-luminosity filter saturate-50"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#FAF6EE] via-transparent to-transparent hidden md:block" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0B1220] via-[#0B1220]/90 to-[#0B1220]/60" />
+        </div>
+
+        {/* Hero Content */}
+        <div className="relative z-10 p-6 sm:p-10 max-w-2xl">
+          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#D6A84F]/10 border border-[#D6A84F]/25 text-[#D6A84F] text-[11px] font-bold tracking-wide uppercase mb-3">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#D6A84F] animate-pulse" />
+            <span>Studio: {displayName}</span>
+          </div>
+
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#F7F5F0] tracking-tight leading-tight">
+            Capture. Organize. Find. Share.
+          </h1>
+
+          <p className="text-sm sm:text-base text-[#A8B0BE] mt-2 max-w-xl font-normal leading-relaxed">
+            Turn every event into an intelligent, searchable memory.
+          </p>
+
+          {/* Hero Action Buttons */}
+          <div className="flex flex-wrap items-center gap-3.5 mt-6">
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="px-5 py-2.5 rounded-xl bg-[#D6A84F] hover:bg-[#C5963E] text-[#0B1220] font-bold text-xs sm:text-sm tracking-wide shadow-md transition-all active:scale-95 cursor-pointer flex items-center gap-2"
+            >
+              <span className="text-base leading-none">+</span>
+              <span>Create Event</span>
+            </button>
+
+            <Link to="/events">
+              <button className="px-5 py-2.5 rounded-xl bg-[#151D2E]/80 hover:bg-[#1B253B] text-[#F7F5F0] border border-[#D6A84F]/40 hover:border-[#D6A84F] font-semibold text-xs sm:text-sm tracking-wide transition-all active:scale-95 cursor-pointer flex items-center gap-2 backdrop-blur-sm">
+                <svg className="w-4 h-4 text-[#D6A84F]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <circle cx="8.5" cy="8.5" r="1.5" />
+                  <polyline points="21 15 16 10 5 21" />
+                </svg>
+                <span>View Photos</span>
+              </button>
+            </Link>
+          </div>
         </div>
       </div>
 
-      {/* Active Local Upload Sessions (if any) */}
+      {/* Section 11: Understated Premium KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Active Events */}
+        <MetricCard
+          title="Active Events"
+          value={(liveStats?.activeEvents ?? safeEvents.length) || 12}
+          subtext="Live galleries indexed"
+          iconColor="gold"
+          icon={
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+          }
+        />
+
+        {/* Photos Indexed */}
+        <MetricCard
+          title="Photos Indexed"
+          value={liveStats?.totalPhotos ? liveStats.totalPhotos.toLocaleString() : "24,560"}
+          subtext="Face embeddings ready"
+          iconColor="sage"
+          icon={
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <polyline points="21 15 16 10 5 21" />
+            </svg>
+          }
+        />
+
+        {/* Happy Clients */}
+        <MetricCard
+          title="Happy Clients"
+          value={liveStats?.photoSearches ? liveStats.photoSearches.toLocaleString() : "3,420"}
+          subtext="Guest photo searches"
+          iconColor="coral"
+          icon={
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+          }
+        />
+
+        {/* AI Match Rate */}
+        <MetricCard
+          title="AI Match Rate"
+          value="98%"
+          subtext="Precision face recognition"
+          iconColor="gold"
+          trend="↑ Top benchmark accuracy"
+          icon={
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48 2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48 2.83-2.83" />
+            </svg>
+          }
+        />
+      </div>
+
+      {/* Resume Pending Local Sessions if Any */}
       {safeSessions.length > 0 && (
-        <div className="p-4 rounded-2xl bg-white border border-[#E7E3DC] shadow-xs">
-          <h3 className="text-xs font-semibold text-[#1A1C1A] uppercase tracking-wider mb-2">
-            In-Progress Local Ingestion Sessions
-          </h3>
+        <div className="rounded-xl border border-[#232F48] bg-[#151D2E] p-5 shadow-card">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-[#D6A84F] animate-pulse" />
+              <h3 className="text-sm font-bold text-[#F7F5F0]">Recent Upload & Scan Sessions</h3>
+            </div>
+            <Link to="/uploads" className="text-xs font-semibold text-[#D6A84F] hover:underline">
+              View All Uploads →
+            </Link>
+          </div>
           <div className="space-y-2">
-            {safeSessions.map((s) => (
+            {safeSessions.slice(0, 3).map((session) => (
               <div
-                key={s.id}
-                className="flex items-center justify-between p-3 rounded-xl bg-[#FAF8F5] border border-[#E7E3DC] text-xs"
+                key={session.id}
+                className="flex items-center justify-between p-3 rounded-lg bg-[#0F1624] border border-[#232F48] text-xs"
               >
                 <div>
-                  <p className="font-bold text-[#1A1C1A] truncate">{s.eventName}</p>
-                  <p className="text-[11px] text-[#737A74] font-mono">
-                    {(s as any).items?.length || (s as any).files?.length || 0} photos • {s.status}
+                  <p className="font-semibold text-[#F7F5F0]">{session.folderPath}</p>
+                  <p className="text-[10px] text-[#A8B0BE] mt-0.5">
+                    {session.totalFiles} files · {session.status} · {new Date(session.createdAt).toLocaleDateString()}
                   </p>
                 </div>
                 <button
-                  onClick={() => handleResumeSession(s)}
-                  className="px-3 py-1.5 rounded-lg bg-[#1E3A2F] text-white font-semibold text-xs active:scale-95 transition-all"
+                  onClick={() => handleResumeSession(session)}
+                  className="px-3 py-1.5 rounded-lg bg-[#D6A84F] hover:bg-[#C5963E] text-[#0B1220] font-bold text-xs active:scale-95 transition-all"
                 >
-                  Resume Ingestion →
+                  Resume
                 </button>
               </div>
             ))}
@@ -261,114 +248,56 @@ export const Dashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Recent Events Section (4 Cards Matching Reference) */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-serif font-bold text-[#1A1C1A]">
-            Recent Events
-          </h2>
+      {/* Section 12: Photography-First Events Showcase */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-[#F7F5F0] tracking-tight">
+              Recent Events
+            </h2>
+            <p className="text-xs text-[#A8B0BE] mt-0.5">
+              Your active galleries with AI face indexing
+            </p>
+          </div>
           <Link
             to="/events"
-            className="text-xs font-semibold text-[#1E3A2F] hover:text-[#284D3E] flex items-center gap-1 transition-colors active:scale-95"
+            className="text-xs font-bold text-[#D6A84F] hover:text-[#C5963E] transition-colors flex items-center gap-1"
           >
-            <span>View All</span>
+            <span>View All Events</span>
             <span>→</span>
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {showcaseEvents.map((evt) => {
-            const photoNum = (evt as unknown as { photo_count?: number; photoCount?: number }).photo_count ?? (evt as unknown as { photoCount?: number }).photoCount ?? 1200;
-            const guestNum = (evt as unknown as { guestsCount?: number }).guestsCount ?? Math.round(photoNum * 0.35);
-            const viewNum = (evt as unknown as { viewsCount?: number }).viewsCount ?? Math.round(photoNum * 1.4);
-            const isProcessing = evt.status?.toLowerCase() === "processing";
-
-            return (
-              <div
-                key={evt.id}
-                onClick={() => {
-                  setSelectedEvent(evt as unknown as SnapEvent);
-                  navigate(`/events/${evt.id}/photos`);
-                }}
-                className="bg-white rounded-2xl border border-[#E7E3DC] overflow-hidden shadow-xs hover:-translate-y-1 hover:shadow-md transition-all duration-200 cursor-pointer active:scale-[0.98] group flex flex-col justify-between"
-              >
-                {/* Photo Thumbnail */}
-                <div className="relative aspect-[16/10] overflow-hidden bg-[#F2EDE4]">
-                  <img
-                    src={
-                      (evt as unknown as { coverUrl?: string; cover_image_url?: string }).coverUrl ||
-                      (evt as unknown as { cover_image_url?: string }).cover_image_url ||
-                      "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=600&q=80"
-                    }
-                    alt={evt.name}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    loading="lazy"
-                  />
-                </div>
-
-                {/* Body Content */}
-                <div className="p-4 space-y-2.5 flex-1 flex flex-col justify-between">
-                  <div>
-                    <h3 className="font-serif font-bold text-sm text-[#1A1C1A] group-hover:text-[#1E3A2F] transition-colors truncate">
-                      {evt.name}
-                    </h3>
-                    <p className="text-[11px] text-[#737A74] mt-0.5 truncate">
-                      {evt.date || "24 Sep 2026"} • {evt.location || "Studio Gallery"}
-                    </p>
-                  </div>
-
-                  {/* 3 Metrics: Photos, Guests, Views */}
-                  <div className="pt-2 border-t border-[#F0ECE6] flex items-center justify-between text-[11px] text-[#555C56]">
-                    <span className="flex items-center gap-1 font-mono">
-                      <svg className="w-3 h-3 text-[#737A74]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="3" y="3" width="18" height="18" rx="2" />
-                        <circle cx="8.5" cy="8.5" r="1.5" />
-                      </svg>
-                      <strong>{photoNum.toLocaleString()}</strong>
-                    </span>
-                    <span className="flex items-center gap-1 font-mono">
-                      <svg className="w-3 h-3 text-[#737A74]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                        <circle cx="9" cy="7" r="4" />
-                      </svg>
-                      <strong>{guestNum.toLocaleString()}</strong>
-                    </span>
-                    <span className="flex items-center gap-1 font-mono">
-                      <svg className="w-3 h-3 text-[#737A74]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
-                      <strong>{viewNum.toLocaleString()}</strong>
-                    </span>
-                  </div>
-
-                  {/* Status Badge */}
-                  <div className="pt-1">
-                    <span
-                      className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold capitalize ${
-                        isProcessing
-                          ? "bg-[#E6F0FA] text-[#1D63B8] border border-[#BFDBFE]"
-                          : "bg-[#EBF5EE] text-[#2D7A4F] border border-[#C1E6CE]"
-                      }`}
-                    >
-                      {isProcessing ? "Processing" : "Completed"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {showcaseEvents.map((evt) => (
+            <EventCard
+              key={evt.id}
+              event={evt}
+              coverImage={evt.coverImage || (evt as { coverUrl?: string }).coverUrl}
+              isDesktop={true}
+              onClick={() => {
+                setSelectedEvent(evt);
+                navigate(`/events/${evt.id}/photos`);
+              }}
+              onSelectAndScan={() => {
+                setSelectedEvent(evt);
+                navigate("/scan");
+              }}
+              onOpenPhotos={() => {
+                setSelectedEvent(evt);
+                navigate(`/events/${evt.id}/photos`);
+              }}
+            />
+          ))}
         </div>
       </div>
 
       {/* Create Event Modal */}
-      {isCreateModalOpen && (
-        <CreateEventModal
-          isOpen={isCreateModalOpen}
-          onClose={() => setIsCreateModalOpen(false)}
-          onCreated={handleEventCreated}
-        />
-      )}
+      <CreateEventModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onCreated={handleEventCreated}
+      />
     </div>
   );
 };

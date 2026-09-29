@@ -146,8 +146,8 @@ services:
   # --- SnapFind Web Application (Studio Hub & Customer Gallery) ---
   web:
     build:
-      context: ./apps/snapfind-web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./apps/snapfind-web/Dockerfile
     container_name: snapfind-web
     restart: unless-stopped
     depends_on:
@@ -165,8 +165,8 @@ services:
   # --- Photographer Portfolio & Client Booking Website ---
   portfolio:
     build:
-      context: ./apps/photographer-website
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./apps/photographer-website/Dockerfile
     container_name: snapfind-portfolio
     restart: unless-stopped
     depends_on:

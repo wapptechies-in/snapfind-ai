@@ -123,8 +123,8 @@ services:
 
   web:
     build:
-      context: ./apps/snapfind-web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./apps/snapfind-web/Dockerfile
     container_name: snapfind-web
     restart: unless-stopped
     ports:

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { eventsApi, adminApi } from "../services/api";
+import { eventsApi, adminApi, billingApi } from "../services/api";
 import { BrandMark } from "@snapfind/ui";
-import { BotanicalLeaves } from "@snapfind/ui";
 import type { SnapEvent } from "../types";
+import type { SubscriptionStatus } from "@snapfind/types";
 
 interface SidebarProps {
   onNavigate?: () => void;
@@ -17,9 +17,28 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
 
   const [pendingApprovals, setPendingApprovals] = useState<number>(0);
   const [events, setEvents] = useState<SnapEvent[]>([]);
+  const [sub, setSub] = useState<SubscriptionStatus | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string>(() => {
     return localStorage.getItem("snapfind_active_event_id") || "";
   });
+
+  useEffect(() => {
+    let isMounted = true;
+    billingApi.getSubscription().then((res) => {
+      if (isMounted) setSub(res);
+    }).catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, [location.pathname]);
+
+  const usedBytes = sub?.used_storage_bytes ?? 0;
+  const maxBytes = sub?.max_storage_bytes ?? (9 * 1024 * 1024 * 1024);
+  const usedGB = (usedBytes / (1024 * 1024 * 1024)).toFixed(2);
+  const maxGB = (maxBytes / (1024 * 1024 * 1024)).toFixed(1);
+  const storagePercent = Math.min(100, Math.round((usedBytes / maxBytes) * 100));
+  const remainingGB = Math.max(0, (maxBytes - usedBytes) / (1024 * 1024 * 1024)).toFixed(1);
+  const isTrial = sub?.is_trial_edition !== false;
 
   useEffect(() => {
     let isMounted = true;
@@ -35,7 +54,7 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [selectedEventId]);
 
   const activeEvent = events.find((e) => e.id === selectedEventId) || events[0] || null;
 
@@ -51,12 +70,14 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
 
   const navItems = [
     {
-      label: "Home",
+      label: "Dashboard",
       to: "/dashboard",
       icon: (
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-          <polyline points="9 22 9 12 15 12 15 22" />
+          <rect x="3" y="3" width="7" height="7" rx="1.5" />
+          <rect x="14" y="3" width="7" height="7" rx="1.5" />
+          <rect x="14" y="14" width="7" height="7" rx="1.5" />
+          <rect x="3" y="14" width="7" height="7" rx="1.5" />
         </svg>
       ),
     },
@@ -73,7 +94,7 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
       ),
     },
     {
-      label: "Capture & Upload",
+      label: "Photos & Upload",
       to: activeEvent ? `/events/${activeEvent.id}/photos` : "/events",
       icon: (
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -84,7 +105,7 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
       ),
     },
     {
-      label: "Processing",
+      label: "AI Processing",
       to: activeEvent ? `/events/${activeEvent.id}/processing` : "/events",
       icon: (
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -105,8 +126,9 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
       ),
     },
     {
-      label: "Subscription",
+      label: "Storage & Plan",
       to: "/subscription",
+      badge: "9 GB Free",
       icon: (
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="2" y="5" width="20" height="14" rx="2" />
@@ -126,17 +148,17 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
     },
   ];
 
-  const displayName = user?.display_name || user?.studio_name || "Jebastin";
+  const displayName = user?.display_name || user?.studio_name || "Alex";
 
   return (
-    <aside className="relative flex h-full w-64 flex-col border-r border-[#E7E3DC] bg-[#FAF8F5] select-none font-sans flex-shrink-0 overflow-hidden">
+    <aside className="relative flex h-full w-64 flex-col border-r border-[#1F293D] bg-[#0B1220] select-none font-sans flex-shrink-0 overflow-hidden">
       {/* Brand Header */}
-      <div className="flex h-20 items-center px-5 flex-shrink-0">
+      <div className="flex h-20 items-center px-6 flex-shrink-0 border-b border-[#151D2E]">
         <BrandMark size="md" showTagline={true} />
       </div>
 
-      {/* Main Navigation (7 synchronized items matching reference) */}
-      <nav className="flex-1 px-3 py-2 space-y-1.5 overflow-y-auto z-10">
+      {/* Main Navigation (Midnight Navy background, subtle Champagne Gold active state) */}
+      <nav className="flex-1 px-3.5 py-4 space-y-1.5 overflow-y-auto z-10">
         {navItems.map((item) => {
           const isActive = location.pathname === item.to || (item.to !== "/dashboard" && location.pathname.startsWith(item.to));
           return (
@@ -144,43 +166,48 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
               key={item.label}
               to={item.to}
               onClick={onNavigate}
-              className={`flex items-center gap-3.5 rounded-xl px-3.5 py-2.5 text-xs transition-all duration-150 active:scale-[0.97] cursor-pointer ${
+              className={`flex items-center gap-3.5 rounded-xl px-3.5 py-2.5 text-xs transition-all duration-150 active:scale-[0.98] cursor-pointer ${
                 isActive
-                  ? "bg-[#E2EBE2] text-[#1E3A2F] font-semibold shadow-sm"
-                  : "text-[#555C56] hover:bg-[#F3EFE9] hover:text-[#1E3A2F]"
+                  ? "bg-[#D6A84F]/15 text-[#D6A84F] font-semibold border border-[#D6A84F]/30 shadow-[0_0_15px_rgba(214,168,79,0.15)]"
+                  : "text-[#A8B0BE] hover:bg-[#151D2E] hover:text-[#F7F5F0]"
               }`}
             >
-              <span className={`transition-colors ${isActive ? "text-[#1E3A2F]" : "text-[#737A74]"}`}>
+              <span className={`transition-colors ${isActive ? "text-[#D6A84F]" : "text-[#7A8394]"}`}>
                 {item.icon}
               </span>
               <span className="truncate">{item.label}</span>
+              {"badge" in item && item.badge && (
+                <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#D6A84F]/20 text-[#D6A84F] border border-[#D6A84F]/30">
+                  {item.badge}
+                </span>
+              )}
             </NavLink>
           );
         })}
 
         {/* Admin Approvals Link if Admin */}
         {isAdmin && (
-          <div className="pt-3 mt-3 border-t border-[#E7E3DC]">
+          <div className="pt-3 mt-3 border-t border-[#1F293D]">
             <NavLink
               to="/admin/approvals"
               onClick={onNavigate}
               className={({ isActive }) =>
-                `flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs transition-all duration-150 active:scale-[0.97] cursor-pointer ${
+                `flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs transition-all duration-150 active:scale-[0.98] cursor-pointer ${
                   isActive
-                    ? "bg-[#E2EBE2] text-[#1E3A2F] font-semibold"
-                    : "text-[#555C56] hover:bg-[#F3EFE9] hover:text-[#1E3A2F]"
+                    ? "bg-[#D6A84F]/15 text-[#D6A84F] font-semibold border border-[#D6A84F]/30"
+                    : "text-[#A8B0BE] hover:bg-[#151D2E] hover:text-[#F7F5F0]"
                 }`
               }
             >
               <div className="flex items-center gap-3.5">
-                <svg className="w-4 h-4 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg className="w-4 h-4 text-[#D6A84F]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                   <path d="m9 12 2 2 4-4" />
                 </svg>
                 <span>Admin Approvals</span>
               </div>
               {pendingApprovals > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">
+                <span className="px-1.5 py-0.5 rounded-full bg-[#D6A84F]/20 text-[#D6A84F] text-[10px] font-bold border border-[#D6A84F]/30">
                   {pendingApprovals}
                 </span>
               )}
@@ -189,20 +216,40 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
         )}
       </nav>
 
-      {/* Decorative Botanical Foliage in Bottom-Left Corner */}
-      <div className="absolute -bottom-8 -left-8 z-0 pointer-events-none opacity-40">
-        <BotanicalLeaves width={160} height={160} />
+      {/* Live Trial Storage Meter (Zero-Overage 9.0 GB Guard) */}
+      <div className="mx-3.5 mb-2.5 p-3 rounded-xl bg-[#0E1626] border border-[#1F293D] text-xs">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-[11px] font-medium text-[#A8B0BE] flex items-center gap-1.5">
+            <span className={`w-1.5 h-1.5 rounded-full ${storagePercent >= 90 ? "bg-[#E87961] animate-ping" : storagePercent >= 75 ? "bg-[#E6A23C]" : "bg-[#8FA382]"}`} />
+            {isTrial ? "Trial Storage (9 GB)" : "Cloud Storage"}
+          </span>
+          <span className="text-[10px] font-mono text-[#D6A84F] font-semibold">
+            {usedGB}/{maxGB} GB
+          </span>
+        </div>
+        <div className="w-full bg-[#151D2E] h-1.5 rounded-full overflow-hidden border border-[#1F293D]">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${
+              storagePercent >= 90 ? "bg-[#E87961]" : storagePercent >= 75 ? "bg-[#E6A23C]" : "bg-[#D6A84F]"
+            }`}
+            style={{ width: `${Math.max(3, storagePercent)}%` }}
+          />
+        </div>
+        <div className="flex items-center justify-between text-[9px] text-[#7A8394] font-mono mt-1">
+          <span>{storagePercent}% used</span>
+          <span className="text-[#8FA382] font-medium">{remainingGB} GB left</span>
+        </div>
       </div>
 
-      {/* User Profile Tray at Bottom (Matching Reference: Avatar, Jebastin, Photographer, Studio Pro badge) */}
-      <div className="relative z-10 p-3.5 border-t border-[#E7E3DC] bg-[#FAF8F5]/90 backdrop-blur-sm">
+      {/* User Profile Tray at Bottom (Midnight / Deep Slate container, Soft White text, Gold tier badge) */}
+      <div className="relative z-10 p-3.5 border-t border-[#1F293D] bg-[#0E1626]/90 backdrop-blur-sm">
         <div className="flex items-center gap-3">
           {/* Avatar */}
-          <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-[#E7E3DC] shadow-sm flex-shrink-0 bg-white flex items-center justify-center">
+          <div className="h-10 w-10 rounded-full overflow-hidden border border-[#D6A84F]/40 shadow-sm flex-shrink-0 bg-[#151D2E] flex items-center justify-center">
             {user?.avatar_url ? (
               <img src={user.avatar_url} alt={displayName} className="h-full w-full object-cover" />
             ) : (
-              <span className="text-sm font-serif font-bold text-[#1E3A2F]">
+              <span className="text-sm font-serif font-bold text-[#D6A84F]">
                 {displayName.charAt(0).toUpperCase()}
               </span>
             )}
@@ -210,27 +257,27 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
 
           {/* User Details */}
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-serif font-bold text-[#1A1C1A] truncate leading-tight">
+            <p className="text-xs font-semibold text-[#F7F5F0] truncate leading-tight">
               {displayName}
             </p>
-            <p className="text-[10px] text-[#737A74] truncate">
+            <p className="text-[10px] text-[#A8B0BE] truncate">
               Photographer
             </p>
             <div className="mt-1">
-              <span className="inline-block px-2 py-0.5 rounded-full bg-[#1E3A2F] text-white text-[9px] font-bold uppercase tracking-wider shadow-xs">
-                Studio Pro
+              <span className="inline-block px-2 py-0.5 rounded-full bg-[#D6A84F]/15 text-[#D6A84F] border border-[#D6A84F]/30 text-[9px] font-bold uppercase tracking-wider">
+                {isTrial ? "Free Trial (9 GB)" : "Studio Pro"}
               </span>
             </div>
           </div>
 
-          {/* Quick Logout or Settings */}
+          {/* Quick Logout */}
           <button
             onClick={() => {
               logout();
               navigate("/login");
             }}
             title="Sign Out"
-            className="p-1.5 rounded-lg text-[#737A74] hover:text-[#C2413A] hover:bg-red-50 transition-colors active:scale-95"
+            className="p-1.5 rounded-lg text-[#7A8394] hover:text-[#E87961] hover:bg-[#151D2E] transition-colors active:scale-95"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />

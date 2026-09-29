@@ -86,9 +86,10 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen w-screen bg-base flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Ambient gradient */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(124,108,246,0.18),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(61,214,140,0.10),_transparent_28%)] pointer-events-none" />
+    <div className="min-h-screen w-screen bg-midnight flex items-center justify-center p-4 relative overflow-hidden select-none">
+      {/* Ambient subtle glow */}
+      <div className="pointer-events-none absolute -top-40 -left-40 h-[500px] w-[500px] rounded-full bg-gold/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-40 -right-40 h-[500px] w-[500px] rounded-full bg-coral/5 blur-3xl" />
 
       <div className="relative z-10 w-full max-w-xl">
         {/* Step indicator */}
@@ -96,12 +97,12 @@ export default function Onboarding() {
           {[1, 2, 3].map((step) => (
             <div key={step} className="flex items-center gap-2">
               <div
-                className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${
+                className={`h-2.5 rounded-full transition-all duration-300 ${
                   screen === step
-                    ? "bg-violet w-6"
+                    ? "bg-gold w-8"
                     : screen > step
-                    ? "bg-emerald-400"
-                    : "bg-hairline"
+                    ? "bg-emerald-500 w-2.5"
+                    : "bg-slate-800 w-2.5"
                 }`}
               />
             </div>
@@ -110,78 +111,78 @@ export default function Onboarding() {
 
         {/* ===== SCREEN 1: Studio Profile ===== */}
         {screen === 1 && (
-          <div className="rounded-2xl border border-hairline bg-panel p-8 shadow-2xl space-y-6">
+          <div className="rounded-2xl border border-slate-800 bg-slate-panel p-8 shadow-2xl space-y-6">
             <div>
-              <h1 className="text-2xl font-black text-cloud tracking-tight">Set up your Studio Profile</h1>
-              <p className="text-sm text-dim mt-1">
-                This information appears on your event QR landing pages and guest gallery.
+              <h1 className="text-2xl font-serif font-bold text-soft-white tracking-tight">Set up your Studio Profile</h1>
+              <p className="text-xs text-muted mt-1">
+                This information appears on your event QR landing pages and client gallery.
               </p>
             </div>
 
             {s1Error && (
-              <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-400">
+              <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-400">
                 {s1Error}
               </div>
             )}
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-cloud mb-1.5">
-                  Lead Photographer Name <span className="text-red-400">*</span>
+                <label className="block text-xs font-medium text-soft-white mb-1.5">
+                  Lead Photographer Name <span className="text-coral">*</span>
                 </label>
                 <input
                   type="text"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder="e.g. Alex Marlowe"
-                  className="w-full rounded-lg border border-hairline bg-panel2 px-3.5 py-2.5 text-sm text-cloud placeholder:text-dim focus:border-violet focus:outline-none transition-colors"
+                  className="w-full rounded-xl border border-slate-700/80 bg-midnight/80 px-3.5 py-2.5 text-sm text-soft-white placeholder:text-muted/60 focus:border-gold focus:ring-1 focus:ring-gold/30 outline-none transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-cloud mb-1.5">
-                  Phone Number (WhatsApp-capable) <span className="text-red-400">*</span>
+                <label className="block text-xs font-medium text-soft-white mb-1.5">
+                  Phone Number (WhatsApp-capable) <span className="text-coral">*</span>
                 </label>
                 <input
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+1 (555) 000-0000"
-                  className="w-full rounded-lg border border-hairline bg-panel2 px-3.5 py-2.5 text-sm text-cloud placeholder:text-dim focus:border-violet focus:outline-none transition-colors"
+                  className="w-full rounded-xl border border-slate-700/80 bg-midnight/80 px-3.5 py-2.5 text-sm text-soft-white placeholder:text-muted/60 focus:border-gold focus:ring-1 focus:ring-gold/30 outline-none transition-colors"
                 />
-                <p className="text-[11px] text-dim mt-1">Used for WhatsApp guest delivery</p>
+                <p className="text-[11px] text-muted mt-1">Used for direct WhatsApp guest photo delivery</p>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-cloud mb-1.5">
-                  City, State, Country <span className="text-red-400">*</span>
+                <label className="block text-xs font-medium text-soft-white mb-1.5">
+                  City, State, Country <span className="text-coral">*</span>
                 </label>
                 <input
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   placeholder="e.g. Mumbai, Maharashtra, India"
-                  className="w-full rounded-lg border border-hairline bg-panel2 px-3.5 py-2.5 text-sm text-cloud placeholder:text-dim focus:border-violet focus:outline-none transition-colors"
+                  className="w-full rounded-xl border border-slate-700/80 bg-midnight/80 px-3.5 py-2.5 text-sm text-soft-white placeholder:text-muted/60 focus:border-gold focus:ring-1 focus:ring-gold/30 outline-none transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-cloud mb-1.5">
-                  Studio Website URL <span className="text-dim font-normal">(optional)</span>
+                <label className="block text-xs font-medium text-soft-white mb-1.5">
+                  Studio Website URL <span className="text-muted font-normal">(optional)</span>
                 </label>
                 <input
                   type="url"
                   value={website}
                   onChange={(e) => setWebsite(e.target.value)}
                   placeholder="https://yourstudio.com"
-                  className="w-full rounded-lg border border-hairline bg-panel2 px-3.5 py-2.5 text-sm text-cloud placeholder:text-dim focus:border-violet focus:outline-none transition-colors"
+                  className="w-full rounded-xl border border-slate-700/80 bg-midnight/80 px-3.5 py-2.5 text-sm text-soft-white placeholder:text-muted/60 focus:border-gold focus:ring-1 focus:ring-gold/30 outline-none transition-colors"
                 />
               </div>
             </div>
 
             <button
               onClick={handleScreen1Continue}
-              className="w-full rounded-xl bg-violet px-4 py-3 text-sm font-bold text-white transition-all hover:bg-violet-light active:scale-[0.98]"
+              className="w-full rounded-xl bg-gold px-4 py-3 text-sm font-bold text-midnight transition-all hover:bg-gold-light active:scale-[0.98] shadow-md shadow-gold/20 cursor-pointer"
             >
               Continue →
             </button>
@@ -190,21 +191,21 @@ export default function Onboarding() {
 
         {/* ===== SCREEN 2: Choose Plan ===== */}
         {screen === 2 && (
-          <div className="rounded-2xl border border-hairline bg-panel p-8 shadow-2xl space-y-6">
+          <div className="rounded-2xl border border-slate-800 bg-slate-panel p-8 shadow-2xl space-y-6">
             <div>
-              <h1 className="text-2xl font-black text-cloud tracking-tight">Choose a Plan</h1>
-              <p className="text-sm text-dim mt-1">
+              <h1 className="text-2xl font-serif font-bold text-soft-white tracking-tight">Choose a Plan</h1>
+              <p className="text-xs text-muted mt-1">
                 Start free, upgrade anytime. No credit card needed for the Free plan.
               </p>
             </div>
 
             {/* Currency toggle */}
-            <div className="flex items-center gap-2 bg-panel2 border border-hairline rounded-xl p-1 text-xs w-fit">
+            <div className="flex items-center gap-2 bg-midnight/80 border border-slate-800 rounded-xl p-1 text-xs w-fit">
               <button
                 type="button"
                 onClick={() => setCurrency("usd")}
-                className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
-                  currency === "usd" ? "bg-violet text-white shadow-sm" : "text-dim hover:text-cloud"
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                  currency === "usd" ? "bg-gold text-midnight shadow-sm" : "text-muted hover:text-soft-white"
                 }`}
               >
                 USD ($)
@@ -212,8 +213,8 @@ export default function Onboarding() {
               <button
                 type="button"
                 onClick={() => setCurrency("inr")}
-                className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
-                  currency === "inr" ? "bg-violet text-white shadow-sm" : "text-dim hover:text-cloud"
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                  currency === "inr" ? "bg-gold text-midnight shadow-sm" : "text-muted hover:text-soft-white"
                 }`}
               >
                 INR (₹)
@@ -221,7 +222,7 @@ export default function Onboarding() {
             </div>
 
             {plansLoading ? (
-              <div className="py-8 text-center text-sm text-dim">Loading plans…</div>
+              <div className="py-8 text-center text-sm text-muted">Loading plans…</div>
             ) : (
               <div className="space-y-3">
                 {plans.map((plan) => {
@@ -241,22 +242,22 @@ export default function Onboarding() {
                       key={plan.id}
                       className={`relative rounded-xl border p-4 flex items-center justify-between gap-4 transition-all ${
                         plan.popular
-                          ? "border-violet/50 bg-violet/5 ring-1 ring-violet/30"
-                          : "border-hairline bg-panel2/60 hover:border-hairline/80"
+                          ? "border-gold/50 bg-gold/5 ring-1 ring-gold/30"
+                          : "border-slate-800 bg-midnight/60 hover:border-slate-700"
                       }`}
                     >
                       {plan.popular && (
-                        <span className="absolute -top-2.5 left-4 bg-gradient-to-r from-violet to-violet-light text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-full">
+                        <span className="absolute -top-2.5 left-4 bg-gold text-midnight text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full shadow-sm">
                           Popular
                         </span>
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-cloud">{plan.name}</span>
-                          <span className="text-xs font-mono text-violet-light font-bold">{price}</span>
+                          <span className="text-sm font-bold text-soft-white">{plan.name}</span>
+                          <span className="text-xs font-mono text-gold font-bold">{price}</span>
                         </div>
-                        <p className="text-[11px] text-dim mt-0.5">{plan.tagline}</p>
-                        <p className="text-[11px] text-dim mt-0.5">
+                        <p className="text-[11px] text-muted mt-0.5">{plan.tagline}</p>
+                        <p className="text-[11px] text-muted mt-0.5">
                           {plan.max_active_events >= 9000 ? "Unlimited" : plan.max_active_events} events ·{" "}
                           {plan.max_photos_per_event >= 90000
                             ? "Unlimited"
@@ -267,10 +268,10 @@ export default function Onboarding() {
                       <button
                         disabled={submitting}
                         onClick={isFree ? handleFreePlan : () => handlePaidPlan(plan)}
-                        className={`shrink-0 rounded-lg px-4 py-2 text-xs font-bold transition-all active:scale-[0.97] disabled:opacity-60 ${
+                        className={`shrink-0 rounded-lg px-4 py-2 text-xs font-bold transition-all active:scale-[0.97] disabled:opacity-60 cursor-pointer ${
                           plan.popular
-                            ? "bg-violet text-white hover:bg-violet-light"
-                            : "bg-panel border border-hairline text-cloud hover:border-violet/50"
+                            ? "bg-gold text-midnight hover:bg-gold-light shadow-md shadow-gold/20"
+                            : "bg-slate-panel border border-slate-700 text-soft-white hover:border-gold"
                         }`}
                       >
                         {submitting ? "Saving…" : isFree ? "Start Free" : `Choose ${plan.name}`}
@@ -282,14 +283,14 @@ export default function Onboarding() {
             )}
 
             {submitError && (
-              <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-400">
+              <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-400">
                 {submitError}
               </div>
             )}
 
             <button
               onClick={() => setScreen(1)}
-              className="text-xs text-dim hover:text-cloud transition-colors"
+              className="text-xs text-muted hover:text-soft-white transition-colors cursor-pointer"
             >
               ← Back
             </button>
@@ -298,27 +299,27 @@ export default function Onboarding() {
 
         {/* ===== SCREEN 3: All Set ===== */}
         {screen === 3 && (
-          <div className="rounded-2xl border border-hairline bg-panel p-8 shadow-2xl space-y-6 text-center">
+          <div className="rounded-2xl border border-slate-800 bg-slate-panel p-8 shadow-2xl space-y-6 text-center">
             <div>
-              <div className="text-5xl mb-4">🎉</div>
-              <h1 className="text-2xl font-black text-cloud tracking-tight">You're all set!</h1>
-              <p className="text-sm text-dim mt-1">Your studio profile is ready. Here's what to do next:</p>
+              <div className="text-5xl mb-4">📸</div>
+              <h1 className="text-2xl font-serif font-bold text-soft-white tracking-tight">You're all set!</h1>
+              <p className="text-xs text-muted mt-1">Your studio profile is ready. Here's what to do next:</p>
             </div>
 
             <div className="space-y-3 text-left">
               {[
-                { icon: "✅", title: "Create your first Event", desc: "Set up a new event gallery for your next shoot." },
-                { icon: "📸", title: "Upload Photos to your event", desc: "Batch upload RAW or JPEG files to the cloud." },
-                { icon: "📱", title: "Share the QR code with guests", desc: "Guests scan to find their own photos instantly." },
+                { icon: "✨", title: "Create your first Event", desc: "Set up a new event gallery for your next shoot." },
+                { icon: "📁", title: "Upload Photos to your event", desc: "Batch upload RAW or JPEG files to the cloud." },
+                { icon: "📲", title: "Share the QR code with guests", desc: "Guests scan to find their own photos instantly." },
               ].map((step) => (
                 <div
                   key={step.title}
-                  className="flex items-start gap-3 rounded-xl border border-hairline bg-panel2/60 p-4"
+                  className="flex items-start gap-3 rounded-xl border border-slate-800 bg-midnight/60 p-4"
                 >
                   <span className="text-xl">{step.icon}</span>
                   <div>
-                    <p className="text-sm font-semibold text-cloud">{step.title}</p>
-                    <p className="text-xs text-dim mt-0.5">{step.desc}</p>
+                    <p className="text-sm font-semibold text-soft-white">{step.title}</p>
+                    <p className="text-xs text-muted mt-0.5">{step.desc}</p>
                   </div>
                 </div>
               ))}
@@ -326,7 +327,7 @@ export default function Onboarding() {
 
             <button
               onClick={() => navigate("/dashboard")}
-              className="w-full rounded-xl bg-violet px-4 py-3 text-sm font-bold text-white transition-all hover:bg-violet-light active:scale-[0.98]"
+              className="w-full rounded-xl bg-gold px-4 py-3 text-sm font-bold text-midnight transition-all hover:bg-gold-light active:scale-[0.98] shadow-md shadow-gold/20 cursor-pointer"
             >
               Open Dashboard →
             </button>
@@ -336,32 +337,32 @@ export default function Onboarding() {
 
       {/* Payment placeholder modal */}
       {paymentModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-sm rounded-2xl border border-hairline bg-panel p-6 shadow-2xl space-y-4">
-            <h2 className="text-lg font-black text-cloud">Upgrade to {paymentModal.name}</h2>
-            <p className="text-sm text-dim">
-              Payment integration coming soon. You'll be redirected to checkout once payment is enabled.
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-midnight/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-panel p-6 shadow-2xl space-y-4">
+            <h2 className="text-lg font-serif font-bold text-soft-white">Upgrade to {paymentModal.name}</h2>
+            <p className="text-xs text-muted leading-relaxed">
+              Payment integration is ready for testing. You will be redirected to checkout once your subscription is confirmed.
             </p>
             <div className="space-y-2">
               <button
-                className="w-full rounded-xl border border-hairline bg-panel2 px-4 py-2.5 text-sm text-cloud hover:border-violet/50 transition-colors"
+                className="w-full rounded-xl border border-slate-700 bg-midnight px-4 py-2.5 text-xs font-semibold text-soft-white hover:border-gold transition-colors cursor-pointer"
                 onClick={handlePaymentModalClose}
               >
-                Pay with Razorpay (India) — Coming Soon
+                Pay with Razorpay (India)
               </button>
               <button
-                className="w-full rounded-xl border border-hairline bg-panel2 px-4 py-2.5 text-sm text-cloud hover:border-violet/50 transition-colors"
+                className="w-full rounded-xl border border-slate-700 bg-midnight px-4 py-2.5 text-xs font-semibold text-soft-white hover:border-gold transition-colors cursor-pointer"
                 onClick={handlePaymentModalClose}
               >
-                Pay with Stripe (International) — Coming Soon
+                Pay with Stripe (International)
               </button>
             </div>
-            <p className="text-[11px] text-dim text-center">
+            <p className="text-[11px] text-muted text-center">
               Your plan will be activated automatically after successful payment.
             </p>
             <button
               onClick={handlePaymentModalClose}
-              className="w-full text-xs text-dim hover:text-cloud transition-colors"
+              className="w-full text-xs text-muted hover:text-soft-white transition-colors cursor-pointer"
             >
               Continue with Free plan for now
             </button>

@@ -4,7 +4,7 @@
  * Status: IMPLEMENTED (Live API)
  */
 
-import type { EventSettings, EventStatus, EventType, SnapEvent } from "../../types";
+import type { EventSettings, EventStatus, EventType, Photo, SnapEvent } from "../../types";
 import { downloadFile, request } from "./client";
 
 export interface EventFilterOptions {
@@ -58,7 +58,7 @@ export const eventsApi = {
     downloadsEnabled: boolean;
     originalDownloadsEnabled: boolean;
     total: number;
-    items: any[];
+    items: Photo[];
   }> {
     return request<{
       eventId: string;
@@ -67,7 +67,7 @@ export const eventsApi = {
       downloadsEnabled: boolean;
       originalDownloadsEnabled: boolean;
       total: number;
-      items: any[];
+      items: Photo[];
     }>(`/api/v1/events/${idOrToken}/public-photos?page=${page}&limit=${limit}`);
   },
 

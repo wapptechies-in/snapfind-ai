@@ -18,45 +18,33 @@ architecture. No AI, authentication, or production features exist yet
 
 ## 1. What SnapFind AI is
 
-- A **photographer** shoots an event and keeps their original
-  RAW/JPEGs on their own machine — they are never auto-uploaded.
-- A **desktop app** (planned) generates lightweight web images,
-  thumbnails, and face embeddings from those originals, and uploads
-  only those derivatives to the cloud.
-- A **customer/guest** scans a QR code from the event, takes a selfie,
-  and SnapFind AI (planned) shows them every photo they appear in.
-- The **photographer** manages all of this from a web dashboard.
+- A **photographer** shoots an event and selects photos or whole folders via the SnapFind Desktop app.
+- The **desktop app** directly streams selected images to secure staging storage via encrypted presigned upload URLs with explicit operator consent. Local files on disk remain completely untouched and unmodified.
+- Cloud-side **AI processing workers** automatically generate optimized web images, thumbnails, and 512-d facial embeddings.
+- A **customer/guest** scans a QR code from the event, uploads a selfie, and SnapFind AI performs vector similarity search to show them every photo they appear in.
+- The **photographer** manages events, uploads, guests, and settings from both the Web and Desktop apps.
 
 ## 2. Project architecture
 
 ```
-PHOTOGRAPHER PERSONAL WEBSITE
+PHOTOGRAPHER DASHBOARD / DESKTOP APP
+            │
+            ├─► Selected Photo Files (Streamed to Secure S3/MinIO via Presigned URLs)
+            │   (Local files on disk remain untouched and unmodified)
+            ▼
+FASTAPI BACKEND & AI PIPELINE
+            │
+            ├── Server-Side Asynchronous Workers (Celery / Direct Fallback)
+            ├── Web-Optimized Derivative & Thumbnail Generation
+            ├── Face Detection & 512-d Facial Embedding Extraction (InsightFace / ArcFace)
+            └── PostgreSQL + pgvector (Event-Scoped Cosine Vector Search)
             │
             ▼
-       SNAPFIND AI
+GUEST EXPERIENCE & CLIENT GALLERY
             │
-      ┌─────┴─────┐
-      ▼           ▼
-Photographer   Customer
-Dashboard      Gallery
-      │           │
-      │          QR
-      │           │
-      │       Find My Photos
-      │           │
-      │       Selfie Search
-      │
-      ▼
-SnapFind Desktop App
-      │
-      ▼
-Photographer's Local Photos
-      │
-      ├── Original RAW/JPEG → remain on local/external storage
-      │
-      ├── Web Images → cloud
-      ├── Thumbnails → cloud
-      └── Face Embeddings → cloud database
+            ├── Public Event QR Code Access
+            ├── Biometric-Protected Guest Selfie Search (Ephemeral selfie, no permanent storage)
+            └── Watermarked Previews & High-Resolution Downloads
 ```
 
 See [`docs/architecture.md`](docs/architecture.md) for the full breakdown,

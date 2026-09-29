@@ -47,18 +47,18 @@ export default function Bookings() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-serif font-bold text-charcoal tracking-tight flex items-center gap-3">
+            <h2 className="text-2xl font-serif font-bold text-soft-white tracking-tight flex items-center gap-3">
               <span>Studio Bookings & Inquiries</span>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-forest/10 text-forest font-sans font-semibold border border-forest/20">
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-gold/15 text-gold font-sans font-semibold border border-gold/30">
                 {bookings.length} total
               </span>
             </h2>
-            <p className="text-xs text-warm-gray mt-1">
+            <p className="text-xs text-muted mt-1">
               Client requests submitted through your portfolio website and booking forms.
             </p>
           </div>
 
-          <Button size="sm" variant="secondary" onClick={fetchBookings} disabled={loading} className="border-warm-beige">
+          <Button size="sm" variant="secondary" onClick={fetchBookings} disabled={loading} className="border-slate-700 bg-midnight text-soft-white hover:border-gold">
             Refresh Inquiries
           </Button>
         </div>
@@ -70,7 +70,7 @@ export default function Bookings() {
         )}
 
         {/* Filter Pills */}
-        <div className="flex items-center gap-2 border-b border-warm-beige pb-3">
+        <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
           {["all", "pending", "confirmed", "cancelled"].map((st) => {
             const isActive = statusFilter === st;
             return (
@@ -79,8 +79,8 @@ export default function Bookings() {
                 onClick={() => setStatusFilter(st)}
                 className={`px-3 py-1.5 rounded-lg text-xs capitalize transition-all duration-150 cursor-pointer ${
                   isActive
-                    ? "bg-forest text-cream font-semibold shadow-sm"
-                    : "bg-white border border-warm-beige text-warm-gray hover:text-charcoal hover:bg-sand-light"
+                    ? "bg-gold text-midnight font-bold shadow-sm"
+                    : "bg-slate-panel border border-slate-800 text-muted hover:text-soft-white hover:bg-midnight"
                 }`}
               >
                 {st}
@@ -93,16 +93,16 @@ export default function Bookings() {
         {loading ? (
           <LoadingSpinner message="Loading client booking inquiries..." />
         ) : bookings.length === 0 ? (
-          <Card className="p-16 text-center border-dashed border-warm-beige bg-white shadow-sm">
-            <div className="text-3xl mb-2 text-forest">📅</div>
-            <h3 className="text-base font-serif font-bold text-charcoal mb-1">No Bookings Yet</h3>
-            <p className="text-xs text-warm-gray max-w-sm mx-auto">
+          <Card className="p-16 text-center border-dashed border-slate-800 bg-slate-panel shadow-sm">
+            <div className="text-3xl mb-2 text-gold">📅</div>
+            <h3 className="text-base font-serif font-bold text-soft-white mb-1">No Bookings Yet</h3>
+            <p className="text-xs text-muted max-w-sm mx-auto">
               Client inquiries submitted via your public portfolio website will appear here in real-time.
             </p>
           </Card>
         ) : filtered.length === 0 ? (
-          <Card className="p-12 text-center bg-white border-warm-beige shadow-sm">
-            <p className="text-xs text-warm-gray">No inquiries match the active filter.</p>
+          <Card className="p-12 text-center bg-slate-panel border-slate-800 shadow-sm">
+            <p className="text-xs text-muted">No inquiries match the active filter.</p>
           </Card>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
@@ -111,59 +111,59 @@ export default function Bookings() {
               const isConfirmed = (b.status || "").toLowerCase() === "confirmed";
 
               return (
-                <Card key={b.id} className="p-5 flex flex-col justify-between bg-white border-warm-beige hover:border-forest/40 transition-all shadow-sm">
+                <Card key={b.id} className="p-5 flex flex-col justify-between bg-slate-panel border-slate-800 hover:border-gold/40 transition-all shadow-sm">
                   <div>
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="text-base font-serif font-bold text-charcoal">{b.name}</h3>
+                          <h3 className="text-base font-serif font-bold text-soft-white">{b.name}</h3>
                           <Badge variant={isConfirmed ? "active" : isPending ? "processing" : "neutral"}>
                             {b.status.toUpperCase()}
                           </Badge>
                         </div>
-                        <p className="text-xs text-forest font-semibold mt-0.5">
+                        <p className="text-xs text-gold font-semibold mt-0.5">
                           {b.eventType} Photoshoot
                         </p>
                       </div>
 
-                      <span className="text-[11px] font-mono text-warm-gray">
+                      <span className="text-[11px] font-mono text-muted">
                         📅 {b.eventDate}
                       </span>
                     </div>
 
                     {/* Details */}
-                    <div className="mt-3.5 space-y-1.5 text-xs text-warm-gray">
+                    <div className="mt-3.5 space-y-1.5 text-xs text-muted">
                       <p className="flex items-center gap-2">
                         <span>📍</span>
-                        <span className="text-charcoal font-medium">{b.location}</span>
+                        <span className="text-soft-white font-medium">{b.location}</span>
                       </p>
                       <p className="flex items-center gap-2">
                         <span>👥</span>
-                        <span>Estimated Guests: <strong className="text-charcoal">{b.guestCount}</strong></span>
+                        <span>Estimated Guests: <strong className="text-soft-white">{b.guestCount}</strong></span>
                       </p>
                       <p className="flex items-center gap-2">
                         <span>📧</span>
-                        <a href={`mailto:${b.email}`} className="text-forest hover:underline font-mono">
+                        <a href={`mailto:${b.email}`} className="text-gold hover:underline font-mono">
                           {b.email}
                         </a>
-                        <span className="text-warm-beige">•</span>
+                        <span className="text-slate-700">•</span>
                         <span>📞</span>
-                        <a href={`tel:${b.phone}`} className="text-charcoal font-mono">
+                        <a href={`tel:${b.phone}`} className="text-soft-white font-mono">
                           {b.phone}
                         </a>
                       </p>
                     </div>
 
                     {b.message && (
-                      <div className="mt-3 p-3 rounded-lg bg-sand-light/60 border border-warm-beige text-xs text-warm-gray italic">
+                      <div className="mt-3 p-3 rounded-lg bg-midnight/60 border border-slate-800 text-xs text-muted italic">
                         "{b.message}"
                       </div>
                     )}
                   </div>
 
                   {/* Action buttons */}
-                  <div className="mt-4 pt-3 border-t border-warm-beige flex items-center justify-between">
-                    <span className="text-[10px] text-warm-gray font-mono">
+                  <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
+                    <span className="text-[10px] text-muted font-mono">
                       Received {new Date(b.createdAt).toLocaleDateString()}
                     </span>
 
@@ -193,7 +193,7 @@ export default function Bookings() {
                           size="sm"
                           variant="secondary"
                           onClick={() => handleUpdateStatus(b.id, "pending")}
-                          className="border-warm-beige text-xs"
+                          className="border-slate-700 bg-midnight text-soft-white text-xs hover:border-gold"
                         >
                           Mark Pending
                         </Button>
@@ -209,4 +209,3 @@ export default function Bookings() {
     </DashboardLayout>
   );
 }
-

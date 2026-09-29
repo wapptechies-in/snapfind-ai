@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Badge, Button, Card, LoadingSpinner, QRCodeModal } from "../../components/common";
+import { Button, Card, LoadingSpinner, QRCodeModal } from "../../components/common";
+import { EventHeader } from "../../components/events/EventHeader";
 import { PhotoViewer } from "../../components/PhotoViewer";
 import { PhotoUploadModal } from "../../components/PhotoUploadModal";
 import { eventsApi, foldersApi, photosApi } from "../../api";
@@ -97,8 +98,9 @@ export const EventPhotos: React.FC = () => {
       setIsNewFolderModalOpen(false);
       setActiveFolderId(created.id);
       await loadData();
-    } catch (err: any) {
-      setFolderError(err?.message || "Failed to create folder");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setFolderError(msg || "Failed to create folder");
     } finally {
       setCreatingFolder(false);
     }
@@ -115,8 +117,9 @@ export const EventPhotos: React.FC = () => {
         setActiveFolderId(null);
       }
       await loadData();
-    } catch (err: any) {
-      alert(`Failed to delete folder: ${err?.message || String(err)}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      alert(`Failed to delete folder: ${msg}`);
     }
   };
 
@@ -190,8 +193,9 @@ export const EventPhotos: React.FC = () => {
       setNotice(newVal ? `"${photo.filename}" published to Customer Gallery ✓` : `"${photo.filename}" hidden from Customer Gallery.`);
       setTimeout(() => setNotice(null), 3000);
       await loadData();
-    } catch (err: any) {
-      setNotice(`Failed to update visibility: ${err?.message || String(err)}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setNotice(`Failed to update visibility: ${msg}`);
       setTimeout(() => setNotice(null), 4000);
     }
   };
@@ -206,8 +210,9 @@ export const EventPhotos: React.FC = () => {
       setSelectedIds([]);
       setTimeout(() => setNotice(null), 3500);
       await loadData();
-    } catch (err: any) {
-      setNotice(`Bulk update failed: ${err?.message || String(err)}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setNotice(`Bulk update failed: ${msg}`);
       setTimeout(() => setNotice(null), 4000);
     } finally {
       setUpdatingVisibility(false);
@@ -236,86 +241,60 @@ export const EventPhotos: React.FC = () => {
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       {notice && (
-        <div className="p-3.5 rounded-xl bg-studio-cream border border-studio-sand text-xs text-studio-forest flex items-center justify-between animate-fade-in font-medium">
+        <div className="p-3.5 rounded-xl bg-slate border border-gold/30 text-xs text-gold flex items-center justify-between animate-fade-in font-medium">
           <span>{notice}</span>
-          <button onClick={() => setNotice(null)} className="text-studio-muted hover:text-studio-charcoal px-1 cursor-pointer">✕</button>
+          <button onClick={() => setNotice(null)} className="text-cool-gray hover:text-soft-white px-1 cursor-pointer">✕</button>
         </div>
       )}
 
-      {/* Event Header Banner */}
-      <div className="relative overflow-hidden rounded-3xl border border-studio-sand bg-white p-6 shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="relative h-16 w-16 rounded-2xl overflow-hidden bg-studio-cream shrink-0 border border-studio-sand shadow-xs">
-              <img
-                src={event.coverImage || event.cover_image_url}
-                alt={event.name}
-                className="h-full w-full object-cover"
-              />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Badge variant={event.status}>{event.status}</Badge>
-                <span className="text-[11px] font-mono text-studio-forest px-2.5 py-0.5 rounded-lg bg-studio-cream border border-studio-sand font-medium">
-                  Token: {event.token}
-                </span>
-                <span className="text-[10px] text-studio-charcoal font-semibold uppercase tracking-wider bg-studio-cream border border-studio-sand px-2 py-0.5 rounded-full">
-                  {event.eventType}
-                </span>
-              </div>
-              <h2 className="font-serif text-2xl font-semibold text-studio-charcoal tracking-tight">{event.name}</h2>
-              <p className="text-xs text-studio-muted mt-1 font-medium">
-                {event.date || "Date not set"} • {event.location || "Location not specified"}
-              </p>
-            </div>
-          </div>
+      {/* Event Header with Unified Tabs */}
+      <EventHeader event={event} />
 
-          {/* Action buttons */}
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <Button size="sm" variant="secondary" onClick={() => setIsQRModalOpen(true)}>
-              <svg className="w-3.5 h-3.5 mr-1 text-studio-forest" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="3" width="7" height="7" rx="1" />
-                <rect x="14" y="3" width="7" height="7" rx="1" />
-                <rect x="14" y="14" width="7" height="7" rx="1" />
-                <rect x="3" y="14" width="7" height="7" rx="1" />
-              </svg>
-              QR Code
-            </Button>
+      {/* Storage & Quick Actions Toolbar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-panel p-3.5 text-xs text-muted shadow-sm">
+        <div className="flex items-center gap-2.5">
+          <span className="rounded-md bg-gold/15 border border-gold/30 px-2 py-0.5 text-[10px] font-semibold text-gold uppercase tracking-wider">
+            1 EVENT : 1 QR : N FOLDERS
+          </span>
+          <span>
+            Photos in sub-folders are organized for easy studio management, while the single event QR code aggregates all photos for guests.
+          </span>
+        </div>
 
-            <Button
-              size="sm"
-              variant="secondary"
-              disabled={downloadingZip || !displayedPhotos.length}
-              onClick={handleDownloadZip}
-            >
-              <svg className="w-3.5 h-3.5 mr-1 text-studio-forest" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-              {downloadingZip ? "Zipping…" : "Download ZIP"}
-            </Button>
+        <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={downloadingZip || !displayedPhotos.length}
+            onClick={handleDownloadZip}
+          >
+            <svg className="w-3.5 h-3.5 mr-1 text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            {downloadingZip ? "Zipping…" : "Download ZIP"}
+          </Button>
 
-            <Button size="sm" variant="secondary" onClick={handleScanFolder}>
-              <svg className="w-3.5 h-3.5 mr-1 text-studio-forest" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                <circle cx="12" cy="13" r="4" />
-              </svg>
-              Scan Folder
-            </Button>
+          <Button size="sm" variant="secondary" onClick={handleScanFolder}>
+            <svg className="w-3.5 h-3.5 mr-1 text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
+            Scan Folder
+          </Button>
 
-            <Button size="sm" variant="primary" onClick={() => setIsUploadModalOpen(true)} className="font-semibold shadow-xs">
-              <svg className="w-3.5 h-3.5 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              Upload Photos
-            </Button>
-          </div>
+          <Button size="sm" variant="primary" onClick={() => setIsUploadModalOpen(true)} className="font-semibold shadow-xs">
+            <svg className="w-3.5 h-3.5 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            Upload Photos
+          </Button>
         </div>
       </div>
 
       {/* Sub-Folders & Gallery Tabs Navigation Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-studio-sand pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline pb-4">
         <div className="flex flex-wrap items-center gap-2">
           {/* All Photos Tab */}
           <button
@@ -326,14 +305,14 @@ export const EventPhotos: React.FC = () => {
             }}
             className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all cursor-pointer ${
               activeFolderId === null && activeTab === "all"
-                ? "bg-studio-forest text-white shadow-xs"
-                : "bg-studio-cream border border-studio-sand text-studio-muted hover:text-studio-charcoal"
+                ? "bg-gold text-midnight font-bold shadow-md shadow-gold/10"
+                : "bg-slate border border-hairline text-cool-gray hover:text-soft-white hover:border-gold/30"
             }`}
           >
             <span>🖼️ All Photos</span>
             <span
               className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                activeFolderId === null && activeTab === "all" ? "bg-white/20 text-white" : "bg-white text-studio-muted"
+                activeFolderId === null && activeTab === "all" ? "bg-midnight/20 text-midnight" : "bg-panel2 text-cool-gray"
               }`}
             >
               {photos.length}
@@ -349,14 +328,14 @@ export const EventPhotos: React.FC = () => {
             }}
             className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all cursor-pointer ${
               activeFolderId === null && activeTab === "public"
-                ? "bg-studio-forest text-white shadow-xs"
-                : "bg-studio-cream border border-studio-sand text-studio-muted hover:text-studio-charcoal"
+                ? "bg-gold text-midnight font-bold shadow-md shadow-gold/10"
+                : "bg-slate border border-hairline text-cool-gray hover:text-soft-white hover:border-gold/30"
             }`}
           >
             <span>🌐 Public Gallery</span>
             <span
               className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                activeFolderId === null && activeTab === "public" ? "bg-white/20 text-white" : "bg-white text-studio-muted"
+                activeFolderId === null && activeTab === "public" ? "bg-midnight/20 text-midnight" : "bg-panel2 text-cool-gray"
               }`}
             >
               {publicPhotosCount}
@@ -376,14 +355,14 @@ export const EventPhotos: React.FC = () => {
                   }}
                   className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all cursor-pointer ${
                     isActive
-                      ? "bg-studio-forest text-white shadow-xs"
-                      : "bg-studio-cream border border-studio-sand text-studio-muted hover:text-studio-charcoal"
+                      ? "bg-gold text-midnight font-bold shadow-md shadow-gold/10"
+                      : "bg-slate border border-hairline text-cool-gray hover:text-soft-white hover:border-gold/30"
                   }`}
                 >
                   <span>📁 {folder.name}</span>
                   <span
                     className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                      isActive ? "bg-white/20 text-white" : "bg-white text-studio-muted"
+                      isActive ? "bg-midnight/20 text-midnight" : "bg-panel2 text-cool-gray"
                     }`}
                   >
                     {folder.photoCount}
@@ -397,7 +376,7 @@ export const EventPhotos: React.FC = () => {
                     handleDeleteFolder(folder);
                   }}
                   title={`Delete folder "${folder.name}"`}
-                  className="ml-1 hidden rounded p-1 text-dim hover:bg-red-500/20 hover:text-red-400 group-hover:inline-flex transition-colors"
+                  className="ml-1 hidden rounded p-1 text-cool-gray hover:bg-coral/20 hover:text-coral group-hover:inline-flex transition-colors"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -426,14 +405,14 @@ export const EventPhotos: React.FC = () => {
 
       {/* Batch Selection Action Bar */}
       {selectedIds.length > 0 && (
-        <Card className="p-3 mb-6 bg-studio-cream border-studio-sand flex flex-wrap items-center justify-between gap-3 animate-fade-in shadow-xs">
+        <Card className="p-3 mb-6 bg-slate border-gold/40 flex flex-wrap items-center justify-between gap-3 animate-fade-in shadow-lg">
           <div className="flex items-center gap-3">
-            <span className="text-xs font-semibold text-studio-charcoal">
-              <strong className="text-studio-forest">{selectedIds.length}</strong> of {filteredPhotos.length} selected
+            <span className="text-xs font-semibold text-soft-white">
+              <strong className="text-gold font-bold">{selectedIds.length}</strong> of {filteredPhotos.length} selected
             </span>
             <button
               onClick={handleSelectAll}
-              className="text-xs text-studio-forest hover:underline font-semibold cursor-pointer"
+              className="text-xs text-gold hover:underline font-semibold cursor-pointer"
             >
               {selectedIds.length === filteredPhotos.length ? "Deselect All" : "Select All"}
             </button>
@@ -463,17 +442,17 @@ export const EventPhotos: React.FC = () => {
       )}
 
       {/* Filter and Stats Bar */}
-      <div className="flex items-center justify-between gap-4 p-4 rounded-2xl border border-studio-sand bg-white shadow-xs">
+      <div className="flex items-center justify-between gap-4 p-4 rounded-xl border border-hairline bg-slate shadow-xs">
         <div className="flex items-center gap-3">
-          <span className="text-xs font-semibold text-studio-charcoal">
+          <span className="text-xs font-semibold text-soft-white">
             {activeTab === "public" ? (
               <>
-                Showing <strong className="text-studio-forest font-semibold">{filteredPhotos.length}</strong> of{" "}
+                Showing <strong className="text-gold font-semibold">{filteredPhotos.length}</strong> of{" "}
                 {publicPhotosCount} Public Gallery photos
               </>
             ) : activeFolder ? (
               <>
-                Folder: <strong className="text-studio-forest font-semibold">{activeFolder.name}</strong> •{" "}
+                Folder: <strong className="text-gold font-semibold">{activeFolder.name}</strong> •{" "}
                 {displayedPhotos.length} {displayedPhotos.length === 1 ? "Photo" : "Photos"}
               </>
             ) : (
@@ -482,8 +461,8 @@ export const EventPhotos: React.FC = () => {
               </>
             )}
           </span>
-          <span className="text-xs text-studio-muted">•</span>
-          <span className="text-xs text-studio-muted font-mono">
+          <span className="text-xs text-cool-gray">•</span>
+          <span className="text-xs text-cool-gray font-mono">
             {(displayedPhotos.reduce((sum, p) => sum + (p.fileSize || 0), 0) / (1024 * 1024)).toFixed(1)} MB total
           </span>
         </div>
@@ -494,29 +473,29 @@ export const EventPhotos: React.FC = () => {
             placeholder={activeTab === "public" ? "Filter public photos..." : activeFolder ? `Search in ${activeFolder.name}...` : "Filter by filename..."}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full px-3 py-1.5 rounded-xl border border-studio-sand bg-studio-cream/40 text-xs text-studio-charcoal placeholder:text-studio-muted/60 focus:border-studio-forest focus:outline-none"
+            className="w-full px-3 py-1.5 rounded-lg border border-hairline bg-midnight text-xs text-soft-white placeholder:text-cool-gray/60 focus:border-gold focus:outline-none"
           />
         </div>
       </div>
 
       {/* Photo Grid */}
       {filteredPhotos.length === 0 ? (
-        <Card className="p-12 text-center">
-          <div className="mx-auto w-12 h-12 rounded-full bg-violet/10 text-violet-light flex items-center justify-center mb-3">
+        <Card className="p-12 text-center bg-slate border-hairline">
+          <div className="mx-auto w-12 h-12 rounded-full bg-gold/10 text-gold flex items-center justify-center mb-3">
             <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="3" y="3" width="18" height="18" rx="2" />
               <circle cx="8.5" cy="8.5" r="1.5" />
               <polyline points="21 15 16 10 5 21" />
             </svg>
           </div>
-          <h3 className="text-sm font-semibold text-cloud">
+          <h3 className="text-sm font-semibold text-soft-white">
             {activeTab === "public"
               ? "No photos in public gallery yet"
               : activeFolder
               ? `No photos in folder "${activeFolder.name}"`
               : "No photos in this album yet"}
           </h3>
-          <p className="text-xs text-dim mt-1 max-w-sm mx-auto">
+          <p className="text-xs text-cool-gray mt-1 max-w-sm mx-auto">
             {activeTab === "public"
               ? "Select photos and click 'Show in Public Gallery' to curate what visitors see on the public customer page."
               : activeFolder
@@ -542,10 +521,10 @@ export const EventPhotos: React.FC = () => {
               <div
                 key={photo.id}
                 onClick={() => setSelectedPhotoIndex(idx)}
-                className={`group relative rounded-xl overflow-hidden border bg-panel2 aspect-square cursor-pointer transition-all duration-200 ${
+                className={`group relative rounded-xl overflow-hidden border bg-slate aspect-square cursor-pointer transition-all duration-200 ${
                   isSelected
-                    ? "border-violet ring-2 ring-violet/50 shadow-lg scale-102"
-                    : "border-hairline hover:border-violet hover:shadow-lg hover:scale-102"
+                    ? "border-gold ring-2 ring-gold/60 shadow-lg scale-102"
+                    : "border-hairline hover:border-gold/50 hover:shadow-lg hover:scale-102"
                 }`}
               >
                 <img
@@ -564,11 +543,11 @@ export const EventPhotos: React.FC = () => {
                   }}
                   className={`absolute top-2 right-2 h-6 w-6 rounded-md border flex items-center justify-center transition-all z-10 ${
                     isSelected
-                      ? "bg-violet border-violet text-white shadow-md"
-                      : "opacity-0 group-hover:opacity-100 bg-black/60 border-white/30 text-transparent hover:border-white"
+                      ? "bg-gold border-gold text-midnight shadow-md"
+                      : "opacity-0 group-hover:opacity-100 bg-midnight/80 border-hairline text-transparent hover:border-gold"
                   }`}
                 >
-                  <svg className={`h-3.5 w-3.5 ${isSelected ? "text-white" : "text-transparent"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                  <svg className={`h-3.5 w-3.5 ${isSelected ? "text-midnight" : "text-transparent"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                     <path d="M5 13l4 4L19 7" />
                   </svg>
                 </button>
@@ -576,16 +555,16 @@ export const EventPhotos: React.FC = () => {
                 {/* Top-left Badges */}
                 <div className="absolute top-2 left-2 z-10 flex flex-col gap-1 items-start">
                   {isPublic && (
-                    <span className="rounded-md px-1.5 py-0.5 text-[9px] font-bold backdrop-blur-md bg-emerald-600/90 border border-emerald-400 text-white flex items-center gap-1 shadow-sm">
+                    <span className="rounded-md px-1.5 py-0.5 text-[9px] font-bold backdrop-blur-md bg-sage/90 border border-sage text-midnight flex items-center gap-1 shadow-sm">
                       <span>🌐</span> Public
                     </span>
                   )}
                 </div>
 
                 {/* Bottom Overlay Actions */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2.5">
-                  <p className="text-[11px] font-semibold text-white truncate">{photo.filename}</p>
-                  <div className="flex items-center justify-between text-[9px] text-zinc-300 font-mono mt-1">
+                <div className="absolute inset-0 bg-gradient-to-t from-midnight/90 via-midnight/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2.5">
+                  <p className="text-[11px] font-semibold text-soft-white truncate">{photo.filename}</p>
+                  <div className="flex items-center justify-between text-[9px] text-cool-gray font-mono mt-1">
                     <span>{((photo.fileSize || 0) / (1024 * 1024)).toFixed(1)} MB</span>
                     <button
                       type="button"
@@ -595,8 +574,8 @@ export const EventPhotos: React.FC = () => {
                       }}
                       className={`px-1.5 py-0.5 rounded font-sans text-[10px] font-semibold border transition-all ${
                         isPublic
-                          ? "bg-emerald-600/90 hover:bg-red-600 text-white border-emerald-400"
-                          : "bg-black/60 hover:bg-emerald-600 text-zinc-200 hover:text-white border-white/20"
+                          ? "bg-sage hover:bg-coral text-midnight hover:text-white border-sage hover:border-coral"
+                          : "bg-midnight/70 hover:bg-gold hover:text-midnight text-cool-gray border-hairline"
                       }`}
                     >
                       {isPublic ? "🌐 Public" : "+ Public"}
@@ -644,15 +623,15 @@ export const EventPhotos: React.FC = () => {
       {/* New Folder Modal */}
       {isNewFolderModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-xl border border-hairline bg-panel p-6 shadow-2xl">
-            <h3 className="text-base font-semibold text-cloud">Create Sub-Folder</h3>
-            <p className="mt-1 text-xs text-dim">
+          <div className="w-full max-w-sm rounded-xl border border-hairline bg-slate p-6 shadow-2xl">
+            <h3 className="text-base font-semibold text-soft-white">Create Sub-Folder</h3>
+            <p className="mt-1 text-xs text-cool-gray">
               Organize event photos by segment (e.g. Ceremony, Reception, Portraits).
             </p>
 
             <form onSubmit={handleCreateFolder} className="mt-4 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-dim mb-1">
+                <label className="block text-xs font-medium text-cool-gray mb-1">
                   Folder Name
                 </label>
                 <input
@@ -660,12 +639,12 @@ export const EventPhotos: React.FC = () => {
                   placeholder="e.g. Ceremony, Reception, Portraits"
                   value={newFolderName}
                   onChange={(e) => setNewFolderName(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-lg border border-hairline bg-panel2 text-xs text-cloud placeholder:text-dim/60 focus:border-violet focus:outline-none"
+                  className="w-full px-3 py-1.5 rounded-lg border border-hairline bg-midnight text-xs text-soft-white placeholder:text-cool-gray/60 focus:border-gold focus:outline-none"
                 />
               </div>
 
               {folderError && (
-                <p className="text-xs text-red-400">{folderError}</p>
+                <p className="text-xs text-coral">{folderError}</p>
               )}
 
               <div className="flex items-center justify-end gap-2 pt-2">

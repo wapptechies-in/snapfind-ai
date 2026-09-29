@@ -46,18 +46,18 @@ export const EventCard: React.FC<EventCardProps> = ({
   return (
     <Card
       hover
-      className={`group flex flex-col overflow-hidden bg-white ${className}`}
+      className={`group flex flex-col overflow-hidden bg-[#151D2E] border border-[#232F48] shadow-card hover:border-[#D6A84F]/40 cursor-pointer ${className}`}
       onClick={onClick}
     >
       {/* 16:9 Photography Container */}
-      <div className="relative aspect-[16/9] w-full overflow-hidden bg-cream">
+      <div className="relative aspect-[16/9] w-full overflow-hidden bg-[#0B1220]">
         <img
           src={imageSrc}
           alt={event.name}
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-charcoal/60 via-transparent to-transparent opacity-60" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0B1220]/90 via-transparent to-transparent opacity-75" />
 
         {/* Status Badge */}
         <div className="absolute top-3 left-3">
@@ -67,21 +67,21 @@ export const EventCard: React.FC<EventCardProps> = ({
         </div>
 
         {/* Photo count pill */}
-        <div className="absolute bottom-2.5 right-3 rounded-md bg-charcoal/70 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
+        <div className="absolute bottom-2.5 right-3 rounded-md bg-[#0B1220]/80 border border-[#232F48] px-2 py-0.5 text-[10px] font-medium text-[#F7F5F0] backdrop-blur-sm">
           {photoCount.toLocaleString()} {photoCount === 1 ? "photo" : "photos"}
         </div>
       </div>
 
       {/* Card Content Area */}
       <div className="flex flex-1 flex-col p-4">
-        <h3 className="font-serif text-base font-bold text-charcoal group-hover:text-forest transition-colors truncate">
+        <h3 className="font-sans text-base font-bold text-[#F7F5F0] group-hover:text-[#D6A84F] transition-colors truncate">
           {event.name}
         </h3>
 
         {/* Metadata Details */}
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-warm-gray font-body">
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#A8B0BE] font-sans">
           <span className="flex items-center gap-1">
-            <svg className="w-3.5 h-3.5 text-sage" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg className="w-3.5 h-3.5 text-[#D6A84F]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
               <line x1="16" y1="2" x2="16" y2="6" />
               <line x1="8" y1="2" x2="8" y2="6" />
@@ -92,7 +92,7 @@ export const EventCard: React.FC<EventCardProps> = ({
 
           {event.location && (
             <span className="flex items-center gap-1 truncate max-w-[140px]">
-              <svg className="w-3.5 h-3.5 text-sage" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg className="w-3.5 h-3.5 text-[#A8B0BE]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                 <circle cx="12" cy="10" r="3" />
               </svg>
@@ -102,15 +102,15 @@ export const EventCard: React.FC<EventCardProps> = ({
 
           {guestCount > 0 && (
             <span className="flex items-center gap-1">
-              <span>👥</span>
+              <span className="text-xs">👥</span>
               {guestCount} guests
             </span>
           )}
         </div>
 
         {/* Card Footer Actions */}
-        <div className="mt-4 pt-3 border-t border-warm-border-light flex items-center justify-between gap-2">
-          {/* Action pills */}
+        <div className="mt-4 pt-3 border-t border-[#232F48] flex items-center justify-between gap-2">
+          {/* Action icon buttons */}
           <div className="flex items-center gap-1">
             {onOpenPhotos && (
               <button
@@ -119,7 +119,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                   e.stopPropagation();
                   onOpenPhotos();
                 }}
-                className="rounded-lg p-1.5 text-warm-gray hover:text-forest hover:bg-cream transition-colors"
+                className="rounded-lg p-1.5 text-[#A8B0BE] hover:text-[#D6A84F] hover:bg-[#1B253B] transition-colors"
                 title="View Photos"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -137,7 +137,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                   e.stopPropagation();
                   onOpenQR();
                 }}
-                className="rounded-lg p-1.5 text-warm-gray hover:text-forest hover:bg-cream transition-colors"
+                className="rounded-lg p-1.5 text-[#A8B0BE] hover:text-[#D6A84F] hover:bg-[#1B253B] transition-colors"
                 title="Guest QR Code"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -156,7 +156,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                   e.stopPropagation();
                   onOpenSettings();
                 }}
-                className="rounded-lg p-1.5 text-warm-gray hover:text-forest hover:bg-cream transition-colors"
+                className="rounded-lg p-1.5 text-[#A8B0BE] hover:text-[#D6A84F] hover:bg-[#1B253B] transition-colors"
                 title="Event Settings"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -173,7 +173,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                   e.stopPropagation();
                   onDelete();
                 }}
-                className="rounded-lg p-1.5 text-warm-gray hover:text-danger hover:bg-danger-bg transition-colors"
+                className="rounded-lg p-1.5 text-[#A8B0BE] hover:text-[#E87961] hover:bg-[#E87961]/15 transition-colors"
                 title="Delete Event"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -192,13 +192,13 @@ export const EventCard: React.FC<EventCardProps> = ({
                 e.stopPropagation();
                 onSelectAndScan();
               }}
-              className="rounded-xl bg-forest hover:bg-forest-hover px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors flex items-center gap-1.5"
+              className="rounded-xl bg-[#D6A84F] hover:bg-[#C5963E] px-3.5 py-1.5 text-xs font-bold text-[#0B1220] shadow-sm transition-colors flex items-center gap-1.5 active:scale-95"
             >
               <span>Select & Scan</span>
               <span>→</span>
             </button>
           ) : (
-            <span className="text-xs font-semibold text-forest group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+            <span className="text-xs font-semibold text-[#D6A84F] group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
               <span>Open Event</span>
               <span>→</span>
             </span>

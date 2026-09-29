@@ -1,85 +1,108 @@
+// SnapFind AI — Official Luxury Gold Photography Design System
+// Master Color Tokens
+
 export const colors = {
-  // --- SnapFind Studio Luxury Color System ---
-  // Warm Ivory & Creams (Canvas & Surfaces)
-  ivory: "#FBF9F4",
-  cream: "#F5EFEB",
-  "cream-soft": "#FAF7F2",
-  "surface-card": "#FFFFFF",
-  "surface-hover": "#FAF7F2",
-  "surface-inset": "#F2ECE2",
+  // --- PRIMARY FOUNDATION ---
+  // Midnight Navy (Main application background, sidebar, navigation, dark hero, dark workspace)
+  midnight: "#0B1220",
+  "midnight-dark": "#070C16",
+  "midnight-light": "#0F182A",
 
-  // Deep Forest Green (Primary Brand & Core Action)
-  forest: "#163E2B",
-  "forest-hover": "#1E5139",
-  "forest-dark": "#0E291C",
-  "forest-light": "#236345",
-  "forest-tint": "#EAF4EE",
+  // Deep Slate (Cards, secondary panels, inputs, dropdowns, navigation surfaces, widgets)
+  slate: "#151D2E",
+  "slate-surface": "#151D2E",
+  "slate-hover": "#1B253B",
+  "slate-active": "#202C45",
+  "slate-border": "#232F48",
+  "slate-border-light": "#2D3B59",
+  "slate-inset": "#0F1624",
+  "slate-700": "#232F48",
+  "slate-800": "#1B253B",
+  "slate-900": "#0F1624",
 
-  // Sage Green (Secondary & Active Nav Indicators)
-  sage: "#4A6B56",
-  "sage-light": "#7D9D89",
-  "sage-soft": "#E2EDE0",
-  "sage-border": "#C7D8C4",
+  // --- BRAND ACCENT (Restrained & Premium) ---
+  // Champagne Gold (Primary CTA, active navigation, important icons, selected states, highlights)
+  gold: "#D6A84F",
+  "gold-hover": "#C5963E",
+  "gold-dark": "#A87C2B",
+  "gold-light": "#E4BE72",
+  "gold-subtle": "rgba(214, 168, 79, 0.12)",
+  "gold-border": "rgba(214, 168, 79, 0.35)",
 
-  // Heritage Champagne Gold (Accent & Luxury Badges)
-  champagne: "#C8A874",
-  "champagne-light": "#E2CEAD",
-  "champagne-soft": "#FAF4EB",
-  "champagne-dark": "#8F6E3B",
+  // --- SECONDARY ACCENT (Used Sparingly) ---
+  // Warm Coral (Secondary actions, notifications, attention states, selected photo highlights)
+  coral: "#E87961",
+  "coral-hover": "#D66750",
+  "coral-subtle": "rgba(232, 121, 97, 0.15)",
+  "coral-border": "rgba(232, 121, 97, 0.35)",
 
-  // Editorial Pastel Metric Accents (Direct from Reference Design)
-  "metric-peach-bg": "#FCECDD",
-  "metric-peach-text": "#9E5926",
-  "metric-peach-border": "#F5D5BA",
+  // --- SUCCESS & STATUS ---
+  // Sage Green (Successful uploads, completed events, online status, positive indicators)
+  sage: "#5FA58B",
+  "sage-hover": "#4E9279",
+  "sage-subtle": "rgba(95, 165, 139, 0.15)",
+  "sage-border": "rgba(95, 165, 139, 0.35)",
 
-  "metric-lavender-bg": "#EDE8F8",
-  "metric-lavender-text": "#5B4C8A",
-  "metric-lavender-border": "#D8CFEE",
+  // --- TYPOGRAPHY CONTRAST ---
+  // Soft White (Headings, primary text, important labels, navigation text)
+  "soft-white": "#F7F5F0",
+  white: "#FFFFFF",
 
-  "metric-jade-bg": "#D9F2E6",
-  "metric-jade-text": "#165B3B",
-  "metric-jade-border": "#BEE5D3",
+  // Cool Gray (Descriptions, metadata, secondary labels, dates, supporting information)
+  "cool-gray": "#A8B0BE",
+  "cool-gray-light": "#C4CAD4",
+  "cool-gray-muted": "#6E788B",
 
-  "metric-amber-bg": "#FDF2DC",
-  "metric-amber-text": "#96651E",
-  "metric-amber-border": "#F8E0B5",
+  // --- CLIENT-FACING LIGHT BACKGROUND ---
+  // Ivory (Light-mode client screens, photo sharing, guest portals)
+  ivory: "#FAF8F3",
+  "ivory-card": "#FFFFFF",
+  "ivory-border": "#E5DFD5",
+  "ivory-text": "#0B1220",
+  "ivory-muted": "#687385",
 
-  // Typography (Organic Contrast - Deep Evergreen Charcoal)
-  charcoal: "#152019",
-  "charcoal-soft": "#2C3831",
-  "warm-gray": "#556057",
-  "warm-gray-light": "#7C867E",
-  "warm-border": "#E8E2D5",
-  "warm-border-light": "#F2ECE2",
+  // --- SEMANTIC ALIASES & COMPATIBILITY BRIDGES ---
+  // These guarantee existing components seamlessly inherit the Luxury Gold palette
+  base: "#0B1220",
+  panel: "#151D2E",
+  panel2: "#0F1624",
+  hairline: "#232F48",
+  cloud: "#F7F5F0",
+  dim: "#A8B0BE",
+  forest: "#D6A84F",
+  "forest-hover": "#C5963E",
+  "forest-dark": "#0B1220",
+  "forest-light": "#E4BE72",
+  "forest-tint": "rgba(214, 168, 79, 0.12)",
+  champagne: "#D6A84F",
+  "champagne-light": "#E4BE72",
+  "champagne-soft": "rgba(214, 168, 79, 0.12)",
+  "champagne-dark": "#A87C2B",
+  charcoal: "#F7F5F0",
+  "charcoal-soft": "#E1DFD9",
+  "warm-gray": "#A8B0BE",
+  "warm-gray-light": "#6E788B",
+  "warm-border": "#232F48",
+  "warm-border-light": "#1B253B",
+  "surface-card": "#151D2E",
+  "surface-hover": "#1B253B",
+  "surface-inset": "#0F1624",
+  cream: "#151D2E",
+  "cream-soft": "#0F1624",
 
-  // Status & Alerts
-  success: "#226B43",
-  "success-bg": "#EAF5EE",
-  "success-border": "#B5DEC6",
-
-  warning: "#B87814",
-  "warning-bg": "#FEF7EB",
-  "warning-border": "#F6DBAE",
-
-  danger: "#B83832",
-  "danger-bg": "#FDF2F1",
-  "danger-border": "#F4BFBC",
-
-  info: "#2B5E7C",
-  "info-bg": "#EBF3F8",
-  "info-border": "#BED9E8",
-
-  // Compatibility Mappings (Seamless transition from legacy tokens)
-  base: "#FBF9F4",
-  panel: "#FFFFFF",
-  panel2: "#F5EFEB",
-  hairline: "#E8E2D5",
-  cloud: "#152019",
-  dim: "#556057",
-  violet: "#163E2B",
-  "violet-light": "#4A6B56",
-  good: "#226B43",
-  bad: "#B83832",
+  // Status mappings
+  success: "#5FA58B",
+  "success-bg": "rgba(95, 165, 139, 0.15)",
+  "success-border": "rgba(95, 165, 139, 0.35)",
+  warning: "#D6A84F",
+  "warning-bg": "rgba(214, 168, 79, 0.15)",
+  "warning-border": "rgba(214, 168, 79, 0.35)",
+  danger: "#E87961",
+  "danger-bg": "rgba(232, 121, 97, 0.15)",
+  "danger-border": "rgba(232, 121, 97, 0.35)",
+  info: "#5B8BF5",
+  "info-bg": "rgba(91, 139, 245, 0.15)",
+  "info-border": "rgba(91, 139, 245, 0.35)",
 } as const;
 
 export type ColorToken = keyof typeof colors;

@@ -27,6 +27,9 @@ export interface SubscriptionStatus {
   max_photos_per_event: number;
   custom_branding: boolean;
   guest_paywall_enabled: boolean;
+  used_storage_bytes?: number;
+  max_storage_bytes?: number;
+  is_trial_edition?: boolean;
 }
 
 export interface GuestCheckoutPayload {

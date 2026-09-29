@@ -29,7 +29,7 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onDelete, onShowQR 
         {/* Cover Image Banner */}
         <div className="relative h-44 w-full overflow-hidden bg-panel2">
           <img
-            src={event.coverImage || (event as any).cover_image || (event as any).cover_photo_url || DEFAULT_EVENT_COVER}
+            src={event.coverImage || (event as { cover_image?: string; cover_photo_url?: string }).cover_image || (event as { cover_image?: string; cover_photo_url?: string }).cover_photo_url || DEFAULT_EVENT_COVER}
             alt={event.name}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"

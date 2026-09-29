@@ -139,13 +139,13 @@ export const ProcessingStatus: React.FC = () => {
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       {/* Event Header */}
-      <div className="p-5 rounded-2xl border border-warm-beige bg-surface flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+      <div className="p-5 rounded-2xl border border-slate-800 bg-slate flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
         <div>
-          <span className="text-[10px] text-forest font-bold uppercase tracking-wider">
+          <span className="text-[10px] text-gold font-bold uppercase tracking-wider">
             Server AI Processing Monitor
           </span>
-          <h2 className="text-lg font-serif font-bold text-charcoal mt-0.5">{selectedEvent.name}</h2>
-          <p className="text-xs text-charcoal-muted font-mono">
+          <h2 className="text-lg font-bold text-soft-white mt-0.5">{selectedEvent.name}</h2>
+          <p className="text-xs text-cool-gray font-mono">
             Token: {selectedEvent.public_token} &middot; Async workers active
           </p>
         </div>
@@ -162,9 +162,9 @@ export const ProcessingStatus: React.FC = () => {
 
       {/* Message alert */}
       {message && (
-        <div className="p-3.5 rounded-xl border border-forest/20 bg-forest/10 text-xs text-forest flex items-center justify-between shadow-sm">
+        <div className="p-3.5 rounded-xl border border-gold/20 bg-slate text-xs text-gold flex items-center justify-between shadow-sm">
           <span>{message}</span>
-          <button onClick={() => setMessage(null)} className="text-charcoal-muted hover:text-charcoal cursor-pointer">
+          <button onClick={() => setMessage(null)} className="text-cool-gray hover:text-soft-white cursor-pointer">
             ✕
           </button>
         </div>
@@ -172,11 +172,11 @@ export const ProcessingStatus: React.FC = () => {
 
       {/* Pipeline Overview Card */}
       {statusData && (
-        <Card className="p-6 bg-surface border-warm-beige shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-warm-beige">
+        <Card className="p-6 bg-slate border-slate-800 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-800">
             <div>
-              <h3 className="text-base font-serif font-semibold text-charcoal">Server-Side Pipeline Status</h3>
-              <p className="text-xs text-charcoal-muted mt-0.5">
+              <h3 className="text-base font-bold text-soft-white">Server-Side Pipeline Status</h3>
+              <p className="text-xs text-cool-gray mt-0.5">
                 Derivative generation, facial landmark detection, 512-d embeddings, and vector indexing
               </p>
             </div>
@@ -188,30 +188,30 @@ export const ProcessingStatus: React.FC = () => {
 
           {/* Counts Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 my-6">
-            <div className="p-4 rounded-xl border border-warm-beige bg-cream text-center">
-              <p className="text-xs text-charcoal-muted font-medium">Total Photos</p>
-              <p className="text-2xl font-bold text-charcoal font-mono mt-1">
+            <div className="p-4 rounded-xl border border-slate-800 bg-midnight text-center">
+              <p className="text-xs text-cool-gray font-medium">Total Photos</p>
+              <p className="text-2xl font-bold text-soft-white font-mono mt-1">
                 {statusData.totalPhotos.toLocaleString()}
               </p>
             </div>
 
-            <div className="p-4 rounded-xl border border-warm-beige bg-cream text-center">
-              <p className="text-xs text-charcoal-muted font-medium">Processed</p>
-              <p className="text-2xl font-bold text-forest font-mono mt-1">
+            <div className="p-4 rounded-xl border border-slate-800 bg-midnight text-center">
+              <p className="text-xs text-cool-gray font-medium">Processed</p>
+              <p className="text-2xl font-bold text-sage font-mono mt-1">
                 {statusData.processed.toLocaleString()}
               </p>
             </div>
 
-            <div className="p-4 rounded-xl border border-warm-beige bg-cream text-center">
-              <p className="text-xs text-charcoal-muted font-medium">Remaining</p>
-              <p className="text-2xl font-bold text-charcoal-muted font-mono mt-1">
+            <div className="p-4 rounded-xl border border-slate-800 bg-midnight text-center">
+              <p className="text-xs text-cool-gray font-medium">Remaining</p>
+              <p className="text-2xl font-bold text-cool-gray font-mono mt-1">
                 {statusData.remaining.toLocaleString()}
               </p>
             </div>
 
-            <div className={`p-4 rounded-xl border text-center ${hasFailed ? "border-danger/30 bg-danger/10" : "border-warm-beige bg-cream"}`}>
-              <p className={`text-xs font-medium ${hasFailed ? "text-danger" : "text-charcoal-muted"}`}>Failed</p>
-              <p className={`text-2xl font-bold font-mono mt-1 ${hasFailed ? "text-danger" : "text-charcoal-muted"}`}>
+            <div className={`p-4 rounded-xl border text-center ${hasFailed ? "border-coral/30 bg-coral/10" : "border-slate-800 bg-midnight"}`}>
+              <p className={`text-xs font-medium ${hasFailed ? "text-coral" : "text-cool-gray"}`}>Failed</p>
+              <p className={`text-2xl font-bold font-mono mt-1 ${hasFailed ? "text-coral" : "text-cool-gray"}`}>
                 {statusData.failed.toLocaleString()}
               </p>
             </div>
@@ -220,8 +220,8 @@ export const ProcessingStatus: React.FC = () => {
           {/* Progress Bar */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-charcoal">Overall Processing Completion</span>
-              <span className="font-mono text-forest font-bold">
+              <span className="font-semibold text-soft-white">Overall Processing Completion</span>
+              <span className="font-mono text-gold font-bold">
                 {statusData.progressPercent}%
               </span>
             </div>
@@ -232,8 +232,8 @@ export const ProcessingStatus: React.FC = () => {
           </div>
 
           {/* Action Controls */}
-          <div className="mt-6 pt-5 border-t border-warm-beige flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs text-charcoal-muted">
+          <div className="mt-6 pt-5 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-cool-gray">
               Background jobs run asynchronously outside the web browser.
             </p>
 
@@ -266,8 +266,8 @@ export const ProcessingStatus: React.FC = () => {
 
       {/* Pipeline Stages Breakdown */}
       {statusData && (
-        <Card className="p-6 bg-surface border-warm-beige shadow-sm">
-          <h3 className="text-sm font-serif font-semibold text-charcoal mb-4">Pipeline Execution Stages</h3>
+        <Card className="p-6 bg-slate border-slate-800 shadow-sm">
+          <h3 className="text-sm font-bold text-soft-white mb-4">Pipeline Execution Stages</h3>
 
           <div className="space-y-3">
             {statusData.stages.map((stage) => {
@@ -278,37 +278,37 @@ export const ProcessingStatus: React.FC = () => {
               return (
                 <div
                   key={stage.name}
-                  className="flex items-center justify-between p-3.5 rounded-xl border border-warm-beige bg-cream/50"
+                  className="flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-midnight/50"
                 >
                   <div className="flex items-center gap-3">
                     <div
                       className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold ${
                         isCompleted
-                          ? "bg-forest/15 text-forest"
+                          ? "bg-sage/20 text-sage"
                           : isStageProcessing
-                          ? "bg-forest/15 text-forest animate-pulse"
+                          ? "bg-gold/20 text-gold animate-pulse"
                           : isStageFailed
-                          ? "bg-danger/15 text-danger"
-                          : "bg-surface text-charcoal-muted border border-warm-beige"
+                          ? "bg-coral/20 text-coral"
+                          : "bg-slate text-cool-gray border border-slate-800"
                       }`}
                     >
                       {isCompleted ? "✓" : isStageProcessing ? "⟳" : isStageFailed ? "✕" : "•"}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-charcoal">{stage.name}</p>
-                      {stage.detail && <p className="text-xs text-charcoal-muted mt-0.5">{stage.detail}</p>}
+                      <p className="text-sm font-medium text-soft-white">{stage.name}</p>
+                      {stage.detail && <p className="text-xs text-cool-gray mt-0.5">{stage.detail}</p>}
                     </div>
                   </div>
 
                   <span
                     className={`text-xs font-medium px-2.5 py-1 rounded-full ${
                       isCompleted
-                        ? "text-forest bg-forest/10"
+                        ? "text-sage bg-sage/10"
                         : isStageProcessing
-                        ? "text-forest bg-forest/15 animate-pulse font-semibold"
+                        ? "text-gold bg-gold/10 animate-pulse font-semibold"
                         : isStageFailed
-                        ? "text-danger bg-danger/10 font-semibold"
-                        : "text-charcoal-muted bg-surface border border-warm-beige"
+                        ? "text-coral bg-coral/10 font-semibold"
+                        : "text-cool-gray bg-slate border border-slate-800"
                     }`}
                   >
                     {stage.status}

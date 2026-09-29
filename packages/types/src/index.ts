@@ -1,4 +1,7 @@
+import type { Photo } from "./photo";
+
 export * from "./event";
+export { normalizeSnapEvent } from "./event";
 export * from "./user";
 export * from "./photo";
 export * from "./upload";
@@ -23,8 +26,8 @@ export interface SearchResult {
   token: string;
   selfiePreviewUrl?: string;
   totalMatches: number;
-  strongMatches: any[];
-  possibleMatches: any[];
+  strongMatches: Photo[];
+  possibleMatches: Photo[];
 }
 
 export interface PlanTier {
@@ -40,7 +43,7 @@ export interface PlanTier {
 }
 
 export interface SubscriptionStatus {
-  tier: "free" | "pro" | "studio" | string;
+  tier: "free" | "pro" | "studio" | "trial" | string;
   status: "active" | "canceled" | "past_due" | string;
   active_events_count: number;
   max_active_events: number;
@@ -48,6 +51,9 @@ export interface SubscriptionStatus {
   max_photos_per_event: number;
   custom_branding: boolean;
   guest_paywall_enabled: boolean;
+  used_storage_bytes?: number;
+  max_storage_bytes?: number;
+  is_trial_edition?: boolean;
 }
 
 export interface GuestCheckoutPayload {

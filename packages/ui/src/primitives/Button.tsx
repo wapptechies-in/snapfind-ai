@@ -1,7 +1,7 @@
 import React from "react";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger" | "accent" | "champagne";
+  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger" | "accent" | "success" | "champagne";
   size?: "sm" | "md" | "lg";
   loading?: boolean;
   icon?: React.ReactNode;
@@ -18,7 +18,7 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const base =
-    "inline-flex items-center justify-center font-medium rounded-xl transition-all duration-150 cursor-pointer select-none active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 font-body";
+    "inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-150 cursor-pointer select-none active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D6A84F]/40 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 font-sans tracking-wide";
 
   const sizeStyles = {
     sm: "px-3 py-1.5 text-xs gap-1.5",
@@ -26,21 +26,30 @@ export const Button: React.FC<ButtonProps> = ({
     lg: "px-5 py-2.5 text-sm md:text-base gap-2.5",
   };
 
-  const normalizedVariant = variant === "champagne" ? "accent" : variant;
+  const normalizedVariant = variant === "champagne" ? "primary" : variant;
 
   const variantStyles = {
+    // Primary: Champagne Gold background, Midnight text
     primary:
-      "bg-forest hover:bg-forest-hover text-white shadow-sm border border-forest-hover/40 active:bg-forest-dark",
+      "bg-[#D6A84F] hover:bg-[#C5963E] text-[#0B1220] shadow-sm font-bold active:bg-[#B38734]",
+    // Secondary: Deep Slate / Transparent, Gold border, Soft White text
     secondary:
-      "bg-white hover:bg-cream text-charcoal border border-warm-border shadow-card active:bg-cream-soft",
-    accent:
-      "bg-champagne hover:bg-champagne-dark text-white shadow-sm border border-champagne-light",
+      "bg-[#151D2E] hover:bg-[#1B253B] text-[#F7F5F0] border border-[#D6A84F]/40 hover:border-[#D6A84F] shadow-sm",
+    // Outline: Slate border, Soft White text
     outline:
-      "border border-warm-border text-warm-gray hover:text-charcoal hover:bg-cream-soft hover:border-warm-gray-light/40 bg-transparent",
+      "border border-[#232F48] text-[#F7F5F0] hover:bg-[#151D2E] hover:border-[#D6A84F]/50 bg-transparent",
+    // Accent: Warm Coral (Used sparingly)
+    accent:
+      "bg-[#E87961] hover:bg-[#D66750] text-[#0B1220] font-bold shadow-sm",
+    // Success: Sage Green
+    success:
+      "bg-[#5FA58B] hover:bg-[#4E9279] text-[#0B1220] font-bold shadow-sm",
+    // Ghost
     ghost:
-      "bg-transparent hover:bg-cream text-warm-gray hover:text-charcoal active:bg-cream-soft",
+      "bg-transparent hover:bg-[#151D2E] text-[#A8B0BE] hover:text-[#F7F5F0]",
+    // Destructive
     danger:
-      "bg-danger-bg hover:bg-danger/20 text-danger border border-danger-border shadow-sm",
+      "bg-[#E87961]/20 hover:bg-[#E87961]/30 text-[#E87961] border border-[#E87961]/40 shadow-sm",
   };
 
   return (

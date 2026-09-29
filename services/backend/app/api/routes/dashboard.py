@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_current_photographer_or_default
+from app.api.dependencies import get_current_photographer
 from app.db.session import get_db
 from app.models.event import Event
 from app.models.photo import Photo
@@ -22,7 +22,7 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 @router.get("/summary", response_model=DashboardSummaryOut)
 @router.get("/stats", response_model=DashboardSummaryOut)
 def get_dashboard_summary(
-    current_photographer: Annotated[Photographer, Depends(get_current_photographer_or_default)],
+    current_photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> DashboardSummaryOut:
     """Compute aggregate dashboard metrics for the current photographer."""

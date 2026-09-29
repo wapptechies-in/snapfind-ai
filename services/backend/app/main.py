@@ -38,6 +38,7 @@ from app.db.migrate_folders import run_folder_migrations
 from app.db.migrate_guest_whatsapp import run_guest_whatsapp_migrations
 from app.db.migrate_photographer_onboarding import run_photographer_onboarding_migrations
 from app.db.migrate_public_gallery import run_public_gallery_migrations
+from app.db.migrate_trial_expiration import run_trial_expiration_migrations
 from app.db.session import init_db
 from app.services.ai.insightface_engine import get_face_engine
 
@@ -56,6 +57,7 @@ async def lifespan(app: FastAPI):
     run_guest_whatsapp_migrations()
     run_photographer_onboarding_migrations()
     run_public_gallery_migrations()
+    run_trial_expiration_migrations()
     # Warm up face engine singleton so it is ready for instant inference
     get_face_engine()
     yield

@@ -4,7 +4,7 @@ import * as fs from "node:fs";
 import * as http from "node:http";
 import * as https from "node:https";
 import * as path from "node:path";
-import { fileURLToPath, URL } from "node:url";
+import { URL } from "node:url";
 
 const appDir = typeof __dirname !== "undefined" ? __dirname : process.cwd();
 
@@ -76,8 +76,8 @@ function createWindow() {
     height: 820,
     minWidth: 1024,
     minHeight: 700,
-    backgroundColor: "#FAF8F5",
-    title: "SnapFind Studio — Professional Photo Processing & Upload Agent",
+    backgroundColor: "#0B1220",
+    title: "SnapFind AI — Professional Photography Platform",
     icon: fs.existsSync(iconPath) ? iconPath : undefined,
     webPreferences: {
       preload: path.join(appDir, "preload.cjs"),
