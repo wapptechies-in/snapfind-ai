@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import AuthLayout from "../layouts/AuthLayout";
 import { useAuth } from "../context/AuthContext";
 import { ApiError } from "../services/api";
+import { getApiBaseUrl, setApiBaseUrl } from "../services/api/client";
 import { GoogleSignInButton } from "../components/auth/GoogleSignInButton";
 
 export default function Register() {
@@ -13,6 +14,8 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showServerSettings, setShowServerSettings] = useState(false);
+  const [customApiUrl, setCustomApiUrl] = useState(() => getApiBaseUrl());
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -139,6 +142,47 @@ export default function Register() {
           Sign in
         </Link>
       </p>
+
+      {/* API Server Configuration Toggle */}
+      <div className="mt-4 pt-3 border-t border-slate-800 text-center">
+        <button
+          type="button"
+          onClick={() => setShowServerSettings(!showServerSettings)}
+          className="text-[11px] text-muted hover:text-soft-white transition-colors cursor-pointer"
+        >
+          {showServerSettings ? "▲ Hide Server Settings" : "⚙ API Server: " + customApiUrl}
+        </button>
+        {showServerSettings && (
+          <div className="mt-2.5 p-3 rounded-xl bg-midnight/90 border border-slate-800 text-left space-y-2 shadow-sm">
+            <label className="text-[11px] font-semibold text-muted block">
+              Backend API URL
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={customApiUrl}
+                onChange={(e) => setCustomApiUrl(e.target.value)}
+                placeholder="https://your-api.onrender.com"
+                className="flex-1 text-xs font-mono bg-slate-panel border border-slate-700 rounded-lg px-2.5 py-1.5 text-soft-white outline-none focus:border-gold"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setApiBaseUrl(customApiUrl);
+                  alert(`API server URL set to: ${customApiUrl}`);
+                  window.location.reload();
+                }}
+                className="px-3 py-1.5 rounded-lg bg-gold text-midnight text-xs font-bold hover:bg-gold-light transition-colors cursor-pointer"
+              >
+                Save
+              </button>
+            </div>
+            <p className="text-[10px] text-muted">
+              Point this to your live Render backend (e.g. <code>https://snapfind-api.onrender.com</code>) or local dev server.
+            </p>
+          </div>
+        )}
+      </div>
     </AuthLayout>
   );
 }

@@ -4,9 +4,41 @@
  * Status: IMPLEMENTED (Phase 4)
  */
 
-const defaultApiHost = typeof window !== "undefined" && window.location.hostname ? window.location.hostname : "127.0.0.1";
-export const API_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string) || `http://${defaultApiHost}:8000`;
+export function getApiBaseUrl(): string {
+  if (typeof window !== "undefined" && window.localStorage) {
+    const saved = localStorage.getItem("snapfind_api_url") || localStorage.getItem("snapfind_desktop_api_url");
+    if (saved && saved !== "http://localhost:8000" && saved !== "http://127.0.0.1:8000") {
+      return saved.replace(/\/+$/, "");
+    }
+  }
+
+  const envUrl = (import.meta.env.VITE_API_URL as string) || (import.meta.env.VITE_API_BASE_URL as string);
+  if (envUrl) {
+    return envUrl.replace(/\/+$/, "");
+  }
+
+  if (typeof window !== "undefined" && window.location.hostname) {
+    const h = window.location.hostname;
+    if (h === "localhost" || h === "127.0.0.1") {
+      return "http://127.0.0.1:8000";
+    }
+    // Only bind to port 8000 if accessing over local LAN numeric IP (e.g. 192.168.x.x, 10.x.x.x)
+    if (/^(\d{1,3}\.){3}\d{1,3}$/.test(h)) {
+      return `http://${h}:8000`;
+    }
+  }
+
+  return "https://snapfind-api.onrender.com";
+}
+
+export function setApiBaseUrl(url: string): void {
+  if (typeof window !== "undefined" && window.localStorage) {
+    localStorage.setItem("snapfind_api_url", url.replace(/\/+$/, ""));
+    localStorage.setItem("snapfind_desktop_api_url", url.replace(/\/+$/, ""));
+  }
+}
+
+export const API_BASE_URL = getApiBaseUrl();
 
 
 export const delay = (ms = 250): Promise<void> =>
@@ -78,10 +110,25 @@ export async function request<T>(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  const baseUrl = getApiBaseUrl();
+  let res: Response;
+  try {
+    res = await fetch(`${baseUrl}${endpoint}`, {
+      ...options,
+      headers,
+    });
+  } catch (err: unknown) {
+    if (err instanceof ApiError) throw err;
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("Network request failed")) {
+      throw new ApiError(
+        `Unable to reach backend API at ${baseUrl}. Please ensure the server is live and CORS is enabled.`,
+        0,
+        `Network error: Cannot reach ${baseUrl}`
+      );
+    }
+    throw new ApiError(msg, 0, msg);
+  }
 
   if (res.status === 401) {
     setAuthToken(null);

@@ -18,18 +18,28 @@ export const delay = (ms = 250): Promise<void> =>
 let tokenStorage: TokenStorageAdapter = defaultTokenStorage;
 
 const getDefaultBaseUrl = (): string => {
+  if (typeof window !== "undefined" && window.localStorage) {
+    const saved = localStorage.getItem("snapfind_desktop_api_url") || localStorage.getItem("snapfind_api_url");
+    if (saved && saved !== "http://localhost:8000" && saved !== "http://127.0.0.1:8000") {
+      return saved.replace(/\/+$/, "");
+    }
+  }
+
+  const envUrl = (import.meta as any)?.env?.VITE_API_URL || (import.meta as any)?.env?.VITE_API_BASE_URL;
+  if (envUrl) return envUrl.replace(/\/+$/, "");
+
   if (typeof window !== "undefined" && window.location.hostname) {
     const h = window.location.hostname;
-    // If accessed over LAN/Wi-Fi (e.g. 192.168.x.x, 10.x.x.x), always bind API to same host
-    if (h !== "localhost" && h !== "127.0.0.1") {
+    if (h === "localhost" || h === "127.0.0.1") {
+      return "http://127.0.0.1:8000";
+    }
+    // Only bind to http://${h}:8000 if it is a numeric LAN IP (e.g. 192.168.x.x, 10.x.x.x)
+    if (/^(\d{1,3}\.){3}\d{1,3}$/.test(h)) {
       return `http://${h}:8000`;
     }
   }
-  if (typeof window !== "undefined" && window.localStorage) {
-    const saved = localStorage.getItem("snapfind_desktop_api_url") || localStorage.getItem("snapfind_api_url");
-    if (saved && saved !== "http://localhost:8000" && saved !== "http://127.0.0.1:8000") return saved;
-  }
-  return "http://127.0.0.1:8000";
+
+  return "https://snapfind-api.onrender.com";
 };
 
 let currentBaseUrl: string = getDefaultBaseUrl();
