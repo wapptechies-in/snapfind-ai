@@ -58,8 +58,7 @@ async def lifespan(app: FastAPI):
     run_photographer_onboarding_migrations()
     run_public_gallery_migrations()
     run_trial_expiration_migrations()
-    # Warm up face engine singleton so it is ready for instant inference
-    get_face_engine()
+    # AI face engine is lazy-loaded on first request to minimize boot memory
     yield
 
 

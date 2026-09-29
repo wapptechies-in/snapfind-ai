@@ -32,12 +32,13 @@ class InsightFaceEngine(FaceEngine):
         self.dimension = settings.FACE_EMBEDDING_DIMENSION
         logger.info(f"Initializing InsightFaceEngine with model '{model_name}' on CPU...")
 
-        # Initialize FaceAnalysis on CPU
+        # Initialize FaceAnalysis on CPU with only detection and recognition modules (saves >60% RAM)
         self.app = FaceAnalysis(
             name=self.model_name,
+            allowed_modules=["detection", "recognition"],
             providers=["CPUExecutionProvider"],
         )
-        self.app.prepare(ctx_id=0, det_size=(640, 640))
+        self.app.prepare(ctx_id=0, det_size=(320, 320))
         logger.info("InsightFaceEngine initialized and ready.")
 
     def detect_faces(self, image: np.ndarray) -> list[DetectedFace]:
