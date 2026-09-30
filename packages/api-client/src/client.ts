@@ -8,8 +8,43 @@ export class ApiError extends Error {
     super(message);
     this.name = "ApiError";
     this.status = status;
-    this.detail = detail;
+    this.detail = detail || message;
   }
+}
+
+export function extractErrorMessage(err: unknown): string {
+  if (!err) return "An unexpected error occurred.";
+  if (typeof err === "string") return err;
+
+  if (err instanceof ApiError) {
+    if (err.detail) {
+      if (typeof err.detail === "string") return err.detail;
+      if (Array.isArray(err.detail)) {
+        return (err.detail as any[])
+          .map((d) => (d.msg ? (d.loc ? `${d.loc.slice(-1)}: ${d.msg}` : d.msg) : JSON.stringify(d)))
+          .join("; ");
+      }
+      return JSON.stringify(err.detail);
+    }
+    return err.message;
+  }
+
+  if (typeof err === "object" && err !== null) {
+    const e = err as any;
+    if (e.detail) {
+      if (typeof e.detail === "string") return e.detail;
+      if (Array.isArray(e.detail)) {
+        return (e.detail as any[])
+          .map((d: any) => (d.msg ? (d.loc ? `${d.loc.slice(-1)}: ${d.msg}` : d.msg) : JSON.stringify(d)))
+          .join("; ");
+      }
+      return JSON.stringify(e.detail);
+    }
+    if (e.message && typeof e.message === "string") return e.message;
+  }
+
+  if (err instanceof Error) return err.message;
+  return String(err);
 }
 
 export const delay = (ms = 250): Promise<void> =>
@@ -114,14 +149,34 @@ export async function request<T>(
   }
 
   if (!res.ok) {
-    let detail = "";
+    let detail: any = "";
     try {
       const errJson = await res.json();
-      detail = errJson.detail ? (typeof errJson.detail === "string" ? errJson.detail : JSON.stringify(errJson.detail)) : JSON.stringify(errJson);
+      if (typeof errJson.detail === "string") {
+        detail = errJson.detail;
+      } else if (Array.isArray(errJson.detail)) {
+        detail = errJson.detail
+          .map((d: any) => (d.msg ? (d.loc ? `${d.loc.slice(-1)}: ${d.msg}` : d.msg) : JSON.stringify(d)))
+          .join("; ");
+      } else if (errJson.detail) {
+        detail = JSON.stringify(errJson.detail);
+      } else if (errJson.message) {
+        detail = errJson.message;
+      } else {
+        detail = JSON.stringify(errJson);
+      }
     } catch {
       detail = await res.text();
     }
-    throw new ApiError(detail || `HTTP ${res.status}`, res.status, detail);
+
+    let message = typeof detail === "string" ? detail : JSON.stringify(detail);
+    if (res.status === 404) {
+      message = `Backend endpoint not found (404: ${endpoint}). If using Render, ensure the latest deploy has finished and your API URL points to the running backend service.`;
+    } else if (!message) {
+      message = `Server responded with HTTP ${res.status}`;
+    }
+
+    throw new ApiError(message, res.status, typeof detail === "string" ? detail : JSON.stringify(detail));
   }
 
   return res.json() as Promise<T>;

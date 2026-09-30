@@ -2,8 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AuthLayout from "../layouts/AuthLayout";
 import { useAuth } from "../context/AuthContext";
-import { ApiError } from "../services/api";
-import { getApiBaseUrl, setApiBaseUrl } from "../services/api/client";
+import { extractErrorMessage, getApiBaseUrl, setApiBaseUrl } from "../services/api";
 import { GoogleSignInButton } from "../components/auth/GoogleSignInButton";
 
 export default function Login() {
@@ -17,7 +16,7 @@ export default function Login() {
   const [customApiUrl, setCustomApiUrl] = useState(() => getApiBaseUrl());
 
   function handleAuthError(err: unknown, userEmail: string) {
-    const msg = err instanceof ApiError ? (err.detail || err.message) : (err instanceof Error ? err.message : "Failed to sign in.");
+    const msg = extractErrorMessage(err) || "Failed to sign in.";
     
     if (msg.includes("ACCOUNT_PENDING")) {
       navigate(`/account-status?email=${encodeURIComponent(userEmail)}&status=pending`);

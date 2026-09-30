@@ -2,8 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AuthLayout from "../layouts/AuthLayout";
 import { useAuth } from "../context/AuthContext";
-import { ApiError } from "../services/api";
-import { getApiBaseUrl, setApiBaseUrl } from "../services/api/client";
+import { extractErrorMessage, getApiBaseUrl, setApiBaseUrl } from "../services/api";
 import { GoogleSignInButton } from "../components/auth/GoogleSignInButton";
 
 export default function Register() {
@@ -30,11 +29,8 @@ export default function Register() {
         navigate(`/account-status?email=${encodeURIComponent(email)}&status=pending`);
       }
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.detail || err.message);
-      } else {
-        setError("Failed to create account. Please check your information.");
-      }
+      const msg = extractErrorMessage(err);
+      setError(msg || "Failed to create account. Please check your information.");
     } finally {
       setLoading(false);
     }
@@ -47,12 +43,12 @@ export default function Register() {
       await loginWithGoogle(credential, studioName.trim() || undefined);
       navigate("/dashboard");
     } catch (err: unknown) {
-      const msg = err instanceof ApiError ? (err.detail || err.message) : (err instanceof Error ? err.message : "Google sign-up failed.");
+      const msg = extractErrorMessage(err);
       if (msg.includes("ACCOUNT_PENDING")) {
         navigate(`/account-status?status=pending`);
         return;
       }
-      setError(msg);
+      setError(msg || "Google sign-up failed.");
     } finally {
       setLoading(false);
     }
@@ -62,8 +58,17 @@ export default function Register() {
     <AuthLayout title="Create your studio account" subtitle="Join SnapFind Studio to organize, share, and deliver client galleries">
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-xs text-red-400">
-            {error}
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-xs text-red-400 space-y-1">
+            <div>{error}</div>
+            {(error.includes("404") || error.includes("Cannot reach") || error.includes("connect")) && !showServerSettings && (
+              <button
+                type="button"
+                onClick={() => setShowServerSettings(true)}
+                className="text-[11px] text-amber-400 underline hover:text-amber-300 block"
+              >
+                Configure Backend API Server URL
+              </button>
+            )}
           </div>
         )}
 
