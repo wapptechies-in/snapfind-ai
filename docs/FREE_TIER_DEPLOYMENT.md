@@ -102,7 +102,7 @@ This guide walks you through deploying SnapFind AI completely for **$0 (Zero Cos
 5. Click **Create Web Service**.
 6. When deployment finishes, test the endpoint:
    ```
-   https://snapfind-api.onrender.com/api/v1/health
+   https://snapfind-api-sq4a.onrender.com/api/v1/health
    ```
    *(Expected response: `{"status": "ok", "app": "SnapFind AI API"}`)*
 
@@ -120,7 +120,7 @@ This guide walks you through deploying SnapFind AI completely for **$0 (Zero Cos
    - **Build Command**: `npm run build:web`
    - **Output Directory**: `apps/snapfind-web/dist`
 4. Under **Environment Variables**, add:
-   - `VITE_API_BASE_URL` = `https://snapfind-api.onrender.com` (Your Render API URL)
+   - `VITE_API_BASE_URL` = `https://snapfind-api-sq4a.onrender.com` (Your Render API URL)
 5. Click **Deploy**. Vercel will deploy your studio dashboard and guest face search gallery.
 
 ### 4.2 Deploy Photographer Portfolio Website (`photographer-website`)
@@ -142,7 +142,7 @@ This guide walks you through deploying SnapFind AI completely for **$0 (Zero Cos
 
 1. Open `desktop/src/api/client.ts` and set the production backend URL:
    ```typescript
-   export const API_BASE_URL = "https://snapfind-api.onrender.com";
+   export const API_BASE_URL = "https://snapfind-api-sq4a.onrender.com";
    ```
 2. Build the final Windows installer:
    ```bash

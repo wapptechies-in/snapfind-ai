@@ -7,7 +7,12 @@
 export function getApiBaseUrl(): string {
   if (typeof window !== "undefined" && window.localStorage) {
     const saved = localStorage.getItem("snapfind_api_url") || localStorage.getItem("snapfind_desktop_api_url");
-    if (saved && saved !== "http://localhost:8000" && saved !== "http://127.0.0.1:8000") {
+    if (
+      saved &&
+      saved !== "http://localhost:8000" &&
+      saved !== "http://127.0.0.1:8000" &&
+      saved !== "https://snapfind-api.onrender.com"
+    ) {
       return saved.replace(/\/+$/, "");
     }
   }
@@ -28,7 +33,7 @@ export function getApiBaseUrl(): string {
     }
   }
 
-  return "https://snapfind-api.onrender.com";
+  return "https://snapfind-api-sq4a.onrender.com";
 }
 
 export function setApiBaseUrl(url: string): void {
@@ -219,7 +224,8 @@ export async function downloadFile(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+  const baseUrl = getApiBaseUrl();
+  const res = await fetch(`${baseUrl}${endpoint}`, {
     ...options,
     headers,
   });

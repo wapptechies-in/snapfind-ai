@@ -55,7 +55,12 @@ let tokenStorage: TokenStorageAdapter = defaultTokenStorage;
 const getDefaultBaseUrl = (): string => {
   if (typeof window !== "undefined" && window.localStorage) {
     const saved = localStorage.getItem("snapfind_desktop_api_url") || localStorage.getItem("snapfind_api_url");
-    if (saved && saved !== "http://localhost:8000" && saved !== "http://127.0.0.1:8000") {
+    if (
+      saved &&
+      saved !== "http://localhost:8000" &&
+      saved !== "http://127.0.0.1:8000" &&
+      saved !== "https://snapfind-api.onrender.com"
+    ) {
       return saved.replace(/\/+$/, "");
     }
   }
@@ -74,7 +79,7 @@ const getDefaultBaseUrl = (): string => {
     }
   }
 
-  return "https://snapfind-api.onrender.com";
+  return "https://snapfind-api-sq4a.onrender.com";
 };
 
 let currentBaseUrl: string = getDefaultBaseUrl();

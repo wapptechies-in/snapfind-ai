@@ -13,6 +13,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_photographer
+from app.core.config import get_settings
 from app.core.security import create_access_token, hash_password, verify_password
 from app.db.session import get_db
 from app.models.photographer import Photographer
@@ -26,6 +27,7 @@ from app.schemas.auth import (
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+settings = get_settings()
 
 
 async def verify_google_credential(credential: str) -> dict:
@@ -127,9 +129,13 @@ def register(
 
     superadmin_email = os.getenv("SUPERADMIN_EMAIL", "").lower().strip()
     is_superadmin = bool(superadmin_email and user_in.email.lower() == superadmin_email)
+    auto_approve = os.getenv(
+        "AUTO_APPROVE_USERS",
+        "true" if settings.ENVIRONMENT.lower() in ("development", "dev", "local", "trial") else "false",
+    ).lower() in ("true", "1", "yes")
 
     init_role = "super_admin" if is_superadmin else "photographer"
-    init_approval = "approved" if is_superadmin else "pending"
+    init_approval = "approved" if (is_superadmin or auto_approve) else "pending"
 
     photographer = Photographer(
         email=user_in.email.lower(),
@@ -226,11 +232,15 @@ async def google_auth(
     )
 
     superadmin_email = os.getenv("SUPERADMIN_EMAIL", "").lower().strip()
+    auto_approve = os.getenv(
+        "AUTO_APPROVE_USERS",
+        "true" if settings.ENVIRONMENT.lower() in ("development", "dev", "local", "trial") else "false",
+    ).lower() in ("true", "1", "yes")
 
     if not photographer:
         is_superadmin = bool(superadmin_email and email_lower == superadmin_email)
         init_role = "super_admin" if is_superadmin else "photographer"
-        init_approval = "approved" if is_superadmin else "pending"
+        init_approval = "approved" if (is_superadmin or auto_approve) else "pending"
 
         studio = payload.studio_name or f"{google_user['name']}'s Studio"
         photographer = Photographer(

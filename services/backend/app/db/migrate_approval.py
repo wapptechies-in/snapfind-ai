@@ -31,9 +31,9 @@ def run_approval_migrations():
             if col_name not in cols:
                 c.execute(f"ALTER TABLE photographers ADD COLUMN {col_name} {col_def}")
 
-        # Ensure demo and default photographers have approved status and super_admin role
-        c.execute("UPDATE photographers SET approval_status = 'approved' WHERE approval_status = 'pending' AND (email IN ('photographer@example.com', 'demo@snapfind.ai') OR id = 'p_001')")
-        c.execute("UPDATE photographers SET role = 'super_admin' WHERE email IN ('photographer@example.com', 'demo@snapfind.ai') OR id = 'p_001'")
+        # Ensure demo, default, and initial admin photographers have approved status and super_admin role
+        c.execute("UPDATE photographers SET approval_status = 'approved' WHERE approval_status = 'pending' AND (email IN ('photographer@example.com', 'demo@snapfind.ai', 'rajjebas789@gmail.com') OR id = 'p_001')")
+        c.execute("UPDATE photographers SET role = 'super_admin' WHERE email IN ('photographer@example.com', 'demo@snapfind.ai', 'rajjebas789@gmail.com') OR id = 'p_001'")
         
         superadmin_email = os.getenv("SUPERADMIN_EMAIL", "").lower().strip()
         if superadmin_email:

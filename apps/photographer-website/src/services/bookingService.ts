@@ -19,8 +19,24 @@ export type BookingEnquiry = {
   message: string;
 };
 
-const API_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string) || "http://127.0.0.1:8000";
+const getFallbackApiUrl = (): string => {
+  const envUrl = (import.meta as any)?.env?.VITE_API_URL || (import.meta as any)?.env?.VITE_API_BASE_URL;
+  if (envUrl) return envUrl.replace(/\/+$/, "");
+
+  if (typeof window !== "undefined" && window.location.hostname) {
+    const h = window.location.hostname;
+    if (h === "localhost" || h === "127.0.0.1") {
+      return "http://127.0.0.1:8000";
+    }
+    if (/^(\d{1,3}\.){3}\d{1,3}$/.test(h)) {
+      return `http://${h}:8000`;
+    }
+  }
+
+  return "https://snapfind-api-sq4a.onrender.com";
+};
+
+const API_BASE_URL = getFallbackApiUrl();
 
 export async function submitBookingEnquiry(
   enquiry: BookingEnquiry

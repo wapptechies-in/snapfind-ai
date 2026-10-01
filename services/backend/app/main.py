@@ -72,7 +72,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.\d+\.\d+\.\d+)(:\d+)?|null|app://.*|file://.*",
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.\d+\.\d+\.\d+|.*\.vercel\.app|.*\.onrender\.com)(:\d+)?|null|app://.*|file://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

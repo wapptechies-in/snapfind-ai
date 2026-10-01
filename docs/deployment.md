@@ -56,10 +56,10 @@ npm run build:web
 
 ### Hosting Targets
 - **Cloudflare Pages / Vercel / Netlify**:
-  - Root directory: `apps/photographer-website` or `apps/snapfind-web`
-  - Build command: `npm run build`
-  - Output directory: `dist`
-  - Configure SPA rewrite rule (redirect `/*` to `/index.html`).
+  - For either Vercel frontend project, set the root directory to the repository root (`./`) so npm can resolve the shared workspace packages.
+  - Photographer website build command: `npm run build:website`; output directory: `apps/photographer-website/dist`.
+  - SnapFind Web build command: `npm run build:web`; output directory: `apps/snapfind-web/dist`.
+  - Set `VITE_API_BASE_URL` for the SnapFind Web project to the live backend URL. The root `vercel.json` provides the SPA fallback for direct navigation to client-side routes.
 - **AWS S3 + CloudFront** or **Nginx**:
   - Serve static directory with gzip/brotli compression and browser caching.
 

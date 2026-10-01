@@ -29,10 +29,12 @@ def read_root() -> dict[str, str]:
     }
 
 
+@router.get("/health", response_model=HealthOut)
 @router.get("/api/v1/health", response_model=HealthOut)
 def get_v1_health(db: Annotated[Session, Depends(get_db)]) -> HealthOut:
     """
-    Structured v1 health check verifying API status and PostgreSQL connection.
+    Structured health check verifying API status and PostgreSQL connection.
+    Supports both /health and /api/v1/health.
     """
     db_status = "connected"
     try:
