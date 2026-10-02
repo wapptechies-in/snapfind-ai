@@ -22,12 +22,8 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const createdUser = await register(studioName, email, password);
-      if (createdUser.approval_status === "approved" || createdUser.role === "super_admin") {
-        navigate("/dashboard");
-      } else {
-        navigate(`/account-status?email=${encodeURIComponent(email)}&status=pending`);
-      }
+      await register(studioName, email, password);
+      navigate("/dashboard");
     } catch (err) {
       const msg = extractErrorMessage(err);
       setError(msg || "Failed to create account. Please check your information.");
@@ -44,10 +40,6 @@ export default function Register() {
       navigate("/dashboard");
     } catch (err: unknown) {
       const msg = extractErrorMessage(err);
-      if (msg.includes("ACCOUNT_PENDING")) {
-        navigate(`/account-status?status=pending`);
-        return;
-      }
       setError(msg || "Google sign-up failed.");
     } finally {
       setLoading(false);

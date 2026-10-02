@@ -48,12 +48,11 @@ def get_current_photographer(
             detail="ACCOUNT_INACTIVE: This account has been deactivated.",
         )
 
-    # Enforce access approval gate
+    # Auto-approve if somehow still pending
     if photographer.approval_status == "pending":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="ACCOUNT_PENDING: Your account is pending admin approval. You will be able to log in once approved.",
-        )
+        photographer.approval_status = "approved"
+        db.commit()
+        db.refresh(photographer)
     if photographer.approval_status == "rejected":
         reason = f" Reason: {photographer.rejection_reason}" if photographer.rejection_reason else ""
         raise HTTPException(

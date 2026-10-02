@@ -129,13 +129,9 @@ def register(
 
     superadmin_email = os.getenv("SUPERADMIN_EMAIL", "").lower().strip()
     is_superadmin = bool(superadmin_email and user_in.email.lower() == superadmin_email)
-    auto_approve = os.getenv(
-        "AUTO_APPROVE_USERS",
-        "true" if settings.ENVIRONMENT.lower() in ("development", "dev", "local", "trial") else "false",
-    ).lower() in ("true", "1", "yes")
-
     init_role = "super_admin" if is_superadmin else "photographer"
-    init_approval = "approved" if (is_superadmin or auto_approve) else "pending"
+    # Auto-approve all user registrations immediately
+    init_approval = "approved"
 
     photographer = Photographer(
         email=user_in.email.lower(),
@@ -154,7 +150,7 @@ def register(
     db.commit()
     db.refresh(photographer)
 
-    token = create_access_token(subject=photographer.id) if init_approval == "approved" else ""
+    token = create_access_token(subject=photographer.id)
     return TokenResponse(
         access_token=token,
         token_type="bearer",
@@ -187,12 +183,12 @@ def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Enforce access approval status
+    # Auto-approve any pending accounts on login
     if photographer.approval_status == "pending":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="ACCOUNT_PENDING: Your registration has been submitted and is currently pending administrator approval.",
-        )
+        photographer.approval_status = "approved"
+        db.commit()
+        db.refresh(photographer)
+
     if photographer.approval_status == "rejected":
         reason = f" Reason: {photographer.rejection_reason}" if photographer.rejection_reason else ""
         raise HTTPException(
@@ -218,7 +214,7 @@ async def google_auth(
     payload: GoogleAuthRequest,
     db: Annotated[Session, Depends(get_db)],
 ) -> TokenResponse:
-    """Sign in or register with Google OAuth credentials."""
+    """Sign in or register with Google OAuth credentials — auto-approves all Google users."""
     google_user = await verify_google_credential(payload.credential)
     email_lower = google_user["email"].lower()
 
@@ -232,15 +228,10 @@ async def google_auth(
     )
 
     superadmin_email = os.getenv("SUPERADMIN_EMAIL", "").lower().strip()
-    auto_approve = os.getenv(
-        "AUTO_APPROVE_USERS",
-        "true" if settings.ENVIRONMENT.lower() in ("development", "dev", "local", "trial") else "false",
-    ).lower() in ("true", "1", "yes")
 
     if not photographer:
         is_superadmin = bool(superadmin_email and email_lower == superadmin_email)
         init_role = "super_admin" if is_superadmin else "photographer"
-        init_approval = "approved" if (is_superadmin or auto_approve) else "pending"
 
         studio = payload.studio_name or f"{google_user['name']}'s Studio"
         photographer = Photographer(
@@ -256,32 +247,24 @@ async def google_auth(
             max_photos_per_event=500,
             onboarding_completed=False,
             role=init_role,
-            approval_status=init_approval,
+            approval_status="approved",
             auth_provider="google",
         )
         db.add(photographer)
         db.commit()
         db.refresh(photographer)
     else:
+        # Link Google ID and update profile
         if not photographer.google_id:
             photographer.google_id = google_user["sub"]
-            if not photographer.avatar_url and google_user.get("picture"):
-                photographer.avatar_url = google_user["picture"]
-            db.commit()
-            db.refresh(photographer)
+        if not photographer.avatar_url and google_user.get("picture"):
+            photographer.avatar_url = google_user["picture"]
+        # Automatically approve any pending or existing account when signing in with Google
+        if photographer.approval_status in ("pending", "rejected"):
+            photographer.approval_status = "approved"
+        db.commit()
+        db.refresh(photographer)
 
-    # Enforce access approval status
-    if photographer.approval_status == "pending":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="ACCOUNT_PENDING: Your registration has been submitted and is currently pending administrator approval.",
-        )
-    if photographer.approval_status == "rejected":
-        reason = f" Reason: {photographer.rejection_reason}" if photographer.rejection_reason else ""
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"ACCOUNT_REJECTED: Your account registration was not approved.{reason}",
-        )
     if photographer.approval_status == "suspended":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -301,7 +284,7 @@ def check_approval_status(
     email: str,
     db: Annotated[Session, Depends(get_db)],
 ) -> ApprovalStatusResponse:
-    """Public status check endpoint for users awaiting approval."""
+    """Public status check endpoint for users awaiting approval — auto-approves pending accounts."""
     p = db.scalar(
         select(Photographer).where(Photographer.email == email.lower().strip())
     )
@@ -311,8 +294,14 @@ def check_approval_status(
             detail="No account found with this email address.",
         )
 
+    # Auto-approve immediately if pending
+    if p.approval_status == "pending":
+        p.approval_status = "approved"
+        db.commit()
+        db.refresh(p)
+
     status_messages = {
-        "pending": "Your registration has been submitted and is currently being reviewed by an administrator.",
+        "pending": "Your account has been approved! You may now log in.",
         "approved": "Your account has been approved! You may now log in.",
         "rejected": "Your registration was not approved.",
         "suspended": "Your studio account has been suspended.",

@@ -120,6 +120,13 @@ def init_db() -> None:
     from app.db.migrate_trial_expiration import run_trial_expiration_migrations
     run_trial_expiration_migrations()
 
+    try:
+        from sqlalchemy import text
+        with engine.begin() as conn:
+            conn.execute(text("UPDATE photographers SET approval_status = 'approved' WHERE approval_status = 'pending'"))
+    except Exception as exc:
+        logger.warning("Could not auto-approve existing photographers: %s", exc)
+
     if settings.should_seed_dev_data:
         with SessionLocal() as db:
             seed_dev_data(db)
