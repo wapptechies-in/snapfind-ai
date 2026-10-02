@@ -57,6 +57,13 @@ export const PhotoViewer: React.FC<PhotoViewerProps> = ({
   if (!isOpen || photos.length === 0) return null;
 
   const currentPhoto = photos[currentIndex] || photos[0];
+  const initialImg = currentPhoto?.url || currentPhoto?.thumbnailUrl || (currentPhoto as any)?.thumbnail_url;
+  const [currentImgSrc, setCurrentImgSrc] = useState(initialImg);
+
+  useEffect(() => {
+    const src = currentPhoto?.url || currentPhoto?.thumbnailUrl || (currentPhoto as any)?.thumbnail_url;
+    setCurrentImgSrc(src);
+  }, [currentPhoto]);
 
   const handleDownload = () => {
     if (onDownload) {
@@ -260,9 +267,14 @@ export const PhotoViewer: React.FC<PhotoViewerProps> = ({
         {/* The Photo */}
         <div className="max-h-full max-w-full flex items-center justify-center">
           <img
-            src={currentPhoto.url}
+            src={currentImgSrc}
             alt={currentPhoto.filename}
             className="max-h-[82vh] max-w-[92vw] object-contain rounded-lg shadow-2xl transition-opacity duration-200"
+            onError={() => {
+              if (currentPhoto.thumbnailUrl && currentImgSrc !== currentPhoto.thumbnailUrl) {
+                setCurrentImgSrc(currentPhoto.thumbnailUrl);
+              }
+            }}
           />
         </div>
 

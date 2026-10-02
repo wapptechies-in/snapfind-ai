@@ -64,14 +64,29 @@ def _resolve_event(event_id_or_token: str, db: Session) -> Event:
 
 
 def _client_reachable_url(url: str | None, request: Request | None = None) -> str | None:
-    """Replace local loopback URLs with the origin used by the requesting client."""
-    if not url or not request:
+    """Replace local loopback URLs with the origin used by the requesting client, ensuring HTTPS on public hosts."""
+    if not url:
         return url
 
-    for local_origin in ("http://127.0.0.1:8000", "http://localhost:8000"):
-        if url.startswith(local_origin):
-            return f"{str(request.base_url).rstrip('/')}{url[len(local_origin):]}"
-    return url
+    res = url
+    if request:
+        base = str(request.base_url).rstrip('/')
+        proto = request.headers.get("x-forwarded-proto", "")
+        # Force HTTPS if client accessed via HTTPS or running on cloud platforms (Render, Vercel)
+        if proto == "https" or "onrender.com" in base or "vercel.app" in base:
+            if base.startswith("http://"):
+                base = "https://" + base[len("http://"):]
+
+        for local_origin in ("http://127.0.0.1:8000", "http://localhost:8000"):
+            if res.startswith(local_origin):
+                res = f"{base}{res[len(local_origin):]}"
+                break
+
+    # If URL still has insecure http on render or vercel, force https
+    if res.startswith("http://") and ("onrender.com" in res or "vercel.app" in res):
+        res = "https://" + res[len("http://"):]
+
+    return res
 
 
 def _enrich_photo_urls(
@@ -131,6 +146,7 @@ def upload_init(
     payload: UploadInitRequest,
     photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
+    request: Request = None,
 ) -> UploadInitResponse:
     """
     Step 1 of binary upload pipeline:
@@ -218,7 +234,7 @@ def upload_init(
 
     return UploadInitResponse(
         photoId=photo_id,
-        uploadUrl=presigned["upload_url"],
+        uploadUrl=_client_reachable_url(presigned["upload_url"], request) or presigned["upload_url"],
         storageKey=original_key,
         headers=presigned.get("headers", {}),
         expiresIn=presigned.get("expires_in", settings.PRESIGNED_URL_EXPIRE_SECONDS),
@@ -817,18 +833,53 @@ async def handle_storage_upload(
 @router.get("/storage/file/{key:path}")
 def handle_storage_file(key: str):
     """
-    Serves stored photos from local storage fallback.
+    Serves stored photos from local storage fallback with variant fallback and caching headers.
     """
     from app.services.storage.local import LocalStorageProvider
 
     local_provider = LocalStorageProvider()
-    file_path = local_provider._get_path(key)
+    clean_key = key.lstrip("/\\")
+    file_path = local_provider._get_path(clean_key)
+
     if not file_path.is_file():
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Storage object '{key}' not found",
-        )
-    return FileResponse(file_path)
+        # Fallback between variants (thumbnails <-> web <-> originals)
+        fallbacks = [
+            clean_key.replace("/thumbnails/", "/web/"),
+            clean_key.replace("/thumbnails/", "/originals/"),
+            clean_key.replace("/web/", "/originals/"),
+            clean_key.replace("/web/", "/thumbnails/"),
+            clean_key.replace("/originals/", "/web/"),
+            clean_key.replace("/originals/", "/thumbnails/"),
+        ]
+        found = False
+        for alt_key in fallbacks:
+            alt_path = local_provider._get_path(alt_key)
+            if alt_path.is_file():
+                file_path = alt_path
+                found = True
+                break
+
+        if not found:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Storage object '{key}' not found",
+            )
+
+    ext = file_path.suffix.lower()
+    media_type = "image/jpeg"
+    if ext == ".png":
+        media_type = "image/png"
+    elif ext == ".webp":
+        media_type = "image/webp"
+
+    return FileResponse(
+        file_path,
+        media_type=media_type,
+        headers={
+            "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
+            "Access-Control-Allow-Origin": "*",
+        },
+    )
 
 
 @router.patch("/photos/{photo_id}/gallery-visibility")

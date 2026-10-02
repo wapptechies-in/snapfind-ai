@@ -24,7 +24,8 @@ class LocalStorageProvider(StorageProvider):
         self.base_dir.mkdir(parents=True, exist_ok=True)
 
     def _get_path(self, key: str) -> Path:
-        return self.base_dir / key
+        clean_key = str(key).lstrip("/\\")
+        return self.base_dir / clean_key
 
     def generate_presigned_upload_url(
         self,
@@ -32,14 +33,15 @@ class LocalStorageProvider(StorageProvider):
         content_type: str,
         expires_in: int = 3600,
     ) -> dict[str, Any]:
-        target = self._get_path(key)
+        clean_key = str(key).lstrip("/\\")
+        target = self._get_path(clean_key)
         target.parent.mkdir(parents=True, exist_ok=True)
         return {
-            "upload_url": f"http://127.0.0.1:8000/api/v1/storage/upload?key={key}",
+            "upload_url": f"http://127.0.0.1:8000/api/v1/storage/upload?key={clean_key}",
             "method": "PUT",
             "headers": {"Content-Type": content_type},
             "expires_in": expires_in,
-            "key": key,
+            "key": clean_key,
         }
 
     def generate_presigned_download_url(
@@ -49,7 +51,8 @@ class LocalStorageProvider(StorageProvider):
         filename: str | None = None,
         inline: bool = False,
     ) -> str:
-        return f"http://127.0.0.1:8000/api/v1/storage/file/{key}"
+        clean_key = str(key).lstrip("/\\")
+        return f"http://127.0.0.1:8000/api/v1/storage/file/{clean_key}"
 
     def object_exists(self, key: str) -> bool:
         return self._get_path(key).is_file()

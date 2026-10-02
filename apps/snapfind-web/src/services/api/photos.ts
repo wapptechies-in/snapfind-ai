@@ -32,23 +32,48 @@ export interface PhotoUrlResult {
 function normalizePhotoUrl(url?: string): string | undefined {
   if (!url) return url;
 
+  let cleanUrl = url.trim();
+
+  // If root-relative path (e.g. /api/v1/storage/file/...)
+  if (cleanUrl.startsWith("/")) {
+    cleanUrl = `${API_BASE_URL}${cleanUrl}`;
+  }
+
+  // Force HTTPS on secure hosts to prevent Mixed Content browser blocking
+  if (
+    typeof window !== "undefined" &&
+    window.location.protocol === "https:" &&
+    cleanUrl.startsWith("http://") &&
+    !cleanUrl.includes("localhost") &&
+    !cleanUrl.includes("127.0.0.1")
+  ) {
+    cleanUrl = cleanUrl.replace(/^http:\/\//i, "https://");
+  }
+
   try {
-    const parsed = new URL(url);
+    const parsed = new URL(cleanUrl);
     if (parsed.hostname === "127.0.0.1" || parsed.hostname === "localhost") {
       return `${API_BASE_URL}${parsed.pathname}${parsed.search}${parsed.hash}`;
     }
   } catch {
-    if (url.startsWith("/")) return `${API_BASE_URL}${url}`;
+    if (!cleanUrl.startsWith("http://") && !cleanUrl.startsWith("https://")) {
+      return `${API_BASE_URL}/${cleanUrl.replace(/^\/+/, "")}`;
+    }
   }
 
-  return url;
+  return cleanUrl;
 }
 
-function normalizePhotoUrls(photo: Photo): Photo {
+function normalizePhotoUrls(photo: any): Photo {
+  const rawThumb = photo.thumbnailUrl || photo.thumbnail_url || photo.url || photo.web_url;
+  const rawWeb = photo.url || photo.web_url || photo.thumbnailUrl || photo.thumbnail_url;
+  const thumb = normalizePhotoUrl(rawThumb);
+  const web = normalizePhotoUrl(rawWeb);
+
   return {
     ...photo,
-    url: normalizePhotoUrl(photo.url) || "",
-    thumbnailUrl: normalizePhotoUrl(photo.thumbnailUrl) || "",
+    url: web || thumb || "",
+    thumbnailUrl: thumb || web || "",
   };
 }
 
