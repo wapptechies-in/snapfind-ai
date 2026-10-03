@@ -51,11 +51,30 @@ def get_storage_provider() -> StorageProvider:
         # Special handling for Cloudflare R2
         if provider_name == "r2":
             region = "auto"
-            if settings.CLOUDFLARE_R2_ACCOUNT_ID and not endpoint_url:
+            if settings.CLOUDFLARE_R2_ACCOUNT_ID and (not endpoint_url or "localhost" in endpoint_url):
                 endpoint_url = f"https://{settings.CLOUDFLARE_R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
-                public_endpoint_url = public_endpoint_url or endpoint_url
+            if not public_endpoint_url or "localhost" in public_endpoint_url:
+                public_endpoint_url = endpoint_url
 
-        # Fast reachability check
+        # For cloud providers (r2 / s3), try initializing S3StorageProvider directly with real credentials
+        if provider_name in ("r2", "s3") and settings.STORAGE_ACCESS_KEY and settings.STORAGE_ACCESS_KEY != "minioadmin":
+            try:
+                return S3StorageProvider(
+                    bucket_name=settings.STORAGE_BUCKET_NAME,
+                    endpoint_url=endpoint_url,
+                    public_endpoint_url=public_endpoint_url,
+                    access_key=settings.STORAGE_ACCESS_KEY,
+                    secret_key=settings.STORAGE_SECRET_KEY,
+                    region_name=region,
+                    cdn_url=settings.STORAGE_CDN_URL,
+                )
+            except Exception as cloud_err:
+                logger.warning(
+                    f"Could not connect to {provider_name.upper()} ({cloud_err}). Gracefully falling back to LocalStorageProvider."
+                )
+                return LocalStorageProvider()
+
+        # Fast reachability check for MinIO / local S3 emulator
         aws_host = f"s3.{region}.amazonaws.com" if provider_name == "s3" and not endpoint_url else None
         if not _is_endpoint_reachable(endpoint_url, default_host=aws_host):
             logger.info(

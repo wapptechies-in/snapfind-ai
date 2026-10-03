@@ -563,22 +563,18 @@ def get_public_event_photos(
         .limit(limit)
     ).all()
 
+    from app.api.routes.photos import _client_reachable_url
+
     items = []
     for p in photos:
         web_url = storage.get_photo_url(p, variant="web", download=False)
         thumb_url = storage.get_photo_url(p, variant="thumbnail", download=False)
-        request_origin = str(request.base_url).rstrip("/")
-        for local_origin in ("http://127.0.0.1:8000", "http://localhost:8000"):
-            if web_url.startswith(local_origin):
-                web_url = f"{request_origin}{web_url[len(local_origin):]}"
-            if thumb_url.startswith(local_origin):
-                thumb_url = f"{request_origin}{thumb_url[len(local_origin):]}"
         items.append({
             "id": p.id,
             "eventId": p.event_id,
             "filename": p.original_filename or p.filename,
-            "url": web_url,
-            "thumbnailUrl": thumb_url,
+            "url": _client_reachable_url(web_url, request),
+            "thumbnailUrl": _client_reachable_url(thumb_url, request),
             "width": p.width,
             "height": p.height,
             "fileSize": p.file_size,

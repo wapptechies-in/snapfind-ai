@@ -69,6 +69,7 @@ def _client_reachable_url(url: str | None, request: Request | None = None) -> st
         return url
 
     res = url
+    render_url = os.getenv("RENDER_EXTERNAL_URL")
     if request:
         base = str(request.base_url).rstrip('/')
         proto = request.headers.get("x-forwarded-proto", "")
@@ -81,6 +82,18 @@ def _client_reachable_url(url: str | None, request: Request | None = None) -> st
             if res.startswith(local_origin):
                 res = f"{base}{res[len(local_origin):]}"
                 break
+        if res.startswith("/"):
+            res = f"{base}{res}"
+    elif render_url:
+        render_base = render_url.rstrip("/")
+        if render_base.startswith("http://"):
+            render_base = "https://" + render_base[len("http://"):]
+        for local_origin in ("http://127.0.0.1:8000", "http://localhost:8000"):
+            if res.startswith(local_origin):
+                res = f"{render_base}{res[len(local_origin):]}"
+                break
+        if res.startswith("/"):
+            res = f"{render_base}{res}"
 
     # If URL still has insecure http on render or vercel, force https
     if res.startswith("http://") and ("onrender.com" in res or "vercel.app" in res):
@@ -251,6 +264,7 @@ def upload_complete(
     photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
     background_tasks: BackgroundTasks = None,
+    request: Request = None,
 ) -> PhotoOut:
     """
     Step 2 of binary upload pipeline:
@@ -325,7 +339,7 @@ def upload_complete(
         else:
             _run_processing(photo.id, job.id)
 
-        return _enrich_photo_urls(photo, storage)
+        return _enrich_photo_urls(photo, storage, request)
 
     except HTTPException:
         raise
@@ -498,6 +512,7 @@ def create_event_photo(
     photo_in: PhotoCreate,
     photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
+    request: Request = None,
 ) -> PhotoOut:
     """Create metadata record for a photo in the specified event (Phase 4 compatibility)."""
     event = _resolve_event(event_id, db)
@@ -528,13 +543,14 @@ def create_event_photo(
     db.commit()
     db.refresh(photo)
 
-    return _enrich_photo_urls(photo, storage)
+    return _enrich_photo_urls(photo, storage, request)
 
 
 @router.get("/photos/{photo_id}", response_model=PhotoOut)
 def get_photo(
     photo_id: str,
     db: Annotated[Session, Depends(get_db)],
+    request: Request = None,
 ) -> PhotoOut:
     """Retrieve metadata for a single photo by ID."""
     photo = db.get(Photo, photo_id)
@@ -544,7 +560,7 @@ def get_photo(
             detail=f"Photo '{photo_id}' not found",
         )
     storage = StorageService()
-    return _enrich_photo_urls(photo, storage)
+    return _enrich_photo_urls(photo, storage, request)
 
 
 @router.delete("/photos/{photo_id}")
@@ -818,16 +834,19 @@ async def handle_storage_upload(
     """
     Direct binary upload handler for local filesystem storage fallback.
     Receives raw binary payload stream and saves it to local storage key path.
+    Streams in chunks to avoid memory spikes.
     """
     from app.services.storage.local import LocalStorageProvider
 
-    body = await request.body()
     local_provider = LocalStorageProvider()
     file_path = local_provider._get_path(key)
     file_path.parent.mkdir(parents=True, exist_ok=True)
+    bytes_written = 0
     with open(file_path, "wb") as f:
-        f.write(body)
-    return {"status": "ok", "key": key, "bytes_written": len(body)}
+        async for chunk in request.stream():
+            f.write(chunk)
+            bytes_written += len(chunk)
+    return {"status": "ok", "key": key, "bytes_written": bytes_written}
 
 
 @router.get("/storage/file/{key:path}")

@@ -115,36 +115,53 @@ export const photosApi = {
     uploadUrl: string,
     file: File,
     mimeType: string,
-    onProgress?: (percent: number) => void
+    onProgress?: (percent: number) => void,
+    retries = 2
   ): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open("PUT", uploadUrl, true);
-      xhr.setRequestHeader("Content-Type", mimeType || file.type || "image/jpeg");
+    const attemptUpload = (attempt: number): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", uploadUrl, true);
+        xhr.setRequestHeader("Content-Type", mimeType || file.type || "image/jpeg");
 
-      if (xhr.upload && onProgress) {
-        xhr.upload.onprogress = (event) => {
-          if (event.lengthComputable) {
-            const percent = Math.round((event.loaded / event.total) * 100);
-            onProgress(percent);
+        if (xhr.upload && onProgress) {
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+              const percent = Math.round((event.loaded / event.total) * 100);
+              onProgress(percent);
+            }
+          };
+        }
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve();
+          } else if (attempt < retries && (xhr.status >= 500 || xhr.status === 429)) {
+            // Server error or rate-limiting — retry with exponential backoff
+            setTimeout(() => {
+              attemptUpload(attempt + 1).then(resolve).catch(reject);
+            }, 1200 * (attempt + 1));
+          } else {
+            reject(new Error(`Storage PUT failed with status ${xhr.status}: ${xhr.statusText || "Upload rejected"}`));
           }
         };
-      }
 
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          resolve();
-        } else {
-          reject(new Error(`Storage PUT failed with status ${xhr.status}: ${xhr.statusText}`));
-        }
-      };
+        xhr.onerror = () => {
+          if (attempt < retries) {
+            // Transient connection reset / cold start drop — retry with backoff
+            setTimeout(() => {
+              attemptUpload(attempt + 1).then(resolve).catch(reject);
+            }, 1500 * (attempt + 1));
+          } else {
+            reject(new Error("Network error during direct binary upload to storage. Check connection and retry."));
+          }
+        };
 
-      xhr.onerror = () => {
-        reject(new Error("Network error during direct binary upload to storage."));
-      };
+        xhr.send(file);
+      });
+    };
 
-      xhr.send(file);
-    });
+    return attemptUpload(0);
   },
 
   /**

@@ -77,7 +77,8 @@ def process_photo_sync(photo_id: str, job_id: str | None = None) -> dict[str, An
             p.checksum = derivs["checksum"]
             p.upload_status = "uploaded"
 
-            face_result = process_photo_for_faces(photo_id, db, image_bytes=original_bytes)
+            proc_bytes = derivs.get("web_bytes") or original_bytes
+            face_result = process_photo_for_faces(photo_id, db, image_bytes=proc_bytes)
             p.processing_status = "completed"
 
             if job_id:
@@ -195,7 +196,8 @@ def process_single_photo_task(
             p.upload_status = "uploaded"
 
             # Run face detection and embeddings (clears existing faces idempotently)
-            face_result = process_photo_for_faces(photo_id, db, image_bytes=original_bytes)
+            proc_bytes = derivs.get("web_bytes") or original_bytes
+            face_result = process_photo_for_faces(photo_id, db, image_bytes=proc_bytes)
             p.processing_status = "completed"
 
             # Update Job counters if associated with a job

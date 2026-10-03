@@ -108,6 +108,7 @@ class StorageService:
             "thumbnail_storage_key": thumb_key,
             "file_size": len(original_bytes),
             "checksum": self.compute_sha256(original_bytes),
+            "web_bytes": web_bytes,
         }
 
     # --- Presigned URLs for Photos ---

@@ -69,10 +69,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+configured_origins = [o for o in settings.cors_origins_list if o != "*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.\d+\.\d+\.\d+|.*\.vercel\.app|.*\.onrender\.com)(:\d+)?|null|app://.*|file://.*",
+    allow_origins=configured_origins,
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.\d+\.\d+\.\d+|.*\.vercel\.app|.*\.onrender\.com|.*\.snapfind\.ai)(:\d+)?|null|app://.*|file://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

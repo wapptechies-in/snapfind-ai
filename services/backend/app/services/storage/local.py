@@ -27,6 +27,21 @@ class LocalStorageProvider(StorageProvider):
         clean_key = str(key).lstrip("/\\")
         return self.base_dir / clean_key
 
+    def _get_public_base(self) -> str:
+        render_url = os.getenv("RENDER_EXTERNAL_URL")
+        if render_url:
+            base = render_url.rstrip("/")
+            if base.startswith("http://"):
+                base = "https://" + base[len("http://"):]
+            return base
+
+        from app.core.config import get_settings
+        st = get_settings()
+        if st.STORAGE_PUBLIC_ENDPOINT_URL and "localhost" not in st.STORAGE_PUBLIC_ENDPOINT_URL and "127.0.0.1" not in st.STORAGE_PUBLIC_ENDPOINT_URL:
+            return st.STORAGE_PUBLIC_ENDPOINT_URL.rstrip("/")
+
+        return "http://127.0.0.1:8000"
+
     def generate_presigned_upload_url(
         self,
         key: str,
@@ -36,8 +51,9 @@ class LocalStorageProvider(StorageProvider):
         clean_key = str(key).lstrip("/\\")
         target = self._get_path(clean_key)
         target.parent.mkdir(parents=True, exist_ok=True)
+        base = self._get_public_base()
         return {
-            "upload_url": f"http://127.0.0.1:8000/api/v1/storage/upload?key={clean_key}",
+            "upload_url": f"{base}/api/v1/storage/upload?key={clean_key}",
             "method": "PUT",
             "headers": {"Content-Type": content_type},
             "expires_in": expires_in,
@@ -52,7 +68,8 @@ class LocalStorageProvider(StorageProvider):
         inline: bool = False,
     ) -> str:
         clean_key = str(key).lstrip("/\\")
-        return f"http://127.0.0.1:8000/api/v1/storage/file/{clean_key}"
+        base = self._get_public_base()
+        return f"{base}/api/v1/storage/file/{clean_key}"
 
     def object_exists(self, key: str) -> bool:
         return self._get_path(key).is_file()
