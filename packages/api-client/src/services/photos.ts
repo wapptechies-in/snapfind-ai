@@ -34,24 +34,47 @@ export interface PhotoUrlResult {
 function normalizePhotoUrl(url?: string): string | undefined {
   if (!url) return url;
   const baseUrl = getApiBaseUrl();
+  let cleanUrl = url.trim();
+
+  if (cleanUrl.startsWith("/")) {
+    cleanUrl = `${baseUrl}${cleanUrl}`;
+  }
+
+  if (
+    typeof window !== "undefined" &&
+    window.location.protocol === "https:" &&
+    cleanUrl.startsWith("http://") &&
+    !cleanUrl.includes("localhost") &&
+    !cleanUrl.includes("127.0.0.1")
+  ) {
+    cleanUrl = cleanUrl.replace(/^http:\/\//i, "https://");
+  }
 
   try {
-    const parsed = new URL(url);
+    const parsed = new URL(cleanUrl);
     if (parsed.hostname === "127.0.0.1" || parsed.hostname === "localhost") {
       return `${baseUrl}${parsed.pathname}${parsed.search}${parsed.hash}`;
     }
   } catch {
-    if (url.startsWith("/")) return `${baseUrl}${url}`;
+    if (!cleanUrl.startsWith("http://") && !cleanUrl.startsWith("https://")) {
+      return `${baseUrl}/${cleanUrl.replace(/^\/+/, "")}`;
+    }
   }
 
-  return url;
+  return cleanUrl;
 }
 
 function normalizePhotoUrls(photo: Photo): Photo {
+  const p = photo as any;
+  const rawThumb = p.thumbnailUrl || p.thumbnail_url || p.url || p.web_url;
+  const rawWeb = p.url || p.web_url || p.thumbnailUrl || p.thumbnail_url;
+  const thumb = normalizePhotoUrl(rawThumb);
+  const web = normalizePhotoUrl(rawWeb);
+
   return {
     ...photo,
-    url: normalizePhotoUrl(photo.url) || "",
-    thumbnailUrl: normalizePhotoUrl(photo.thumbnailUrl) || "",
+    url: web || thumb || "",
+    thumbnailUrl: thumb || web || "",
   };
 }
 
@@ -88,45 +111,71 @@ export const photosApi = {
     eventId: string,
     payload: { filename: string; fileSize: number; mimeType: string; folderId?: string | null }
   ): Promise<UploadInitResult> {
-    return request<UploadInitResult>(`/api/v1/events/${eventId}/photos/upload-init`, {
+    const res = await request<UploadInitResult>(`/api/v1/events/${eventId}/photos/upload-init`, {
       method: "POST",
       body: JSON.stringify(payload),
     });
+    return {
+      ...res,
+      uploadUrl: normalizePhotoUrl(res.uploadUrl) || res.uploadUrl,
+    };
   },
 
   uploadBinary(
     uploadUrl: string,
     file: File,
     mimeType: string,
-    onProgress?: (percent: number) => void
+    onProgress?: (percent: number) => void,
+    storageKey?: string
   ): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open("PUT", uploadUrl, true);
-      xhr.setRequestHeader("Content-Type", mimeType || file.type || "image/jpeg");
+    const baseUrl = getApiBaseUrl();
+    const cleanStorageKey = storageKey ? storageKey.replace(/^\/+/, "") : "";
+    const backendFallbackUrl = cleanStorageKey
+      ? `${baseUrl}/api/v1/storage/upload?key=${encodeURIComponent(cleanStorageKey)}`
+      : null;
 
-      if (xhr.upload && onProgress) {
-        xhr.upload.onprogress = (event) => {
-          if (event.lengthComputable) {
-            const percent = Math.round((event.loaded / event.total) * 100);
-            onProgress(percent);
+    const normalizedTargetUrl = normalizePhotoUrl(uploadUrl) || uploadUrl;
+
+    const executePut = (targetUrl: string): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", targetUrl, true);
+        xhr.setRequestHeader("Content-Type", mimeType || file.type || "image/jpeg");
+
+        if (xhr.upload && onProgress) {
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+              const percent = Math.round((event.loaded / event.total) * 100);
+              onProgress(percent);
+            }
+          };
+        }
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve();
+          } else {
+            reject(new Error(`Storage PUT failed with status ${xhr.status}: ${xhr.statusText}`));
           }
         };
+
+        xhr.onerror = () => {
+          reject(new Error(`Network error during PUT upload to ${targetUrl}`));
+        };
+
+        xhr.send(file);
+      });
+    };
+
+    return executePut(normalizedTargetUrl).catch((primaryErr) => {
+      console.warn("Direct storage upload failed, attempting backend fallback upload:", primaryErr);
+      if (backendFallbackUrl && backendFallbackUrl !== normalizedTargetUrl) {
+        return executePut(backendFallbackUrl).catch((fallbackErr) => {
+          console.error("Backend fallback upload also failed:", fallbackErr);
+          throw new Error("Network error during photo upload. Please check your connection and retry.");
+        });
       }
-
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          resolve();
-        } else {
-          reject(new Error(`Storage PUT failed with status ${xhr.status}: ${xhr.statusText}`));
-        }
-      };
-
-      xhr.onerror = () => {
-        reject(new Error("Network error during direct binary upload to storage."));
-      };
-
-      xhr.send(file);
+      throw new Error("Network error during direct binary upload to storage.");
     });
   },
 

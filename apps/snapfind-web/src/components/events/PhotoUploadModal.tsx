@@ -146,7 +146,8 @@ export function PhotoUploadModal({
                 i.id === item.id ? { ...i, progress: mappedProgress } : i
               )
             );
-          }
+          },
+          initResult.storageKey
         );
 
         // Step 3: Upload Complete (generates derivatives & triggers face recognition)

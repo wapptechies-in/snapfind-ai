@@ -291,7 +291,27 @@ def upload_complete(
 
     storage = StorageService()
     storage_key = photo.original_storage_key or photo.storage_key
-    if not storage_key or not storage.provider.object_exists(storage_key):
+    exists = False
+    if storage_key:
+        exists = storage.provider.object_exists(storage_key)
+        if not exists:
+            # Check local storage fallback and sync to remote provider if found
+            from app.services.storage.local import LocalStorageProvider
+            local_provider = LocalStorageProvider()
+            if local_provider.object_exists(storage_key):
+                try:
+                    data = local_provider.get_object_bytes(storage_key)
+                    storage.provider.put_object_bytes(
+                        storage_key,
+                        data,
+                        content_type=photo.mime_type or "image/jpeg",
+                    )
+                    exists = True
+                except Exception as sync_err:
+                    logger.warning(f"Could not sync local binary to storage provider: {sync_err}")
+                    exists = True
+
+    if not storage_key or not exists:
         photo.upload_status = "failed"
         photo.processing_status = "failed"
         db.commit()
@@ -832,21 +852,34 @@ async def handle_storage_upload(
     key: str = Query(...),
 ):
     """
-    Direct binary upload handler for local filesystem storage fallback.
-    Receives raw binary payload stream and saves it to local storage key path.
-    Streams in chunks to avoid memory spikes.
+    Direct binary upload handler for storage fallback & proxying.
+    Receives raw binary payload stream, saves it to local storage key path,
+    and syncs to the active storage provider (R2/S3/MinIO) so object_exists succeeds.
     """
     from app.services.storage.local import LocalStorageProvider
 
+    clean_key = str(key).lstrip("/\\")
     local_provider = LocalStorageProvider()
-    file_path = local_provider._get_path(key)
+    file_path = local_provider._get_path(clean_key)
     file_path.parent.mkdir(parents=True, exist_ok=True)
     bytes_written = 0
     with open(file_path, "wb") as f:
         async for chunk in request.stream():
             f.write(chunk)
             bytes_written += len(chunk)
-    return {"status": "ok", "key": key, "bytes_written": bytes_written}
+
+    # Sync to active storage provider if S3/R2/MinIO is configured
+    try:
+        storage = StorageService()
+        if storage.provider and not isinstance(storage.provider, LocalStorageProvider):
+            content_type = request.headers.get("content-type", "image/jpeg")
+            with open(file_path, "rb") as f:
+                data = f.read()
+            storage.provider.put_object_bytes(clean_key, data, content_type=content_type)
+    except Exception as exc:
+        logger.warning(f"Could not sync uploaded file '{clean_key}' to active storage provider: {exc}")
+
+    return {"status": "ok", "key": clean_key, "bytes_written": bytes_written}
 
 
 @router.get("/storage/file/{key:path}")

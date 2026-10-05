@@ -100,28 +100,40 @@ export const photosApi = {
    */
   async uploadInit(
     eventId: string,
-    payload: { filename: string; fileSize: number; mimeType: string }
+    payload: { filename: string; fileSize: number; mimeType: string; folderId?: string | null }
   ): Promise<UploadInitResult> {
-    return request<UploadInitResult>(`/api/v1/events/${eventId}/photos/upload-init`, {
+    const res = await request<UploadInitResult>(`/api/v1/events/${eventId}/photos/upload-init`, {
       method: "POST",
       body: JSON.stringify(payload),
     });
+    return {
+      ...res,
+      uploadUrl: normalizePhotoUrl(res.uploadUrl) || res.uploadUrl,
+    };
   },
 
   /**
-   * Step 2: Directly upload binary to MinIO/S3 using presigned PUT URL with progress tracking.
+   * Step 2: Directly upload binary to MinIO/S3 using presigned PUT URL with progress tracking
+   * and automatic backend proxy fallback if direct upload fails (e.g. CORS preflight restriction).
    */
   uploadBinary(
     uploadUrl: string,
     file: File,
     mimeType: string,
     onProgress?: (percent: number) => void,
-    retries = 2
+    storageKey?: string
   ): Promise<void> {
-    const attemptUpload = (attempt: number): Promise<void> => {
+    const cleanStorageKey = storageKey ? storageKey.replace(/^\/+/, "") : "";
+    const backendFallbackUrl = cleanStorageKey
+      ? `${API_BASE_URL}/api/v1/storage/upload?key=${encodeURIComponent(cleanStorageKey)}`
+      : null;
+
+    const normalizedTargetUrl = normalizePhotoUrl(uploadUrl) || uploadUrl;
+
+    const executePut = (targetUrl: string): Promise<void> => {
       return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.open("PUT", uploadUrl, true);
+        xhr.open("PUT", targetUrl, true);
         xhr.setRequestHeader("Content-Type", mimeType || file.type || "image/jpeg");
 
         if (xhr.upload && onProgress) {
@@ -136,32 +148,30 @@ export const photosApi = {
         xhr.onload = () => {
           if (xhr.status >= 200 && xhr.status < 300) {
             resolve();
-          } else if (attempt < retries && (xhr.status >= 500 || xhr.status === 429)) {
-            // Server error or rate-limiting — retry with exponential backoff
-            setTimeout(() => {
-              attemptUpload(attempt + 1).then(resolve).catch(reject);
-            }, 1200 * (attempt + 1));
           } else {
             reject(new Error(`Storage PUT failed with status ${xhr.status}: ${xhr.statusText || "Upload rejected"}`));
           }
         };
 
         xhr.onerror = () => {
-          if (attempt < retries) {
-            // Transient connection reset / cold start drop — retry with backoff
-            setTimeout(() => {
-              attemptUpload(attempt + 1).then(resolve).catch(reject);
-            }, 1500 * (attempt + 1));
-          } else {
-            reject(new Error("Network error during direct binary upload to storage. Check connection and retry."));
-          }
+          reject(new Error(`Network error during PUT upload to ${targetUrl}`));
         };
 
         xhr.send(file);
       });
     };
 
-    return attemptUpload(0);
+    // First try direct storage PUT (or normalized URL)
+    return executePut(normalizedTargetUrl).catch((primaryErr) => {
+      console.warn("Direct storage upload failed, attempting backend fallback upload:", primaryErr);
+      if (backendFallbackUrl && backendFallbackUrl !== normalizedTargetUrl) {
+        return executePut(backendFallbackUrl).catch((fallbackErr) => {
+          console.error("Backend fallback upload also failed:", fallbackErr);
+          throw new Error("Network error during photo upload. Please check your connection and retry.");
+        });
+      }
+      throw new Error("Network error during direct binary upload to storage. Check connection and retry.");
+    });
   },
 
   /**
