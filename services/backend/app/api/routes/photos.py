@@ -6,6 +6,7 @@ Status: IMPLEMENTED (Phase 6)
 import io
 import logging
 import os
+import concurrent.futures
 from typing import Annotated, Any
 import zipfile
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
@@ -38,6 +39,12 @@ from app.schemas.photo import (
 from app.services.ai.service import process_photo_for_faces
 from app.services.storage import StorageService
 from app.workers.tasks.photo_tasks import process_photo_sync, process_single_photo_task
+
+# Bounded asynchronous background executor decoupling heavy image processing from HTTP web traffic
+_PHOTO_WORKER = concurrent.futures.ThreadPoolExecutor(
+    max_workers=1,
+    thread_name_prefix="photo_async_worker",
+)
 
 
 logger = logging.getLogger("snapfind.photos")
@@ -345,19 +352,13 @@ def upload_complete(
                     task = process_single_photo_task.delay(photo_id=p_id, job_id=j_id)
                     logger.info(f"Enqueued Celery task {task.id} for photo {p_id}")
                 else:
-                    logger.info(f"Celery broker offline. Processing photo {p_id} directly.")
+                    logger.info(f"Background worker processing photo {p_id} (job: {j_id})")
                     process_photo_sync(photo_id=p_id, job_id=j_id)
             except Exception as run_err:
-                logger.warning(f"Error during photo task dispatch for {p_id}: {run_err}. Falling back to sync processing.")
-                try:
-                    process_photo_sync(photo_id=p_id, job_id=j_id)
-                except Exception as sync_err:
-                    logger.error(f"Background processing failed for {p_id}: {sync_err}", exc_info=True)
+                logger.error(f"Background processing failed for {p_id}: {run_err}", exc_info=True)
 
-        if background_tasks is not None:
-            background_tasks.add_task(_run_processing, photo.id, job.id)
-        else:
-            _run_processing(photo.id, job.id)
+        # Always submit to background worker pool - NEVER block HTTP client response
+        _PHOTO_WORKER.submit(_run_processing, photo.id, job.id)
 
         return _enrich_photo_urls(photo, storage, request)
 

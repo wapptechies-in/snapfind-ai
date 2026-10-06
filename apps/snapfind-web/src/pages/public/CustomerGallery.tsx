@@ -53,16 +53,17 @@ export default function CustomerGallery() {
       if (!token) return;
       setLoading(true);
       try {
-        const eventData = await eventsApi.getByToken(token);
+        const [eventData, publicRes] = await Promise.all([
+          eventsApi.getByToken(token),
+          eventsApi.getPublicPhotos(token).catch((photoErr) => {
+            console.error("Failed to load public photos:", photoErr);
+            return { items: [] };
+          }),
+        ]);
+
         if (eventData) {
           setEvent(eventData);
-          try {
-            const publicRes = await eventsApi.getPublicPhotos(eventData.public_token || eventData.token || token);
-            setPhotos(publicRes?.items || []);
-          } catch (photoErr) {
-            console.error("Failed to load public photos:", photoErr);
-            setPhotos([]);
-          }
+          setPhotos(publicRes?.items || []);
 
           // Restore saved favorites for this specific event
           try {

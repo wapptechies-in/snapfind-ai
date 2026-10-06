@@ -5,6 +5,7 @@ Status: IMPLEMENTED (Phase 6)
 """
 
 import logging
+import time
 from typing import Any
 import boto3
 from botocore.client import Config
@@ -13,6 +14,9 @@ from botocore.exceptions import ClientError
 from app.services.storage.base import StorageProvider
 
 logger = logging.getLogger("snapfind.storage.s3")
+
+# Global thread-safe in-memory cache for presigned download URLs to eliminate HMAC signature CPU overhead
+_URL_CACHE: dict[str, tuple[str, float]] = {}
 
 
 class S3StorageProvider(StorageProvider):
@@ -131,6 +135,12 @@ class S3StorageProvider(StorageProvider):
             clean_key = key.lstrip("/")
             return f"{self.cdn_url}/{clean_key}"
 
+        cache_key = f"{key}:{filename}:{inline}:{expires_in}"
+        now = time.time()
+        cached = _URL_CACHE.get(cache_key)
+        if cached and cached[1] > now + 300:
+            return cached[0]
+
         params: dict[str, Any] = {
             "Bucket": self.bucket_name,
             "Key": key,
@@ -146,6 +156,14 @@ class S3StorageProvider(StorageProvider):
             Params=params,
             ExpiresIn=expires_in,
         )
+
+        _URL_CACHE[cache_key] = (url, now + expires_in)
+        if len(_URL_CACHE) > 5000:
+            # Clean expired entries when cache grows
+            expired_keys = [k for k, v in _URL_CACHE.items() if v[1] <= now + 300]
+            for k in expired_keys:
+                _URL_CACHE.pop(k, None)
+
         return url
 
     def object_exists(self, key: str) -> bool:

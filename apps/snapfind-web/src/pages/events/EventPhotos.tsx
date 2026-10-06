@@ -38,28 +38,19 @@ export default function EventPhotos() {
       setEvent(eventData);
 
       if (eventData) {
-        // Load folders
-        try {
-          const folderList = await foldersApi.list(eventData.id);
-          setFolders(folderList);
-        } catch (fErr) {
-          console.warn("Could not load folders:", fErr);
-          setFolders([]);
-        }
-
-        // Load all photos for event
-        try {
-          const photosData = await photosApi.getByEventId(eventData.id);
-          setPhotos(photosData);
-        } catch (photoErr) {
-          console.warn("Could not load photos via getByEventId, falling back to list:", photoErr);
-          try {
-            const fallbackPhotos = await photosApi.list(eventData.id);
-            setPhotos(fallbackPhotos);
-          } catch {
-            setPhotos([]);
-          }
-        }
+        // Parallelize folder and photo metadata fetching for instant page load
+        const [folderList, photosData] = await Promise.all([
+          foldersApi.list(eventData.id).catch((fErr) => {
+            console.warn("Could not load folders:", fErr);
+            return [] as EventFolder[];
+          }),
+          photosApi.getByEventId(eventData.id).catch(async (photoErr) => {
+            console.warn("Could not load photos via getByEventId, falling back to list:", photoErr);
+            return photosApi.list(eventData.id).catch(() => [] as Photo[]);
+          }),
+        ]);
+        setFolders(folderList);
+        setPhotos(photosData);
       }
     } catch (err) {
       console.error("Failed to load event:", err);
