@@ -61,6 +61,7 @@ export function PhotoUploadModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
   const activeCountRef = useRef(0);
+  const inFlightIdsRef = useRef<Set<string>>(new Set());
   const hasFinishedAnyRef = useRef(false);
 
   useEffect(() => {
@@ -71,7 +72,13 @@ export function PhotoUploadModal({
   useEffect(() => {
     return () => {
       items.forEach((item) => {
-        if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+        if (item.previewUrl) {
+          try {
+            URL.revokeObjectURL(item.previewUrl);
+          } catch {
+            // ignore
+          }
+        }
       });
     };
   }, [items]);
@@ -80,7 +87,7 @@ export function PhotoUploadModal({
     const validFiles: UploadFileItem[] = [];
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
 
-    Array.from(files).forEach((file) => {
+    Array.from(files).forEach((file, index) => {
       if (!allowedTypes.includes(file.type)) {
         alert(`File "${file.name}" is not a supported image (JPEG, PNG, or WebP).`);
         return;
@@ -90,12 +97,14 @@ export function PhotoUploadModal({
         return;
       }
 
+      // Memory optimization: generate preview object URL only for first 12 items to prevent DOM freezing on 100+ photos
+      const shouldGeneratePreview = index < 12;
       validFiles.push({
-        id: `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+        id: `${Date.now()}_${Math.random().toString(36).substring(2, 9)}_${index}`,
         file,
         name: file.name,
         size: file.size,
-        previewUrl: URL.createObjectURL(file),
+        previewUrl: shouldGeneratePreview ? URL.createObjectURL(file) : "",
         status: "queued",
         progress: 0,
       });
@@ -108,94 +117,120 @@ export function PhotoUploadModal({
 
   const uploadSingleItem = useCallback(
     async (item: UploadFileItem) => {
-      try {
-        // Step 1: Upload Init
-        setItems((prev) =>
-          prev.map((i) =>
-            i.id === item.id ? { ...i, status: "initializing", progress: 5 } : i
-          )
-        );
+      let attempts = 0;
+      const maxAttempts = 2;
 
-        const initResult = await photosApi.uploadInit(eventId, {
-          filename: item.name,
-          fileSize: item.size,
-          mimeType: item.file.type || "image/jpeg",
-          folderId: selectedFolderId || undefined,
-        });
+      while (attempts < maxAttempts) {
+        try {
+          // Step 1: Upload Init
+          setItems((prev) =>
+            prev.map((i) =>
+              i.id === item.id ? { ...i, status: "initializing", progress: 5 } : i
+            )
+          );
 
-        const photoId = initResult.photoId;
+          const initResult = await photosApi.uploadInit(eventId, {
+            filename: item.name,
+            fileSize: item.size,
+            mimeType: item.file.type || "image/jpeg",
+            folderId: selectedFolderId || undefined,
+          });
 
-        // Step 2: Upload Binary directly to storage
-        setItems((prev) =>
-          prev.map((i) =>
-            i.id === item.id
-              ? { ...i, status: "uploading", photoId, progress: 10 }
-              : i
-          )
-        );
+          const photoId = initResult.photoId;
 
-        await photosApi.uploadBinary(
-          initResult.uploadUrl,
-          item.file,
-          item.file.type || "image/jpeg",
-          (percent) => {
-            // Scale progress from 10% to 90% during raw upload
-            const mappedProgress = 10 + Math.round((percent * 80) / 100);
+          // Step 2: Upload Binary directly to storage with throttled progress updates
+          setItems((prev) =>
+            prev.map((i) =>
+              i.id === item.id
+                ? { ...i, status: "uploading", photoId, progress: 10 }
+                : i
+            )
+          );
+
+          let lastReportedProgress = 10;
+          await photosApi.uploadBinary(
+            initResult.uploadUrl,
+            item.file,
+            item.file.type || "image/jpeg",
+            (percent) => {
+              // Scale progress from 10% to 90%
+              const mappedProgress = 10 + Math.round((percent * 80) / 100);
+              // Throttle to at least 5% increments or final boundary to prevent browser thread locking
+              if (mappedProgress - lastReportedProgress >= 5 || mappedProgress >= 90) {
+                lastReportedProgress = mappedProgress;
+                setItems((prev) =>
+                  prev.map((i) =>
+                    i.id === item.id ? { ...i, progress: mappedProgress } : i
+                  )
+                );
+              }
+            },
+            initResult.storageKey
+          );
+
+          // Step 3: Upload Complete (derivatives generated on backend)
+          setItems((prev) =>
+            prev.map((i) =>
+              i.id === item.id ? { ...i, status: "processing", progress: 95 } : i
+            )
+          );
+
+          await photosApi.uploadComplete(photoId);
+
+          // Clean up blob URL to release browser memory immediately
+          if (item.previewUrl) {
+            try {
+              URL.revokeObjectURL(item.previewUrl);
+            } catch {
+              // ignore
+            }
+          }
+
+          setItems((prev) =>
+            prev.map((i) =>
+              i.id === item.id ? { ...i, status: "completed", progress: 100 } : i
+            )
+          );
+
+          hasFinishedAnyRef.current = true;
+          return; // Success, exit retry loop
+        } catch (err: unknown) {
+          attempts++;
+          console.warn(`Upload attempt ${attempts}/${maxAttempts} failed for ${item.name}:`, err);
+          if (attempts < maxAttempts) {
+            // Brief backoff before retry to allow backend buffer clearing
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          } else {
+            const errMsg =
+              err instanceof Error
+                ? err.message
+                : typeof err === "object" && err !== null && "detail" in err
+                ? String((err as { detail: unknown }).detail)
+                : "Upload failed";
+
             setItems((prev) =>
               prev.map((i) =>
-                i.id === item.id ? { ...i, progress: mappedProgress } : i
+                i.id === item.id
+                  ? {
+                      ...i,
+                      status: "failed",
+                      error: errMsg,
+                    }
+                  : i
               )
             );
-          },
-          initResult.storageKey
-        );
-
-        // Step 3: Upload Complete (generates derivatives & triggers face recognition)
-        setItems((prev) =>
-          prev.map((i) =>
-            i.id === item.id ? { ...i, status: "processing", progress: 95 } : i
-          )
-        );
-
-        await photosApi.uploadComplete(photoId);
-
-        setItems((prev) =>
-          prev.map((i) =>
-            i.id === item.id ? { ...i, status: "completed", progress: 100 } : i
-          )
-        );
-
-        hasFinishedAnyRef.current = true;
-      } catch (err: unknown) {
-        console.error(`Error uploading ${item.name}:`, err);
-        const errMsg =
-          err instanceof Error
-            ? err.message
-            : typeof err === "object" && err !== null && "detail" in err
-            ? String((err as { detail: unknown }).detail)
-            : "Upload failed";
-
-        setItems((prev) =>
-          prev.map((i) =>
-            i.id === item.id
-              ? {
-                  ...i,
-                  status: "failed",
-                  error: errMsg,
-                }
-              : i
-          )
-        );
-      } finally {
-        activeCountRef.current = Math.max(0, activeCountRef.current - 1);
+          }
+        }
       }
     },
     [eventId, selectedFolderId]
   );
 
-  // Queue orchestrator with concurrency limit
+  // Queue orchestrator with concurrency limit and in-flight tracking
   useEffect(() => {
-    const queuedItems = items.filter((i) => i.status === "queued");
+    const queuedItems = items.filter(
+      (i) => i.status === "queued" && !inFlightIdsRef.current.has(i.id)
+    );
     if (queuedItems.length === 0) return;
 
     while (
@@ -205,8 +240,13 @@ export function PhotoUploadModal({
       const nextItem = queuedItems.shift();
       if (!nextItem) break;
 
+      inFlightIdsRef.current.add(nextItem.id);
       activeCountRef.current += 1;
-      uploadSingleItem(nextItem);
+
+      uploadSingleItem(nextItem).finally(() => {
+        inFlightIdsRef.current.delete(nextItem.id);
+        activeCountRef.current = Math.max(0, activeCountRef.current - 1);
+      });
     }
   }, [items, uploadSingleItem]);
 
@@ -415,11 +455,19 @@ export function PhotoUploadModal({
                     className="flex items-center gap-3 p-3 rounded-xl border border-slate-800 bg-midnight/60 text-xs"
                   >
                     {/* Thumbnail */}
-                    <img
-                      src={item.previewUrl}
-                      alt={item.name}
-                      className="w-10 h-10 object-cover rounded-lg bg-black/40 border border-slate-800 shrink-0"
-                    />
+                    {item.previewUrl ? (
+                      <img
+                        src={item.previewUrl}
+                        alt={item.name}
+                        className="w-10 h-10 object-cover rounded-lg bg-black/40 border border-slate-800 shrink-0"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-lg bg-slate-800/80 border border-slate-700/60 flex items-center justify-center shrink-0 text-slate-400">
+                        <svg className="w-5 h-5 text-gold/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                    )}
 
                     {/* File info and progress bar */}
                     <div className="flex-1 min-w-0">

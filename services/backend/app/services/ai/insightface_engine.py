@@ -10,6 +10,8 @@ Status: DEVELOPMENT / PRODUCTION READY WITH RESILIENT FALLBACK
 
 import logging
 import os
+import threading
+import gc
 from typing import Any
 import numpy as np
 
@@ -27,6 +29,7 @@ logger = logging.getLogger("snapfind.ai")
 settings = get_settings()
 
 _engine_instance: FaceEngine | None = None
+_ENGINE_LOCK = threading.Lock()
 
 
 class LightweightFaceEngine(FaceEngine):
@@ -136,6 +139,7 @@ class InsightFaceEngine(FaceEngine):
         self.model_name = model_name
         self.version = settings.AI_MODEL_VERSION
         self.dimension = settings.FACE_EMBEDDING_DIMENSION
+        self._inference_lock = threading.Lock()
         logger.info(f"Initializing InsightFaceEngine with model '{model_name}' on CPU...")
 
         # Initialize FaceAnalysis on CPU with only detection and recognition modules (saves >60% RAM)
@@ -150,7 +154,7 @@ class InsightFaceEngine(FaceEngine):
     def detect_faces(self, image: np.ndarray) -> list[DetectedFace]:
         """
         Detect faces in image (BGR format).
-        Downscales image to max 1280px before detection to conserve RAM, then scales bounding boxes back.
+        Downscales image to max 960px before detection to conserve RAM, then scales bounding boxes back.
         """
         if image is None or image.size == 0:
             return []
@@ -158,7 +162,7 @@ class InsightFaceEngine(FaceEngine):
         import cv2
 
         orig_h, orig_w = image.shape[:2]
-        max_dim = 1280
+        max_dim = 960
         scale = 1.0
         if max(orig_h, orig_w) > max_dim:
             scale = max_dim / max(orig_h, orig_w)
@@ -168,7 +172,8 @@ class InsightFaceEngine(FaceEngine):
         else:
             proc_image = image
 
-        faces = self.app.get(proc_image)
+        with self._inference_lock:
+            faces = self.app.get(proc_image)
         detected: list[DetectedFace] = []
 
         for idx, face in enumerate(faces):
@@ -236,11 +241,13 @@ def get_face_engine() -> FaceEngine:
     """Singleton getter ensuring the AI model is loaded only once with graceful fallback."""
     global _engine_instance
     if _engine_instance is None:
-        try:
-            _engine_instance = InsightFaceEngine(model_name=settings.AI_MODEL_VERSION)
-        except Exception as e:
-            logger.warning(
-                f"Could not initialize InsightFaceEngine ({e}). Seamlessly falling back to LightweightFaceEngine."
-            )
-            _engine_instance = LightweightFaceEngine()
+        with _ENGINE_LOCK:
+            if _engine_instance is None:
+                try:
+                    _engine_instance = InsightFaceEngine(model_name=settings.AI_MODEL_VERSION)
+                except Exception as e:
+                    logger.warning(
+                        f"Could not initialize InsightFaceEngine ({e}). Seamlessly falling back to LightweightFaceEngine."
+                    )
+                    _engine_instance = LightweightFaceEngine()
     return _engine_instance

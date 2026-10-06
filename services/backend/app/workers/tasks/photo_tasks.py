@@ -5,7 +5,9 @@ Status: IMPLEMENTED (Phase 7)
 """
 
 from datetime import datetime, timezone
+import gc
 import logging
+import threading
 from typing import Any
 from celery.exceptions import MaxRetriesExceededError
 from sqlalchemy import select
@@ -19,13 +21,16 @@ from app.workers.celery_app import celery_app
 
 logger = logging.getLogger("snapfind.tasks")
 
+# Serializes heavy AI face detection across background threads on Render 512MB RAM tier
+_FACE_INDEXING_LOCK = threading.Lock()
+
 def process_photo_sync(photo_id: str, job_id: str | None = None) -> dict[str, Any]:
     """
     Directly processes a single photo without Celery dependency:
     1. Fetches photo record and updates status to 'processing'.
     2. Retrieves original image bytes from object storage.
-    3. Generates web (1920px) and thumbnail (400px) image derivatives.
-    4. Executes AI face detection, quality filtering, and embeddings.
+    3. Generates web (1920px) and thumbnail (400px) image derivatives and marks photo uploaded.
+    4. Executes AI face detection, quality filtering, and embeddings serialized under lock.
     5. Updates photo and processing job metrics in PostgreSQL.
     """
     logger.info(f"Starting direct processing for photo {photo_id} (job: {job_id})")
@@ -62,6 +67,7 @@ def process_photo_sync(photo_id: str, job_id: str | None = None) -> dict[str, An
             original_bytes=original_bytes,
         )
 
+        # Step 1: Save derivatives and mark photo uploaded immediately so client sees it
         with SessionLocal() as db:
             p = db.get(Photo, photo_id)
             if not p:
@@ -76,11 +82,24 @@ def process_photo_sync(photo_id: str, job_id: str | None = None) -> dict[str, An
             p.file_size = derivs["file_size"]
             p.checksum = derivs["checksum"]
             p.upload_status = "uploaded"
+            db.commit()
 
-            proc_bytes = derivs.get("web_bytes") or original_bytes
-            face_result = process_photo_for_faces(photo_id, db, image_bytes=proc_bytes)
-            p.processing_status = "completed"
+        # Step 2: Serialized heavy AI face detection & pgvector embeddings
+        proc_bytes = derivs.get("web_bytes") or original_bytes
+        face_result = {"faces_detected": 0, "faces_embedded": 0, "faces_rejected": 0}
+        try:
+            with _FACE_INDEXING_LOCK:
+                with SessionLocal() as db:
+                    face_result = process_photo_for_faces(photo_id, db, image_bytes=proc_bytes)
+                gc.collect()
+        except Exception as face_err:
+            logger.warning(f"Face indexing warning for photo {photo_id}: {face_err}")
 
+        # Step 3: Complete processing job
+        with SessionLocal() as db:
+            p = db.get(Photo, photo_id)
+            if p:
+                p.processing_status = "completed"
             if job_id:
                 j = db.get(ProcessingJob, job_id)
                 if j:
@@ -179,7 +198,7 @@ def process_single_photo_task(
             original_bytes=original_bytes,
         )
 
-        # 3. AI Face Detection, Quality Scoring & pgvector Storage
+        # Step 1: Save derivatives and mark photo uploaded immediately
         with SessionLocal() as db:
             p = db.get(Photo, photo_id)
             if not p:
@@ -194,11 +213,24 @@ def process_single_photo_task(
             p.file_size = derivs["file_size"]
             p.checksum = derivs["checksum"]
             p.upload_status = "uploaded"
+            db.commit()
 
-            # Run face detection and embeddings (clears existing faces idempotently)
-            proc_bytes = derivs.get("web_bytes") or original_bytes
-            face_result = process_photo_for_faces(photo_id, db, image_bytes=proc_bytes)
-            p.processing_status = "completed"
+        # Step 2: Serialized heavy AI face detection & pgvector embeddings
+        proc_bytes = derivs.get("web_bytes") or original_bytes
+        face_result = {"faces_detected": 0, "faces_embedded": 0, "faces_rejected": 0}
+        try:
+            with _FACE_INDEXING_LOCK:
+                with SessionLocal() as db:
+                    face_result = process_photo_for_faces(photo_id, db, image_bytes=proc_bytes)
+                gc.collect()
+        except Exception as face_err:
+            logger.warning(f"Face indexing warning for photo {photo_id}: {face_err}")
+
+        # Step 3: Complete processing job
+        with SessionLocal() as db:
+            p = db.get(Photo, photo_id)
+            if p:
+                p.processing_status = "completed"
 
             # Update Job counters if associated with a job
             if job_id:

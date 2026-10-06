@@ -69,6 +69,65 @@ export default function FindMyPhotos() {
     setPreviewUrl(url);
   };
 
+function optimizeSelfieForSearch(file: File): Promise<File> {
+  return new Promise((resolve) => {
+    // If file is already small (under 400KB), return directly
+    if (file.size <= 400 * 1024) {
+      resolve(file);
+      return;
+    }
+
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const MAX_SIZE = 800; // Optimal resolution for InsightFace detection & pgvector search
+      let { width, height } = img;
+      if (width > MAX_SIZE || height > MAX_SIZE) {
+        if (width > height) {
+          height = Math.round((height * MAX_SIZE) / width);
+          width = MAX_SIZE;
+        } else {
+          width = Math.round((width * MAX_SIZE) / height);
+          height = MAX_SIZE;
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resolve(file);
+        return;
+      }
+
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            resolve(file);
+            return;
+          }
+          const cleanName = file.name.replace(/\.[^.]+$/, ".jpg");
+          const optimizedFile = new File([blob], cleanName, {
+            type: "image/jpeg",
+            lastModified: Date.now(),
+          });
+          resolve(optimizedFile);
+        },
+        "image/jpeg",
+        0.85
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(file);
+    };
+    img.src = objectUrl;
+  });
+}
+
   const handleSearch = async () => {
     if (!selectedFile || !token) {
       setError("Please select or upload a selfie first.");
@@ -77,33 +136,38 @@ export default function FindMyPhotos() {
 
     setSearching(true);
     setError(null);
-    setProgressPercent(15);
-    setSearchStatusText("Uploading selfie to secure face pipeline...");
+    setProgressPercent(10);
+    setSearchStatusText("Optimizing selfie for instant AI search...");
 
     try {
+      // Downscale 10MB raw phone selfie to ~70KB for ultrafast upload and minimal server load
+      const uploadPayload = await optimizeSelfieForSearch(selectedFile);
+      setProgressPercent(25);
+      setSearchStatusText("Connecting to secure face pipeline...");
+
       // 1. Submit async background job (non-blocking)
-      const jobResponse = await searchApi.searchAsync(token, selectedFile);
+      const jobResponse = await searchApi.searchAsync(token, uploadPayload);
       const jobId = jobResponse.jobId || jobResponse.job_id;
       if (!jobId || jobId === "null") {
         throw new Error("Could not initialize face search job.");
       }
 
-      setProgressPercent(35);
+      setProgressPercent(45);
       setSearchStatusText("Scanning event photos for matching faces...");
 
       // 2. Poll job status until completed or failed
-      const maxAttempts = 40; // ~60 seconds max
+      const maxAttempts = 40; // ~50 seconds max
       let attempts = 0;
       let completedJob: { totalMatches?: number; strongMatches?: unknown[]; possibleMatches?: unknown[]; status?: string; errorMessage?: string } | null = null;
 
       while (attempts < maxAttempts) {
-        await new Promise((resolve) => setTimeout(resolve, 1400));
+        await new Promise((resolve) => setTimeout(resolve, attempts === 0 ? 800 : 1200));
         attempts++;
 
         try {
           const statusData = await searchApi.getJobStatus(jobId);
           if (statusData.status === "processing") {
-            setProgressPercent(Math.min(40 + attempts * 3, 85));
+            setProgressPercent(Math.min(50 + attempts * 4, 88));
             setSearchStatusText("Analyzing facial features & computing similarity...");
           } else if (statusData.status === "completed") {
             completedJob = statusData;
@@ -125,7 +189,7 @@ export default function FindMyPhotos() {
       if (!completedJob) {
         // Fallback to synchronous search if job polling timed out
         setSearchStatusText("Finalizing results directly...");
-        const syncResults = await searchApi.searchBySelfie(token, selectedFile);
+        const syncResults = await searchApi.searchBySelfie(token, uploadPayload);
         completedJob = {
           totalMatches: syncResults.totalMatches,
           strongMatches: syncResults.strongMatches,

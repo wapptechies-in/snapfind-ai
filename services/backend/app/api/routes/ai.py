@@ -139,8 +139,8 @@ async def search_faces_endpoint(
     )
 
 
-# --- Asynchronous Background Face Search Pipeline ---
 import concurrent.futures
+import gc
 import json
 import logging
 from datetime import datetime, timezone
@@ -150,7 +150,7 @@ from app.schemas.search_job import SearchJobOut
 from app.services.rate_limit import check_rate_limit
 
 logger = logging.getLogger("snapfind.ai.async")
-_SEARCH_EXECUTOR = concurrent.futures.ThreadPoolExecutor(max_workers=3, thread_name_prefix="face_search_worker")
+_SEARCH_EXECUTOR = concurrent.futures.ThreadPoolExecutor(max_workers=1, thread_name_prefix="face_search_worker")
 
 
 def _run_search_job_background(job_id: str, event_id: str, selfie_bytes: bytes, base_url: str):
