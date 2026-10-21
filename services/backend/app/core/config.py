@@ -33,7 +33,8 @@ class Settings(BaseSettings):
     # --- Security & Auth (Phase 2) ---
     SECRET_KEY: str = "snapfind-secret-jwt-key-for-dev-only-change-in-prod-2026"
     JWT_ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60  # 1 hour
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7  # 7 days
 
     # --- CORS ---
     # Comma-separated list of allowed origins, e.g.
@@ -105,7 +106,16 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     """Cached settings instance — import this, not Settings() directly."""
-    return Settings()
+    instance = Settings()
+    if (
+        instance.ENVIRONMENT.lower() != "development"
+        and instance.SECRET_KEY == "snapfind-secret-jwt-key-for-dev-only-change-in-prod-2026"
+    ):
+        raise RuntimeError(
+            "CRITICAL SECURITY CONFIGURATION ERROR: SECRET_KEY is set to the insecure default key in a non-development environment! "
+            "Please provide a secure random SECRET_KEY environment variable."
+        )
+    return instance
 
 
 settings = get_settings()

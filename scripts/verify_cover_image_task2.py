@@ -17,6 +17,11 @@ def main():
     print("=== Task 2 Verification: Custom Cover Image on Event Creation ===")
     
     with httpx.Client(base_url=BASE_URL, timeout=15.0) as client:
+        # Step 0: Login
+        login_res = client.post("/api/v1/auth/login", json={"email": "photographer@snapfind.ai", "password": "Snapfind2026!"})
+        assert login_res.status_code == 200, f"Login failed: {login_res.text}"
+        client.headers["Authorization"] = f"Bearer {login_res.json()['access_token']}"
+
         # Step 1: Upload a custom cover photo
         print("[1] Testing POST /api/v1/events/upload-cover...")
         # Create a tiny 1x1 JPEG in-memory

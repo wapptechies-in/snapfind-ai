@@ -54,7 +54,7 @@ class Photo(Base):
         String(32), default="completed", nullable=False, index=True
     )  # pending, processing, completed, failed
     is_public_gallery: Mapped[bool] = mapped_column(
-        Boolean, default=False, nullable=False, server_default="0", index=True
+        Boolean, default=True, nullable=False, server_default="1", index=True
     )
     url: Mapped[str | None] = mapped_column(String(512), nullable=True)
     thumbnail_url: Mapped[str | None] = mapped_column(String(512), nullable=True)

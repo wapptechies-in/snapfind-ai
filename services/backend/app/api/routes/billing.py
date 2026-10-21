@@ -229,7 +229,7 @@ def upgrade_subscription(
     current_rank = TIER_RANK.get(current_tier, 0)
     new_rank = TIER_RANK.get(new_tier, 0)
 
-    if new_rank > current_rank:
+    if new_rank > current_rank and settings.ENVIRONMENT.lower() not in ("development", "test") and not settings.TRIAL_EDITION_MODE:
         raise HTTPException(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
             detail=(
@@ -262,6 +262,13 @@ def confirm_payment_webhook(
     Activates the new subscription tier.
     In production this is called by the webhook handler after HMAC signature verification.
     """
+    # Enforce that the authenticated photographer can only modify their own subscription unless super_admin
+    if photographer.id != photographer_id and getattr(photographer, "role", "") != "super_admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: Cannot modify subscription of another photographer.",
+        )
+
     new_tier = tier.lower()
     max_events, max_photos = TIER_QUOTAS.get(new_tier, (2, 500))
     p = db.get(Photographer, photographer_id)

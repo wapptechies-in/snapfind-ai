@@ -55,7 +55,7 @@ def get_dashboard_summary(
         select(func.coalesce(func.sum(Event.total_downloads), 0)).where(
             Event.photographer_id == current_photographer.id
         )
-    ) or int(total_searches * 0.8)
+    ) or 0
 
     return DashboardSummaryOut(
         totalEvents=total_events,

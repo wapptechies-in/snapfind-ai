@@ -248,6 +248,7 @@ def upload_init(
         folder_id=payload.folder_id,
         upload_status="pending",
         processing_status="pending",
+        is_public_gallery=payload.is_public_gallery if payload.is_public_gallery is not None else True,
     )
     db.add(photo)
     db.commit()
@@ -559,6 +560,7 @@ def create_event_photo(
         folder_id=photo_in.folder_id,
         upload_status="uploaded",
         processing_status="completed",
+        is_public_gallery=photo_in.is_public_gallery if photo_in.is_public_gallery is not None else True,
     )
     db.add(photo)
     db.commit()
@@ -850,6 +852,7 @@ def download_event_photos_zip(
 @router.put("/storage/upload")
 async def handle_storage_upload(
     request: Request,
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     key: str = Query(...),
 ):
     """
@@ -939,6 +942,7 @@ def handle_storage_file(key: str):
 def update_photo_gallery_visibility(
     photo_id: str,
     payload: GalleryVisibilityUpdate,
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ):
     """Toggle or set whether an individual photo appears in the public customer gallery."""
@@ -947,6 +951,12 @@ def update_photo_gallery_visibility(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Photo '{photo_id}' not found",
+        )
+    event = db.get(Event, photo.event_id)
+    if not event or (event.photographer_id != photographer.id and getattr(photographer, "role", "") != "super_admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to modify photos in this event.",
         )
     photo.is_public_gallery = payload.is_public_gallery
     db.commit()
@@ -957,10 +967,16 @@ def update_photo_gallery_visibility(
 def bulk_update_gallery_visibility(
     event_id: str,
     payload: BulkGalleryVisibilityUpdate,
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ):
     """Bulk update public customer gallery visibility for a list of photos under an event."""
     event = _resolve_event(event_id, db)
+    if event.photographer_id != photographer.id and getattr(photographer, "role", "") != "super_admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to modify photos in this event.",
+        )
     updated_count = 0
     if payload.photo_ids:
         photos = db.scalars(

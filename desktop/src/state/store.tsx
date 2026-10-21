@@ -49,7 +49,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [settings, setSettings] = useState<AppSettings>(() => {
     const isProd = Boolean((import.meta as any).env?.PROD);
-    const defaultProductionUrl = (import.meta as any).env?.VITE_API_URL || "https://staging-api.snapfind.ai";
+    const defaultProductionUrl = (import.meta as any).env?.VITE_API_URL || "https://snapfind-api-sq4a.onrender.com";
     const defaultDevelopmentUrl = "http://127.0.0.1:8000";
     const defaultUrl = isProd ? defaultProductionUrl : defaultDevelopmentUrl;
 
@@ -57,9 +57,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
-        if (isProd && (parsed.apiBaseUrl === "http://localhost:8000" || parsed.apiBaseUrl === "http://127.0.0.1:8000")) {
+        if (isProd && (parsed.apiBaseUrl === "http://localhost:8000" || parsed.apiBaseUrl === "http://127.0.0.1:8000" || parsed.apiBaseUrl === "https://staging-api.snapfind.ai")) {
           parsed.apiBaseUrl = defaultProductionUrl;
-        } else if (!isProd && parsed.apiBaseUrl === "http://localhost:8000") {
+        } else if ((!isProd) && (parsed.apiBaseUrl === "http://localhost:8000")) {
           parsed.apiBaseUrl = "http://127.0.0.1:8000";
         }
         return parsed;
@@ -69,7 +69,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     const savedUrl = localStorage.getItem("snapfind_desktop_api_url");
     let activeUrl = savedUrl || defaultUrl;
-    if (isProd && (!savedUrl || savedUrl === "http://localhost:8000" || savedUrl === "http://127.0.0.1:8000")) {
+    if (isProd && (!savedUrl || savedUrl === "http://localhost:8000" || savedUrl === "http://127.0.0.1:8000" || savedUrl === "https://staging-api.snapfind.ai")) {
       activeUrl = defaultProductionUrl;
     }
     return {
@@ -187,6 +187,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const logout = () => {
     authApi.logout();
+    try {
+      localStorage.removeItem("snapfind_desktop_settings");
+      localStorage.removeItem("snapfind_desktop_api_url");
+      // Remove any snapfind_session_* items
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith("snapfind_session_") || key.startsWith("snapfind_"))) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+    } catch (e) {
+      console.warn("Error clearing localStorage on logout:", e);
+    }
     setUser(null);
     setSelectedEvent(null);
     setScanResult(null);

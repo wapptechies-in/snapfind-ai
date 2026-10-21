@@ -11,4 +11,5 @@ class HealthOut(BaseModel):
     service: str = "snapfind-api"
     version: str = "0.2.0"
     database: str = "connected"
+    redis: str = "unconfigured"
     environment: str = "development"

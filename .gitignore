@@ -25,6 +25,7 @@ build/
 **/build/
 .vite/
 *.tsbuildinfo
+**/*.tsbuildinfo
 
 # Databases
 *.sqlite3

@@ -19,6 +19,11 @@ def main():
     print("=== Task 3 Verification: Active / Inactive Toggle for Events ===")
 
     with httpx.Client(base_url=BASE_URL, timeout=15.0) as client:
+        # Step 0: Login
+        login_res = client.post("/api/v1/auth/login", json={"email": "photographer@snapfind.ai", "password": "Snapfind2026!"})
+        assert login_res.status_code == 200, f"Login failed: {login_res.text}"
+        client.headers["Authorization"] = f"Bearer {login_res.json()['access_token']}"
+
         # Step 1: Create an Event
         print("[1] Creating new Event...")
         create_payload = {

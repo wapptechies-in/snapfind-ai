@@ -109,11 +109,15 @@ export const photosApi = {
 
   async uploadInit(
     eventId: string,
-    payload: { filename: string; fileSize: number; mimeType: string; folderId?: string | null }
+    payload: { filename: string; fileSize: number; mimeType: string; folderId?: string | null; isPublicGallery?: boolean }
   ): Promise<UploadInitResult> {
+    const body = {
+      ...payload,
+      isPublicGallery: payload.isPublicGallery !== undefined ? payload.isPublicGallery : true,
+    };
     const res = await request<UploadInitResult>(`/api/v1/events/${eventId}/photos/upload-init`, {
       method: "POST",
-      body: JSON.stringify(payload),
+      body: JSON.stringify(body),
     });
     return {
       ...res,

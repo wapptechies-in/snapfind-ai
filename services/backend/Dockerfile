@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1 \
     libglib2.0-0 \
     curl \
+    fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
@@ -27,6 +28,16 @@ RUN python -c "from insightface.app import FaceAnalysis; app = FaceAnalysis(name
 
 COPY . .
 
+# Create and switch to non-root app user
+RUN useradd -m -u 1000 appuser && \
+    mkdir -p /app/media_storage /home/appuser/.insightface && \
+    chown -R appuser:appuser /app /home/appuser/.insightface
+
+USER appuser
+
 EXPOSE 8000
+
+HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
 
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

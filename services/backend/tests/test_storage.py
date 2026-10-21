@@ -111,6 +111,7 @@ def test_upload_pipeline_lifecycle():
         "filename": "wedding_dance.jpg",
         "fileSize": len(sample_bytes),
         "mimeType": "image/jpeg",
+        "isPublicGallery": False,
     }
     init_resp = client.post(f"/api/v1/events/{event_id}/photos/upload-init", json=init_payload)
     assert init_resp.status_code == 201

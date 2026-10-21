@@ -101,6 +101,12 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
     return <div ref={buttonRef} className="w-full flex justify-center min-h-[44px]" />;
   }
 
+  // If running in production build and no client ID configured, do not show insecure dev simulation modal
+  const isDevMode = Boolean(import.meta.env?.DEV);
+  if (!isDevMode && !clientId) {
+    return null;
+  }
+
   // Fallback interactive button for development or when client ID is pending setup
   return (
     <>

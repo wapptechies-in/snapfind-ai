@@ -57,6 +57,9 @@ export interface DesktopAPI {
   listUploadSessions: () => Promise<Record<string, unknown>[]>;
   deleteUploadSession: (sessionId: string) => Promise<boolean>;
   openExternal: (url: string) => Promise<void>;
+  setApiBaseUrl?: (url: string) => Promise<boolean>;
+  encryptToken?: (plainToken: string) => Promise<string>;
+  decryptToken?: (encryptedToken: string) => Promise<string | null>;
   log: (level: string, message: string) => Promise<void>;
   getLogs: () => Promise<string[]>;
   getPlatform: () => Promise<string>;

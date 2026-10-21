@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, shell } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, safeStorage, session, shell } from "electron";
 import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import * as http from "node:http";
@@ -19,6 +19,32 @@ process.on("unhandledRejection", (reason) => {
 const SUPPORTED_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp"]);
 let mainWindow: BrowserWindow | null = null;
 let isScanCancelled = false;
+let configuredApiBaseUrl: string = process.env.VITE_API_URL || "https://snapfind-api-sq4a.onrender.com";
+
+// Allowed directory roots selected by user via native dialogs
+const allowedDirectories = new Set<string>();
+
+function isPathAllowed(targetPath: string): boolean {
+  if (!targetPath || typeof targetPath !== "string") return false;
+  try {
+    const resolvedTarget = path.resolve(targetPath);
+    for (const allowedDir of allowedDirectories) {
+      const resolvedAllowed = path.resolve(allowedDir);
+      if (resolvedTarget === resolvedAllowed || resolvedTarget.startsWith(resolvedAllowed + path.sep)) {
+        return true;
+      }
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
+function sanitizeSessionId(sessionId: string): string {
+  if (!sessionId || typeof sessionId !== "string") return "unknown";
+  // Strip out any path traversal characters like ../, ..\, slashes, and control characters
+  return sessionId.replace(/[^a-zA-Z0-9_-]/g, "_");
+}
 
 // Ensure userData directory exists for logs and sessions
 function getSessionsDir(): string {
@@ -83,8 +109,20 @@ function createWindow() {
       preload: path.join(appDir, "preload.cjs"),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false,
+      sandbox: true,
     },
+  });
+
+  // Set strict Content Security Policy (CSP) for all requests in the Electron window
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        "Content-Security-Policy": [
+          "default-src 'self' 'unsafe-inline' data: blob: http: https: ws: wss:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: http: https:; connect-src 'self' http: https: ws: wss:; frame-src 'self' https://accounts.google.com;",
+        ],
+      },
+    });
   });
 
   mainWindow.setMenuBarVisibility(false);
@@ -167,13 +205,76 @@ ipcMain.handle("dialog:openFolder", async () => {
   if (result.canceled || result.filePaths.length === 0) {
     return null;
   }
-  return result.filePaths[0];
+  const selectedPath = path.resolve(result.filePaths[0]);
+  allowedDirectories.add(selectedPath);
+  return selectedPath;
 });
 
 // 2. Recursive File Scanner with Streaming Progress
 ipcMain.handle("scanner:scanFolder", async (_event, folderPath: string) => {
+  if (!folderPath || typeof folderPath !== "string") {
+    return {
+      folderPath,
+      totalFilesScanned: 0,
+      supportedFilesFound: 0,
+      unsupportedFilesSkipped: 0,
+      duplicateCount: 0,
+      totalBytes: 0,
+      files: [],
+      error: "Invalid folder path provided.",
+    };
+  }
+
+  const resolvedFolder = path.resolve(folderPath);
+  // Verify folder existence
+  if (!fs.existsSync(resolvedFolder)) {
+    return {
+      folderPath,
+      totalFilesScanned: 0,
+      supportedFilesFound: 0,
+      unsupportedFilesSkipped: 0,
+      duplicateCount: 0,
+      totalBytes: 0,
+      files: [],
+      error: "Specified folder does not exist.",
+    };
+  }
+
+  // Validate that folderPath is allowed or explicitly register user-selected folder
+  if (!isPathAllowed(resolvedFolder)) {
+    // If user triggered scanner for this folder, ensure it is an actual directory
+    try {
+      const st = fs.statSync(resolvedFolder);
+      if (st.isDirectory()) {
+        allowedDirectories.add(resolvedFolder);
+      } else {
+        return {
+          folderPath,
+          totalFilesScanned: 0,
+          supportedFilesFound: 0,
+          unsupportedFilesSkipped: 0,
+          duplicateCount: 0,
+          totalBytes: 0,
+          files: [],
+          error: "Selected path is not a directory.",
+        };
+      }
+    } catch {
+      return {
+        folderPath,
+        totalFilesScanned: 0,
+        supportedFilesFound: 0,
+        unsupportedFilesSkipped: 0,
+        duplicateCount: 0,
+        totalBytes: 0,
+        files: [],
+        error: "Access denied or invalid directory.",
+      };
+    }
+  }
+
   isScanCancelled = false;
-  appendLog("INFO", `Starting recursive scan of folder: ${folderPath}`);
+  appendLog("INFO", `Starting recursive scan of folder: ${resolvedFolder}`);
 
   const files: Array<{
     filename: string;
@@ -310,17 +411,32 @@ ipcMain.handle(
   async (_event, filePath: string, uploadUrl: string, contentType: string, customHeaders = {}) => {
     return new Promise((resolve) => {
       try {
-        if (!fs.existsSync(filePath)) {
-          resolve({ success: false, error: `File not found on disk: ${filePath}` });
+        if (!filePath || typeof filePath !== "string") {
+          resolve({ success: false, error: "Invalid file path." });
           return;
         }
 
-        const stat = fs.statSync(filePath);
+        const resolvedFilePath = path.resolve(filePath);
+
+        // Security validation: verify that filePath belongs to an allowed/scanned folder
+        if (!isPathAllowed(resolvedFilePath)) {
+          appendLog("WARN", `Unauthorized file read attempt blocked for path: ${resolvedFilePath}`);
+          resolve({ success: false, error: "Access denied: File is outside of user-selected directories." });
+          return;
+        }
+
+        if (!fs.existsSync(resolvedFilePath)) {
+          resolve({ success: false, error: `File not found on disk: ${resolvedFilePath}` });
+          return;
+        }
+
+        const stat = fs.statSync(resolvedFilePath);
         const totalBytes = stat.size;
         let bytesSent = 0;
         let targetUrl = uploadUrl;
         if (targetUrl.startsWith("/")) {
-          targetUrl = `http://127.0.0.1:8000${targetUrl}`;
+          const base = (configuredApiBaseUrl || "http://127.0.0.1:8000").replace(/\/+$/, "");
+          targetUrl = `${base}${targetUrl}`;
         }
         const parsedUrl = new URL(targetUrl);
         const isHttps = parsedUrl.protocol === "https:";
@@ -383,8 +499,9 @@ ipcMain.handle(
 ipcMain.handle("storage:saveSession", async (_event, sessionData: { id: string }) => {
   try {
     if (!sessionData || !sessionData.id) return false;
+    const safeId = sanitizeSessionId(sessionData.id);
     const dir = getSessionsDir();
-    const filePath = path.join(dir, `session_${sessionData.id}.json`);
+    const filePath = path.join(dir, `session_${safeId}.json`);
     const tempPath = `${filePath}.tmp`;
 
     // Atomic write
@@ -399,7 +516,8 @@ ipcMain.handle("storage:saveSession", async (_event, sessionData: { id: string }
 
 ipcMain.handle("storage:loadSession", async (_event, sessionId: string) => {
   try {
-    const filePath = path.join(getSessionsDir(), `session_${sessionId}.json`);
+    const safeId = sanitizeSessionId(sessionId);
+    const filePath = path.join(getSessionsDir(), `session_${safeId}.json`);
     if (!fs.existsSync(filePath)) return null;
     const content = await fs.promises.readFile(filePath, "utf8");
     return JSON.parse(content);
@@ -432,7 +550,8 @@ ipcMain.handle("storage:listSessions", async () => {
 
 ipcMain.handle("storage:deleteSession", async (_event, sessionId: string) => {
   try {
-    const filePath = path.join(getSessionsDir(), `session_${sessionId}.json`);
+    const safeId = sanitizeSessionId(sessionId);
+    const filePath = path.join(getSessionsDir(), `session_${safeId}.json`);
     if (fs.existsSync(filePath)) {
       await fs.promises.unlink(filePath);
     }
@@ -462,6 +581,40 @@ ipcMain.handle("app:getLogs", async () => {
   } catch {
     return [];
   }
+});
+
+ipcMain.handle("app:setApiBaseUrl", (_event, url: string) => {
+  if (url && typeof url === "string") {
+    configuredApiBaseUrl = url.trim().replace(/\/+$/, "");
+  }
+  return true;
+});
+
+// Secure credential storage using OS keychain / DPAPI via Electron safeStorage
+ipcMain.handle("auth:encryptToken", (_event, plainToken: string) => {
+  try {
+    if (!plainToken || typeof plainToken !== "string") return "";
+    if (safeStorage.isEncryptionAvailable()) {
+      const buffer = safeStorage.encryptString(plainToken);
+      return buffer.toString("base64");
+    }
+  } catch (err) {
+    appendLog("WARN", `safeStorage encrypt failed: ${err}`);
+  }
+  return plainToken;
+});
+
+ipcMain.handle("auth:decryptToken", (_event, encryptedBase64: string) => {
+  try {
+    if (!encryptedBase64 || typeof encryptedBase64 !== "string") return null;
+    if (safeStorage.isEncryptionAvailable()) {
+      const buffer = Buffer.from(encryptedBase64, "base64");
+      return safeStorage.decryptString(buffer);
+    }
+  } catch (err) {
+    appendLog("WARN", `safeStorage decrypt failed (falling back): ${err}`);
+  }
+  return encryptedBase64;
 });
 
 ipcMain.handle("app:getPlatform", () => `${process.platform} (${process.arch})`);

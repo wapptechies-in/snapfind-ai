@@ -3,12 +3,13 @@
 
 echo "Starting SnapFind AI development environment..."
 
-# Check if PostgreSQL container is running
+# Check if containers are running
 if [ -z "$(docker ps -q -f name=snapfind-postgres -f status=running)" ]; then
-    echo "Starting PostgreSQL container..."
-    docker compose up -d postgres
+    echo "Starting PostgreSQL, Redis, and MinIO infrastructure containers..."
+    docker compose up -d postgres redis minio create-bucket
 else
-    echo "PostgreSQL is already running."
+    echo "PostgreSQL is already running. Ensuring Redis & MinIO are running..."
+    docker compose up -d redis minio create-bucket
 fi
 
 echo "To run all services concurrently in separate terminals:"

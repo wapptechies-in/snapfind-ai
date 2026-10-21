@@ -4,7 +4,22 @@
  * Status: IMPLEMENTED (Phase 8)
  */
 
-let authToken: string | null = localStorage.getItem("snapfind_desktop_token");
+let authToken: string | null = null;
+const rawStoredToken = localStorage.getItem("snapfind_desktop_token");
+
+// Initialize token with safeStorage decryption if available or plain fallback
+if (rawStoredToken) {
+  if (typeof window !== "undefined" && window.desktopAPI?.decryptToken) {
+    window.desktopAPI.decryptToken(rawStoredToken).then((decrypted) => {
+      authToken = decrypted || rawStoredToken;
+    }).catch(() => {
+      authToken = rawStoredToken;
+    });
+  } else {
+    authToken = rawStoredToken;
+  }
+}
+
 const savedUrl = localStorage.getItem("snapfind_desktop_api_url");
 const isProd = Boolean((import.meta as any).env?.PROD);
 const defaultProductionUrl = (import.meta as any).env?.VITE_API_URL || "https://snapfind-api-sq4a.onrender.com";
@@ -24,7 +39,18 @@ export function getAuthToken(): string | null {
 export function setAuthToken(token: string | null) {
   authToken = token;
   if (token) {
-    localStorage.setItem("snapfind_desktop_token", token);
+    if (typeof window !== "undefined" && window.desktopAPI?.encryptToken) {
+      window.desktopAPI
+        .encryptToken(token)
+        .then((encrypted) => {
+          localStorage.setItem("snapfind_desktop_token", encrypted || token);
+        })
+        .catch(() => {
+          localStorage.setItem("snapfind_desktop_token", token);
+        });
+    } else {
+      localStorage.setItem("snapfind_desktop_token", token);
+    }
   } else {
     localStorage.removeItem("snapfind_desktop_token");
   }
@@ -37,6 +63,9 @@ export function getApiBaseUrl(): string {
 export function setApiBaseUrl(url: string) {
   apiBaseUrl = url.replace(/\/+$/, "");
   localStorage.setItem("snapfind_desktop_api_url", apiBaseUrl);
+  if (typeof window !== "undefined" && window.desktopAPI?.setApiBaseUrl) {
+    window.desktopAPI.setApiBaseUrl(apiBaseUrl).catch(() => {});
+  }
 }
 
 export async function request<T>(

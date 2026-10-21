@@ -9,6 +9,8 @@ export default defineConfig({
     alias: {
       "@snapfind/api-client": path.resolve(__dirname, "../../packages/api-client/src"),
       "@snapfind/types": path.resolve(__dirname, "../../packages/types/src"),
+      "@snapfind/tokens": path.resolve(__dirname, "../../packages/tokens/src"),
+      "@snapfind/ui": path.resolve(__dirname, "../../packages/ui/src"),
     },
   },
   server: {

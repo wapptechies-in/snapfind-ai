@@ -408,7 +408,13 @@ export const Settings: React.FC = () => {
             variant="secondary"
             className="border-slate-700 bg-midnight text-soft-white hover:border-gold"
             onClick={() => {
-              const url = "http://localhost:5173/subscription";
+              const frontendUrl =
+                (import.meta as any).env?.VITE_FRONTEND_URL ||
+                (import.meta as any).env?.VITE_STUDIO_URL ||
+                (settings.apiBaseUrl?.includes("localhost") || settings.apiBaseUrl?.includes("127.0.0.1")
+                  ? "http://localhost:5173"
+                  : "https://studio.snapfind.ai");
+              const url = `${frontendUrl.replace(/\/+$/, "")}/subscription`;
               if (window.desktopAPI) {
                 window.desktopAPI.openExternal(url);
               } else {

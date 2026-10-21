@@ -22,7 +22,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "build": "echo ok"
+    "build": "tsc --build tsconfig.json"
   }
 }
 

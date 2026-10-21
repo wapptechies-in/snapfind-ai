@@ -203,6 +203,7 @@ def get_guest(
 @router.delete("/{guest_id}", status_code=status.HTTP_200_OK)
 def delete_guest(
     guest_id: str,
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> dict[str, Any]:
     """
@@ -214,6 +215,14 @@ def delete_guest(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Guest '{guest_id}' not found.",
+        )
+
+    # Validate that the photographer owns the event associated with this guest
+    event = db.get(Event, guest.event_id)
+    if not event or (event.photographer_id != photographer.id and getattr(photographer, "role", "") != "super_admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to delete guests from this event.",
         )
 
     db.delete(guest)

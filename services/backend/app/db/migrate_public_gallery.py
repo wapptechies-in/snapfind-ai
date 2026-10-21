@@ -25,11 +25,11 @@ def run_public_gallery_migrations():
             is_sqlite = engine.dialect.name == "sqlite"
             if is_sqlite:
                 conn.execute(
-                    text("ALTER TABLE photos ADD COLUMN is_public_gallery BOOLEAN DEFAULT 0 NOT NULL;")
+                    text("ALTER TABLE photos ADD COLUMN is_public_gallery BOOLEAN DEFAULT 1 NOT NULL;")
                 )
             else:
                 conn.execute(
-                    text("ALTER TABLE photos ADD COLUMN is_public_gallery BOOLEAN DEFAULT FALSE NOT NULL;")
+                    text("ALTER TABLE photos ADD COLUMN is_public_gallery BOOLEAN DEFAULT TRUE NOT NULL;")
                 )
                 conn.execute(
                     text("CREATE INDEX IF NOT EXISTS ix_photos_is_public_gallery ON photos(is_public_gallery);")
@@ -37,6 +37,17 @@ def run_public_gallery_migrations():
             logger.info("Successfully added 'is_public_gallery' column to 'photos' table.")
         else:
             logger.info("'is_public_gallery' column already exists in 'photos' table.")
+
+        # Ensure all existing uploaded photos default to visible in public gallery unless specifically excluded
+        is_sqlite = engine.dialect.name == "sqlite"
+        if is_sqlite:
+            conn.execute(
+                text("UPDATE photos SET is_public_gallery = 1 WHERE is_public_gallery = 0 OR is_public_gallery IS NULL;")
+            )
+        else:
+            conn.execute(
+                text("UPDATE photos SET is_public_gallery = TRUE WHERE is_public_gallery = FALSE OR is_public_gallery IS NULL;")
+            )
 
 
 if __name__ == "__main__":

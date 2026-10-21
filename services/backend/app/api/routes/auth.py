@@ -7,14 +7,21 @@ Status: IMPLEMENTED (Phase 2 + Onboarding Phase)
 import os
 import httpx
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_photographer
 from app.core.config import get_settings
-from app.core.security import create_access_token, hash_password, verify_password
+from app.core.limiter import limiter
+from app.core.security import (
+    create_access_token,
+    create_refresh_token,
+    decode_refresh_token,
+    hash_password,
+    verify_password,
+)
 from app.db.session import get_db
 from app.models.photographer import Photographer
 from app.schemas.auth import (
@@ -31,8 +38,13 @@ settings = get_settings()
 
 
 async def verify_google_credential(credential: str) -> dict:
-    """Verifies Google ID token against Google's tokeninfo endpoint, or accepts dev mock tokens."""
+    """Verifies Google ID token against Google's tokeninfo endpoint, or accepts dev mock tokens in development."""
     if credential.startswith("mock-google-") or credential.startswith("dev-"):
+        if settings.ENVIRONMENT != "development":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Mock Google authentication is disabled in non-development environments.",
+            )
         parts = credential.split(":")
         email = parts[1] if len(parts) > 1 else "google_user@test.com"
         name = parts[2] if len(parts) > 2 else "Google User"
@@ -110,10 +122,28 @@ class ExtendedUserOut(UserOut):
     auto_watermark: bool = False
 
 
+REFRESH_COOKIE_NAME = "snapfind_refresh_token"
+COOKIE_MAX_AGE_SECONDS = 7 * 24 * 60 * 60
+IS_PROD_ENV = settings.ENVIRONMENT.lower() == "production"
+
+def _set_refresh_cookie(response: Response, refresh_token: str) -> None:
+    response.set_cookie(
+        key=REFRESH_COOKIE_NAME,
+        value=refresh_token,
+        max_age=COOKIE_MAX_AGE_SECONDS,
+        httponly=True,
+        secure=IS_PROD_ENV,
+        samesite="lax" if not IS_PROD_ENV else "none",
+        path="/api/v1/auth",
+    )
+
 # --- Routes ---
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("3/minute")
 def register(
+    request: Request,
+    response: Response,
     user_in: UserRegister,
     db: Annotated[Session, Depends(get_db)],
 ) -> TokenResponse:
@@ -151,6 +181,8 @@ def register(
     db.refresh(photographer)
 
     token = create_access_token(subject=photographer.id)
+    refresh_token = create_refresh_token(subject=photographer.id)
+    _set_refresh_cookie(response, refresh_token)
     return TokenResponse(
         access_token=token,
         token_type="bearer",
@@ -159,7 +191,10 @@ def register(
 
 
 @router.post("/login", response_model=TokenResponse)
+@limiter.limit("5/minute")
 def login(
+    request: Request,
+    response: Response,
     user_in: UserLogin,
     db: Annotated[Session, Depends(get_db)],
 ) -> TokenResponse:
@@ -202,6 +237,8 @@ def login(
         )
 
     token = create_access_token(subject=photographer.id)
+    refresh_token = create_refresh_token(subject=photographer.id)
+    _set_refresh_cookie(response, refresh_token)
     return TokenResponse(
         access_token=token,
         token_type="bearer",
@@ -210,7 +247,10 @@ def login(
 
 
 @router.post("/google", response_model=TokenResponse)
+@limiter.limit("10/minute")
 async def google_auth(
+    request: Request,
+    response: Response,
     payload: GoogleAuthRequest,
     db: Annotated[Session, Depends(get_db)],
 ) -> TokenResponse:
@@ -272,11 +312,68 @@ async def google_auth(
         )
 
     token = create_access_token(subject=photographer.id)
+    refresh_token = create_refresh_token(subject=photographer.id)
+    _set_refresh_cookie(response, refresh_token)
     return TokenResponse(
         access_token=token,
         token_type="bearer",
         user=UserOut.model_validate(photographer),
     )
+
+
+@router.post("/refresh", response_model=TokenResponse)
+@limiter.limit("20/minute")
+def refresh_token_endpoint(
+    request: Request,
+    response: Response,
+    db: Annotated[Session, Depends(get_db)],
+    snapfind_refresh_token: Annotated[str | None, Cookie()] = None,
+) -> TokenResponse:
+    """Exchanges a valid 7-day httpOnly refresh token cookie for a new 1-hour access token."""
+    if not snapfind_refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token cookie missing or expired.",
+        )
+
+    payload = decode_refresh_token(snapfind_refresh_token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token.",
+        )
+
+    photographer_id = payload.get("sub")
+    photographer = db.get(Photographer, photographer_id)
+    if not photographer or not photographer.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found or account deactivated.",
+        )
+
+    new_access_token = create_access_token(subject=photographer.id)
+    # Optionally rotate refresh token
+    new_refresh_token = create_refresh_token(subject=photographer.id)
+    _set_refresh_cookie(response, new_refresh_token)
+
+    return TokenResponse(
+        access_token=new_access_token,
+        token_type="bearer",
+        user=UserOut.model_validate(photographer),
+    )
+
+
+@router.post("/logout")
+def logout_endpoint(response: Response):
+    """Clears the httpOnly refresh token cookie on logout."""
+    response.delete_cookie(
+        key=REFRESH_COOKIE_NAME,
+        path="/api/v1/auth",
+        httponly=True,
+        secure=IS_PROD_ENV,
+        samesite="lax" if not IS_PROD_ENV else "none",
+    )
+    return {"ok": True, "message": "Logged out successfully."}
 
 
 @router.get("/status", response_model=ApprovalStatusResponse)

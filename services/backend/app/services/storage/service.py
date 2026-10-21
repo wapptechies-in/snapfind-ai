@@ -208,15 +208,27 @@ class StorageService:
         overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
         draw = ImageDraw.Draw(overlay)
 
-        # Attempt to load clean font
-        try:
-            font_size = max(18, int(h / 24))
-            font = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", font_size)
-        except Exception:
+        # Attempt to load clean font across platforms (Linux container, Windows, Mac)
+        font = None
+        font_size = max(18, int(h / 24))
+        candidate_font_paths = [
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+            "C:/Windows/Fonts/arial.ttf",
+            "C:/Windows/Fonts/segoeui.ttf",
+            "/System/Library/Fonts/Helvetica.ttc",
+            "arial.ttf",
+        ]
+        for font_path in candidate_font_paths:
             try:
-                font = ImageFont.truetype("arial.ttf", 28)
+                font = ImageFont.truetype(font_path, font_size)
+                break
             except Exception:
-                font = ImageFont.load_default()
+                continue
+
+        if font is None:
+            font = ImageFont.load_default()
 
         # 1. Subtle diagonal repeating watermark text
         tile_w = max(240, int(w / 4))

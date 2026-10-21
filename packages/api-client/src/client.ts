@@ -139,7 +139,13 @@ export async function request<T>(
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    throw new ApiError(`Cannot connect to SnapFind API (${currentBaseUrl}): ${msg}`, 0, msg);
+    let hint = "";
+    if (currentBaseUrl.includes("onrender.com")) {
+      hint = " (Note: Free-tier Render instances sleep when inactive and may take 30-50s to wake up on first visit. Please wait and refresh.)";
+    } else if (currentBaseUrl.includes("127.0.0.1") || currentBaseUrl.includes("localhost")) {
+      hint = " (Local backend is not reachable. Run 'launch-backend.bat' or 'npm run dev:backend' in terminal.)";
+    }
+    throw new ApiError(`Cannot connect to SnapFind API (${currentBaseUrl}): ${msg}${hint}`, 0, msg);
   }
 
   if (res.status === 401) {

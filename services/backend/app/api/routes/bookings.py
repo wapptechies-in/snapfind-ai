@@ -81,6 +81,7 @@ def list_bookings(
 @router.get("/{booking_id}", response_model=BookingOut)
 def get_booking(
     booking_id: str,
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
 ) -> BookingOut:
     """Retrieve details for a single booking."""
@@ -89,6 +90,11 @@ def get_booking(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Booking '{booking_id}' not found",
+        )
+    if booking.photographer_id != photographer.id and getattr(photographer, "role", "") != "super_admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to view this booking.",
         )
     return booking
 

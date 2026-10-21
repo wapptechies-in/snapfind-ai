@@ -74,7 +74,14 @@ if use_sqlite or (db_url.startswith("sqlite") and not is_prod):
 else:
     connect_args = {"connect_timeout": 10}
     try:
-        engine = create_engine(db_url, pool_pre_ping=True, connect_args=connect_args)
+        engine = create_engine(
+            db_url,
+            pool_pre_ping=True,
+            pool_size=getattr(settings, "DB_POOL_SIZE", 10),
+            max_overflow=getattr(settings, "DB_MAX_OVERFLOW", 20),
+            pool_recycle=1800,
+            connect_args=connect_args,
+        )
         with engine.connect() as conn:
             pass
     except Exception as e:

@@ -20,6 +20,7 @@ class PhotoCreate(BaseModel):
     storage_key: str | None = Field(default=None, alias="storageKey")
     thumbnail_key: str | None = Field(default=None, alias="thumbnailKey")
     folder_id: str | None = Field(default=None, alias="folderId")
+    is_public_gallery: bool | None = Field(default=None, alias="isPublicGallery")
 
 
 class UploadInitRequest(BaseModel):
@@ -30,6 +31,7 @@ class UploadInitRequest(BaseModel):
     mime_type: str = Field(default="image/jpeg", alias="mimeType")
     checksum: str | None = None
     folder_id: str | None = Field(default=None, alias="folderId")
+    is_public_gallery: bool | None = Field(default=None, alias="isPublicGallery")
 
 
 class UploadInitResponse(BaseModel):
@@ -83,7 +85,7 @@ class PhotoOut(BaseModel):
     checksum: str | None = None
     upload_status: str = Field(default="uploaded", alias="uploadStatus")
     processing_status: str = Field(default="completed", alias="processingStatus")
-    is_public_gallery: bool = Field(default=False, alias="isPublicGallery")
+    is_public_gallery: bool = Field(default=True, alias="isPublicGallery")
     created_at: datetime = Field(..., alias="uploadedAt")
 
 

@@ -9,13 +9,17 @@
     "desktop"
   ],
   "scripts": {
+    "dev": "npm run dev:web",
+    "dev:full": "cmd /c launch-dev-full.bat",
+    "dev:backend": "powershell -ExecutionPolicy Bypass -Command \"cd services/backend; .\\.venv\\Scripts\\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload\"",
     "dev:website": "npm run dev --workspace=apps/photographer-website",
     "dev:web": "npm run dev --workspace=apps/snapfind-web",
     "dev:desktop": "npm run dev --workspace=desktop",
+    "build:packages": "npm run build --workspace=packages/types && npm run build --workspace=packages/tokens && npm run build --workspace=packages/ui && npm run build --workspace=packages/api-client",
     "build:website": "npm run build --workspace=apps/photographer-website",
-    "build:web": "npm run build --workspace=apps/snapfind-web",
-    "build:desktop": "npm run build --workspace=desktop",
-    "build": "npm run build:website && npm run build:web && npm run build:desktop",
+    "build:web": "npm run build:packages && npm run build --workspace=apps/snapfind-web",
+    "build:desktop": "npm run build:packages && npm run build --workspace=desktop",
+    "build": "npm run build:packages && npm run build:website && npm run build --workspace=apps/snapfind-web && npm run build --workspace=desktop",
     "install:all": "npm install"
   },
   "engines": {

@@ -38,7 +38,7 @@ def main():
     print("\n[Step 1] Logging in photographer (shared credentials for Desktop & Web)...")
     login_resp = requests.post(
         f"{BACKEND_URL}/auth/login",
-        json={"email": "photographer@snapfind.ai", "password": "password123"},
+        json={"email": "photographer@snapfind.ai", "password": "Snapfind2026!"},
     )
     if login_resp.status_code != 200:
         print(f"Login failed: {login_resp.status_code} {login_resp.text}")

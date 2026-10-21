@@ -18,69 +18,86 @@ from app.models.booking import Booking
 logger = logging.getLogger(__name__)
 
 
+def _ensure_account(
+    db: Session,
+    user_id: str,
+    photographer_id: str,
+    email: str,
+    password: str,
+    studio_name: str,
+    display_name: str,
+    phone: str = "+1 (555) 234-8901",
+    subscription_tier: str = "studio",
+) -> tuple[User, Photographer]:
+    pwd_hash = hash_password(password)
+    user = db.scalar(select(User).where(User.email == email))
+    if not user:
+        user = User(
+            id=user_id,
+            email=email,
+            password_hash=pwd_hash,
+            full_name=display_name,
+            role="photographer",
+            is_active=True,
+        )
+        db.add(user)
+        db.flush()
+    else:
+        user.password_hash = pwd_hash
+        user.is_active = True
+        db.flush()
+
+    photographer = db.scalar(select(Photographer).where(Photographer.email == email))
+    if not photographer:
+        photographer = Photographer(
+            id=photographer_id,
+            user_id=user.id,
+            email=email,
+            studio_name=studio_name,
+            display_name=display_name,
+            phone=phone,
+            bio="Professional AI studio workflow and event photography.",
+            website="https://snapfind.ai",
+            hashed_password=pwd_hash,
+            approval_status="approved",
+            subscription_tier=subscription_tier,
+            subscription_status="active",
+        )
+        db.add(photographer)
+        db.flush()
+    else:
+        photographer.hashed_password = pwd_hash
+        photographer.approval_status = "approved"
+        photographer.subscription_tier = subscription_tier
+        photographer.subscription_status = "active"
+        db.flush()
+
+    return user, photographer
+
+
 def seed_dev_data(db: Session) -> None:
     """Seed sample development data if database is empty."""
-    # Check if demo photographer already exists
-    existing = db.scalar(
-        select(Photographer).where(Photographer.email == "photographer@example.com")
+    # Ensure all three standard demo accounts exist with valid passwords
+    demo_user, demo_photographer = _ensure_account(
+        db, "usr_001", "p_001", "photographer@example.com", "password123",
+        "Marlowe & Finch Photography", "Alex Marlowe", "+1 (555) 234-8901", "studio"
     )
-    if existing:
-        logger.info("Database already seeded. Skipping initial fixtures.")
+    _ensure_account(
+        db, "usr_002", "p_002", "demo@snapfind.ai", "snapfind123",
+        "SnapFind Studio Pro", "SnapFind Pro Agent", "+1 (555) 987-6543", "pro"
+    )
+    _ensure_account(
+        db, "usr_003", "p_003", "photographer@snapfind.ai", "Snapfind2026!",
+        "Apex Photography Studio", "SnapFind Lead Photographer", "+1 (555) 345-6789", "studio"
+    )
+
+    # Check if demo events already exist
+    existing_event = db.scalar(select(Event).limit(1))
+    if existing_event:
+        logger.info("Database events already seeded. Standard demo accounts verified.")
         return
 
-    logger.info("Seeding development data...")
-
-    # 1. Create User
-    demo_user = User(
-        id="usr_001",
-        email="photographer@example.com",
-        password_hash=hash_password("password123"),
-        full_name="Alex Marlowe",
-        role="photographer",
-        is_active=True,
-    )
-    db.add(demo_user)
-    db.flush()
-
-    # 2. Create Photographer Profile
-    demo_photographer = Photographer(
-        id="p_001",
-        user_id=demo_user.id,
-        email=demo_user.email,
-        studio_name="Marlowe & Finch Photography",
-        display_name="Alex Marlowe",
-        phone="+1 (555) 234-8901",
-        bio="Commercial and luxury wedding photography specializing in natural light and candid portraits.",
-        website="https://marlowefinch.photo",
-        hashed_password=demo_user.password_hash,
-    )
-    db.add(demo_photographer)
-
-    # 2b. Create Desktop Demo User (demo@snapfind.ai / snapfind123)
-    snapfind_demo_user = User(
-        id="usr_002",
-        email="demo@snapfind.ai",
-        password_hash=hash_password("snapfind123"),
-        full_name="SnapFind Pro Photographer",
-        role="photographer",
-        is_active=True,
-    )
-    db.add(snapfind_demo_user)
-    db.flush()
-
-    snapfind_photographer = Photographer(
-        id="p_002",
-        user_id=snapfind_demo_user.id,
-        email=snapfind_demo_user.email,
-        studio_name="SnapFind Studio Pro",
-        display_name="SnapFind Pro Agent",
-        phone="+1 (555) 987-6543",
-        bio="Professional AI studio workflow and event photography.",
-        website="https://snapfind.ai",
-        hashed_password=snapfind_demo_user.password_hash,
-    )
-    db.add(snapfind_photographer)
-    db.flush()
+    logger.info("Seeding initial events development data...")
 
     # 3. Create Sample Events
     sample_events = [

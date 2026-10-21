@@ -10,7 +10,7 @@
     "./tokens.css": "./src/tokens.css"
   },
   "scripts": {
-    "build": "echo ok"
+    "build": "tsc --build tsconfig.json"
   }
 }
 

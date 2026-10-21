@@ -38,7 +38,7 @@ def create_access_token(
     extra_claims: dict | None = None,
 ) -> str:
     """
-    Create a signed JWT access token.
+    Create a signed JWT access token (short-lived, 1 hour by default).
     `subject` is typically the photographer/user ID.
     """
     if expires_delta:
@@ -50,6 +50,7 @@ def create_access_token(
 
     to_encode = {
         "sub": str(subject),
+        "type": "access",
         "exp": expire,
         "iat": datetime.now(timezone.utc),
     }
@@ -62,6 +63,48 @@ def create_access_token(
         algorithm=settings.JWT_ALGORITHM,
     )
     return encoded_jwt
+
+
+def create_refresh_token(
+    subject: str,
+    expires_delta: timedelta | None = None,
+) -> str:
+    """
+    Create a signed JWT refresh token (long-lived, 7 days by default).
+    """
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(
+            days=getattr(settings, "REFRESH_TOKEN_EXPIRE_DAYS", 7)
+        )
+
+    to_encode = {
+        "sub": str(subject),
+        "type": "refresh",
+        "exp": expire,
+        "iat": datetime.now(timezone.utc),
+    }
+    return jwt.encode(
+        to_encode,
+        settings.SECRET_KEY,
+        algorithm=settings.JWT_ALGORITHM,
+    )
+
+
+def decode_refresh_token(token: str) -> dict | None:
+    """Decode and validate a JWT refresh token."""
+    try:
+        payload = jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.JWT_ALGORITHM],
+        )
+        if payload.get("type") != "refresh":
+            return None
+        return payload
+    except jwt.PyJWTError:
+        return None
 
 
 def decode_access_token(token: str) -> dict | None:

@@ -43,7 +43,9 @@ def run_verification():
 
     # 2. API Lifecycle Test
     print("\n[2/5] Testing Event & Sub-folder Creation...")
-    client = TestClient(app)
+    from app.core.security import create_access_token
+    auth_token = create_access_token("p_001")
+    client = TestClient(app, headers={"Authorization": f"Bearer {auth_token}"})
 
     ev_resp = client.post(
         "/api/v1/events",

@@ -77,6 +77,7 @@ def test_subfolder_lifecycle_and_qr_aggregation():
             "fileSize": len(img_c),
             "mimeType": "image/jpeg",
             "folderId": ceremony_id,
+            "isPublicGallery": False,
         },
     )
     assert init_c.status_code == 201
@@ -109,6 +110,7 @@ def test_subfolder_lifecycle_and_qr_aggregation():
             "fileSize": len(img_r),
             "mimeType": "image/jpeg",
             "folderId": reception_id,
+            "isPublicGallery": False,
         },
     )
     assert init_r.status_code == 201
@@ -135,6 +137,7 @@ def test_subfolder_lifecycle_and_qr_aggregation():
             "filename": "cover_shot.jpg",
             "fileSize": len(img_root),
             "mimeType": "image/jpeg",
+            "isPublicGallery": False,
         },
     )
     assert init_root.status_code == 201

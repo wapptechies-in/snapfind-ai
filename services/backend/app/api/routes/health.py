@@ -42,10 +42,24 @@ def get_v1_health(db: Annotated[Session, Depends(get_db)]) -> HealthOut:
     except Exception:
         db_status = "disconnected"
 
+    redis_status = "unconfigured"
+    redis_url = getattr(settings, "REDIS_URL", None)
+    if redis_url:
+        try:
+            import redis
+            r = redis.from_url(redis_url, socket_timeout=1.0)
+            r.ping()
+            redis_status = "connected"
+        except Exception:
+            redis_status = "disconnected"
+
+    is_healthy = db_status == "connected" and (redis_status in ("connected", "unconfigured"))
+
     return HealthOut(
-        status="ok" if db_status == "connected" else "degraded",
+        status="ok" if is_healthy else "degraded",
         service="snapfind-api",
         version="0.2.0",
         database=db_status,
+        redis=redis_status,
         environment=settings.ENVIRONMENT,
     )
