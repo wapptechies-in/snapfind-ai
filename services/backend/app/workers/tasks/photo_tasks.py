@@ -57,7 +57,23 @@ def process_photo_sync(photo_id: str, job_id: str | None = None) -> dict[str, An
 
     try:
         if not storage_key or not storage.provider.object_exists(storage_key):
-            raise FileNotFoundError(f"Storage binary not found at key '{storage_key}' for photo {photo_id}")
+            error_msg = f"Photo binary not found in storage (upload was interrupted or not received). Please re-upload this photo."
+            logger.warning(f"Photo {photo_id}: {error_msg}")
+            with SessionLocal() as db:
+                p = db.get(Photo, photo_id)
+                if p:
+                    p.processing_status = "failed"
+                    p.upload_status = "failed"
+                if job_id:
+                    j = db.get(ProcessingJob, job_id)
+                    if j:
+                        j.failed_items += 1
+                        j.error_message = error_msg
+                        if j.processed_items + j.failed_items >= j.total_items and j.total_items > 0:
+                            j.status = "failed" if j.processed_items == 0 else "completed"
+                            j.completed_at = datetime.now(timezone.utc)
+                db.commit()
+            return {"status": "failed", "photo_id": photo_id, "error": error_msg}
 
         original_bytes = storage.provider.get_object_bytes(storage_key)
 
@@ -186,7 +202,23 @@ def process_single_photo_task(
 
     try:
         if not storage_key or not storage.provider.object_exists(storage_key):
-            raise FileNotFoundError(f"Storage binary not found at key '{storage_key}' for photo {photo_id}")
+            error_msg = f"Photo binary not found in storage (upload was interrupted or not received). Please re-upload this photo."
+            logger.warning(f"Photo {photo_id}: {error_msg}")
+            with SessionLocal() as db:
+                p = db.get(Photo, photo_id)
+                if p:
+                    p.processing_status = "failed"
+                    p.upload_status = "failed"
+                if job_id:
+                    j = db.get(ProcessingJob, job_id)
+                    if j:
+                        j.failed_items += 1
+                        j.error_message = error_msg
+                        if j.processed_items + j.failed_items >= j.total_items and j.total_items > 0:
+                            j.status = "failed" if j.processed_items == 0 else "completed"
+                            j.completed_at = datetime.now(timezone.utc)
+                db.commit()
+            return {"status": "failed", "photo_id": photo_id, "error": error_msg}
 
         # 1. Fetch original binary from storage
         original_bytes = storage.provider.get_object_bytes(storage_key)
@@ -291,11 +323,9 @@ def process_single_photo_task(
 
 
 @celery_app.task(
-    bind=True,
     name="app.workers.tasks.photo_tasks.process_event_photos_task",
 )
 def process_event_photos_task(
-    self,
     event_id: str,
     job_id: str | None = None,
     force_reprocess: bool = False,
@@ -345,11 +375,9 @@ def process_event_photos_task(
 
 
 @celery_app.task(
-    bind=True,
     name="app.workers.tasks.photo_tasks.retry_failed_photos_task",
 )
 def retry_failed_photos_task(
-    self,
     event_id: str,
     job_id: str | None = None,
 ) -> dict[str, Any]:

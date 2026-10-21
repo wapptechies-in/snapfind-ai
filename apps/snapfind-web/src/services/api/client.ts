@@ -153,7 +153,7 @@ export async function request<T>(
   const baseUrl = getApiBaseUrl();
   let res: Response;
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 12000);
+  const timeoutId = setTimeout(() => controller.abort(), 90000);
 
   try {
     res = await fetch(`${baseUrl}${endpoint}`, {

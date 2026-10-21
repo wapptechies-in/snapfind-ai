@@ -292,6 +292,13 @@ export const photosApi = {
     );
   },
 
+  async cleanFailedPhotos(eventId: string): Promise<{ ok: boolean; message: string; cleaned_count: number }> {
+    return request<{ ok: boolean; message: string; cleaned_count: number }>(
+      `/api/v1/events/${eventId}/processing/clean-failed`,
+      { method: "DELETE" }
+    );
+  },
+
   async cancelProcessing(eventId: string): Promise<{ success: boolean; message: string }> {
     return request<{ success: boolean; message: string }>(
       `/api/v1/events/${eventId}/processing/cancel`,

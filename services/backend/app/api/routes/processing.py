@@ -4,9 +4,10 @@ Status: IMPLEMENTED (Phase 7)
 """
 
 from datetime import datetime, timezone
+import concurrent.futures
 import logging
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
@@ -30,6 +31,7 @@ from app.workers.tasks.photo_tasks import (
 
 logger = logging.getLogger("snapfind.processing")
 router = APIRouter(tags=["processing"])
+_PHOTO_WORKER = concurrent.futures.ThreadPoolExecutor(max_workers=1)
 
 
 def _resolve_event(event_id_or_token: str, db: Session) -> Event:
@@ -190,9 +192,11 @@ def start_event_processing(
     event_id: str,
     photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
+    background_tasks: BackgroundTasks = None,
 ) -> ProcessingActionResponse:
     """
-    Triggers background Celery processing for all pending or un-indexed photos in the event.
+    Triggers background processing for all pending or un-indexed photos in the event.
+    Non-blocking: responds immediately while background worker processes in background.
     """
     event = _resolve_event(event_id, db)
     if event.photographer_id != photographer.id:
@@ -236,15 +240,17 @@ def start_event_processing(
             job.celery_task_id = task.id
             db.commit()
         except Exception as celery_err:
-            logger.warning(f"Could not dispatch via Celery broker: {celery_err}. Executing task directly.")
-            process_event_photos_task(
-                event_id=event.id, job_id=job.id, force_reprocess=False
-            )
+            logger.warning(f"Could not dispatch via Celery broker: {celery_err}. Dispatching background task.")
+            if background_tasks:
+                background_tasks.add_task(process_event_photos_task, event.id, job.id, False)
+            else:
+                _PHOTO_WORKER.submit(process_event_photos_task, event.id, job.id, False)
     else:
-        logger.info(f"Celery broker offline. Processing event photos directly.")
-        process_event_photos_task(
-            event_id=event.id, job_id=job.id, force_reprocess=False
-        )
+        logger.info("Celery broker offline. Dispatching event photos in background worker.")
+        if background_tasks:
+            background_tasks.add_task(process_event_photos_task, event.id, job.id, False)
+        else:
+            _PHOTO_WORKER.submit(process_event_photos_task, event.id, job.id, False)
 
     return ProcessingActionResponse(
         success=True,
@@ -262,10 +268,11 @@ def reprocess_event_photos(
     event_id: str,
     photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
+    background_tasks: BackgroundTasks = None,
 ) -> ProcessingActionResponse:
     """
     Forces reprocessing of ALL photos in the event:
-    Regenerates derivatives, re-detects faces, re-embeds vectors, and clears previous faces.
+    Non-blocking: responds immediately while background worker processes in background.
     """
     event = _resolve_event(event_id, db)
     if event.photographer_id != photographer.id:
@@ -306,15 +313,17 @@ def reprocess_event_photos(
             job.celery_task_id = task.id
             db.commit()
         except Exception as celery_err:
-            logger.warning(f"Could not dispatch via Celery broker: {celery_err}. Executing task directly.")
-            process_event_photos_task(
-                event_id=event.id, job_id=job.id, force_reprocess=True
-            )
+            logger.warning(f"Could not dispatch via Celery broker: {celery_err}. Dispatching background task.")
+            if background_tasks:
+                background_tasks.add_task(process_event_photos_task, event.id, job.id, True)
+            else:
+                _PHOTO_WORKER.submit(process_event_photos_task, event.id, job.id, True)
     else:
-        logger.info("Celery broker offline. Reprocessing event photos directly.")
-        process_event_photos_task(
-            event_id=event.id, job_id=job.id, force_reprocess=True
-        )
+        logger.info("Celery broker offline. Reprocessing event photos in background worker.")
+        if background_tasks:
+            background_tasks.add_task(process_event_photos_task, event.id, job.id, True)
+        else:
+            _PHOTO_WORKER.submit(process_event_photos_task, event.id, job.id, True)
 
     return ProcessingActionResponse(
         success=True,
@@ -332,9 +341,11 @@ def retry_failed_photos(
     event_id: str,
     photographer: Annotated[Photographer, Depends(get_current_photographer)],
     db: Annotated[Session, Depends(get_db)],
+    background_tasks: BackgroundTasks = None,
 ) -> ProcessingActionResponse:
     """
     Retries processing only for photos currently in 'failed' status.
+    Non-blocking: responds immediately while background worker processes in background.
     """
     event = _resolve_event(event_id, db)
     if event.photographer_id != photographer.id:
@@ -368,17 +379,25 @@ def retry_failed_photos(
     db.add(job)
     db.commit()
 
+    from app.workers.celery_app import is_celery_broker_reachable
+
     if is_celery_broker_reachable():
         try:
             task = retry_failed_photos_task.delay(event_id=event.id, job_id=job.id)
             job.celery_task_id = task.id
             db.commit()
         except Exception as celery_err:
-            logger.warning(f"Could not dispatch via Celery broker: {celery_err}. Executing task directly.")
-            retry_failed_photos_task(event_id=event.id, job_id=job.id)
+            logger.warning(f"Could not dispatch via Celery broker: {celery_err}. Dispatching background task.")
+            if background_tasks:
+                background_tasks.add_task(retry_failed_photos_task, event.id, job.id)
+            else:
+                _PHOTO_WORKER.submit(retry_failed_photos_task, event.id, job.id)
     else:
-        logger.info("Celery broker offline. Retrying failed photos directly.")
-        retry_failed_photos_task(event_id=event.id, job_id=job.id)
+        logger.info("Celery broker offline. Retrying failed photos in background worker.")
+        if background_tasks:
+            background_tasks.add_task(retry_failed_photos_task, event.id, job.id)
+        else:
+            _PHOTO_WORKER.submit(retry_failed_photos_task, event.id, job.id)
 
     return ProcessingActionResponse(
         success=True,
@@ -386,6 +405,53 @@ def retry_failed_photos(
         jobId=job.id,
         dispatchedCount=failed_count,
     )
+
+
+@router.delete(
+    "/events/{event_id}/processing/clean-failed",
+    response_model=dict,
+)
+def clean_failed_event_photos(
+    event_id: str,
+    photographer: Annotated[Photographer, Depends(get_current_photographer)],
+    db: Annotated[Session, Depends(get_db)],
+) -> dict:
+    """
+    Cleans up and removes failed/phantom photo records from an event
+    so the pipeline counter resets cleanly.
+    """
+    event = _resolve_event(event_id, db)
+    if event.photographer_id != photographer.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to manage processing for this event.",
+        )
+
+    failed_photos = db.scalars(
+        select(Photo).where(
+            Photo.event_id == event.id,
+            Photo.processing_status == "failed",
+        )
+    ).all()
+
+    from app.services.storage import StorageService
+    storage = StorageService()
+    deleted_ids = []
+    for p in failed_photos:
+        try:
+            storage.delete_photo_objects(p)
+        except Exception:
+            pass
+        db.delete(p)
+        deleted_ids.append(p.id)
+
+    db.commit()
+    return {
+        "ok": True,
+        "message": f"Successfully cleaned {len(deleted_ids)} failed photo records.",
+        "cleaned_count": len(deleted_ids),
+        "cleaned_ids": deleted_ids,
+    }
 
 
 @router.post(

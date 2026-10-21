@@ -71,6 +71,8 @@ class StorageService:
         5. Uploads web & thumbnail to storage.
         Returns dictionary with metadata and keys.
         """
+        import gc
+
         with Image.open(io.BytesIO(original_bytes)) as img:
             # Transpose according to EXIF orientation
             img = ImageOps.exif_transpose(img)
@@ -86,13 +88,17 @@ class StorageService:
             web_buf = io.BytesIO()
             web_img.save(web_buf, format="JPEG", quality=85, optimize=True)
             web_bytes = web_buf.getvalue()
+            del web_img
+            del web_buf
 
-            # 2. Thumbnail (max 400x400)
-            thumb_img = img.copy()
-            thumb_img.thumbnail((400, 400), Image.Resampling.LANCZOS)
+            # 2. Thumbnail (max 400x400) - reused from base img
+            img.thumbnail((400, 400), Image.Resampling.BILINEAR)
             thumb_buf = io.BytesIO()
-            thumb_img.save(thumb_buf, format="JPEG", quality=80, optimize=True)
+            img.save(thumb_buf, format="JPEG", quality=80, optimize=True)
             thumb_bytes = thumb_buf.getvalue()
+            del thumb_buf
+
+        gc.collect()
 
         web_key = self.build_web_key(event_id, photo_id)
         thumb_key = self.build_thumbnail_key(event_id, photo_id)

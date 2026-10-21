@@ -108,6 +108,25 @@ export default function EventProcessing() {
     }
   };
 
+  const handleCleanFailed = async () => {
+    if (!id) return;
+    if (!window.confirm(`Clean and remove all ${job?.failed || 0} failed photo records from this event?`)) {
+      return;
+    }
+    setActionLoading("clean");
+    setFeedback(null);
+    try {
+      const res = await photosApi.cleanFailedPhotos(id);
+      setFeedback({ type: "success", text: res.message || "Cleaned failed photo records" });
+      await fetchJobStatus(id);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to clean failed photos";
+      setFeedback({ type: "error", text: msg });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const handleCancel = async () => {
     if (!id) return;
     setActionLoading("cancel");
@@ -227,14 +246,25 @@ export default function EventProcessing() {
           </Button>
 
           {hasFailedPhotos && (
-            <Button
-              size="sm"
-              variant="danger"
-              disabled={actionLoading !== null}
-              onClick={handleRetryFailed}
-            >
-              {actionLoading === "retry" ? "Retrying..." : `Retry Failed (${job.failed})`}
-            </Button>
+            <>
+              <Button
+                size="sm"
+                variant="danger"
+                disabled={actionLoading !== null}
+                onClick={handleRetryFailed}
+              >
+                {actionLoading === "retry" ? "Retrying..." : `Retry Failed (${job.failed})`}
+              </Button>
+
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={actionLoading !== null}
+                onClick={handleCleanFailed}
+              >
+                {actionLoading === "clean" ? "Cleaning..." : `Clean Failed (${job.failed})`}
+              </Button>
+            </>
           )}
 
           {isProcessing && (

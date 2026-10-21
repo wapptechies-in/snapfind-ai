@@ -36,7 +36,7 @@ interface PhotoUploadModalProps {
   onUploadSuccess: () => void;
 }
 
-const MAX_CONCURRENT_UPLOADS = 4;
+const MAX_CONCURRENT_UPLOADS = 2;
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
