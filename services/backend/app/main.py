@@ -141,7 +141,8 @@ async def security_headers_middleware(request: Request, call_next):
 # 3. Tightened CORS configuration
 configured_origins = [o for o in settings.cors_origins_list if o not in ("*", "null")]
 
-# In production, only allow explicitly configured CORS_ORIGINS; in development allow safe local/LAN regex
+# In production allow configured origins + any Vercel deployment; in dev allow local LAN + Vercel
+prod_origin_regex = r"https://.*\.vercel\.app"
 dev_origin_regex = (
     r"https?://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|.*\.vercel\.app|.*\.onrender\.com|.*\.snapfind\.ai)(:\d+)?"
 )
@@ -149,7 +150,7 @@ dev_origin_regex = (
 app.add_middleware(
     CORSMiddleware,
     allow_origins=configured_origins,
-    allow_origin_regex=None if is_prod else dev_origin_regex,
+    allow_origin_regex=prod_origin_regex if is_prod else dev_origin_regex,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"] if is_prod else ["*"],
     allow_headers=["*"],
