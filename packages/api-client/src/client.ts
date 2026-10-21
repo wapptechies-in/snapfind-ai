@@ -79,7 +79,7 @@ const getDefaultBaseUrl = (): string => {
     }
   }
 
-  return "https://snapfind-api-sq4a.onrender.com";
+  return "https://snapfind-ai.onrender.com";
 };
 
 let currentBaseUrl: string = getDefaultBaseUrl();
@@ -132,10 +132,14 @@ export async function request<T>(
   const url = `${currentBaseUrl}${endpoint}`;
   let res: Response;
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 12000);
+
   try {
     res = await fetch(url, {
       ...options,
       headers,
+      signal: options.signal || controller.signal,
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -146,6 +150,8 @@ export async function request<T>(
       hint = " (Local backend is not reachable. Run 'launch-backend.bat' or 'npm run dev:backend' in terminal.)";
     }
     throw new ApiError(`Cannot connect to SnapFind API (${currentBaseUrl}): ${msg}${hint}`, 0, msg);
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   if (res.status === 401) {

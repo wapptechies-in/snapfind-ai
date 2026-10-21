@@ -33,7 +33,7 @@ export function getApiBaseUrl(): string {
     }
   }
 
-  return "https://snapfind-api-sq4a.onrender.com";
+  return "https://snapfind-ai.onrender.com";
 }
 
 export function setApiBaseUrl(url: string): void {
@@ -152,15 +152,19 @@ export async function request<T>(
 
   const baseUrl = getApiBaseUrl();
   let res: Response;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 12000);
+
   try {
     res = await fetch(`${baseUrl}${endpoint}`, {
       ...options,
       headers,
+      signal: options.signal || controller.signal,
     });
   } catch (err: unknown) {
     if (err instanceof ApiError) throw err;
     const msg = err instanceof Error ? err.message : String(err);
-    if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("Network request failed")) {
+    if (msg.includes("Failed to fetch") || msg.includes("NetworkError") || msg.includes("Network request failed") || msg.includes("aborted")) {
       throw new ApiError(
         `Unable to reach backend API at ${baseUrl}. Please ensure the server is live and CORS is enabled.`,
         0,
@@ -168,6 +172,8 @@ export async function request<T>(
       );
     }
     throw new ApiError(msg, 0, msg);
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   if (res.status === 401) {

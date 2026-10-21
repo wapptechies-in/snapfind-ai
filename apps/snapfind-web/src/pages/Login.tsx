@@ -173,7 +173,7 @@ export default function Login() {
                 type="text"
                 value={customApiUrl}
                 onChange={(e) => setCustomApiUrl(e.target.value)}
-                placeholder="https://snapfind-api-sq4a.onrender.com"
+                placeholder="https://snapfind-ai.onrender.com"
                 className="flex-1 text-xs font-mono bg-slate-panel border border-slate-700 rounded-lg px-2.5 py-1.5 text-soft-white outline-none focus:border-gold"
               />
               <button
@@ -189,7 +189,7 @@ export default function Login() {
               </button>
             </div>
             <p className="text-[10px] text-muted">
-              Point this to your live Render backend (e.g. <code>https://snapfind-api-sq4a.onrender.com</code>) or local dev server.
+              Point this to your live Render backend (e.g. <code>https://snapfind-ai.onrender.com</code>) or local dev server.
             </p>
           </div>
         )}

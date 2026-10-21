@@ -22,7 +22,7 @@ if (rawStoredToken) {
 
 const savedUrl = localStorage.getItem("snapfind_desktop_api_url");
 const isProd = Boolean((import.meta as any).env?.PROD);
-const defaultProductionUrl = (import.meta as any).env?.VITE_API_URL || "https://snapfind-api-sq4a.onrender.com";
+const defaultProductionUrl = (import.meta as any).env?.VITE_API_URL || "https://snapfind-ai.onrender.com";
 const defaultDevelopmentUrl = "http://127.0.0.1:8000";
 const defaultUrl = isProd ? defaultProductionUrl : defaultDevelopmentUrl;
 

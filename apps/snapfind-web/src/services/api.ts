@@ -22,7 +22,7 @@ const getFallbackApiUrl = (): string => {
     }
   }
 
-  return "https://snapfind-api-sq4a.onrender.com";
+  return "https://snapfind-ai.onrender.com";
 };
 
 const API_BASE_URL = getFallbackApiUrl();

@@ -19,7 +19,7 @@ process.on("unhandledRejection", (reason) => {
 const SUPPORTED_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp"]);
 let mainWindow: BrowserWindow | null = null;
 let isScanCancelled = false;
-let configuredApiBaseUrl: string = process.env.VITE_API_URL || "https://snapfind-api-sq4a.onrender.com";
+let configuredApiBaseUrl: string = process.env.VITE_API_URL || "https://snapfind-ai.onrender.com";
 
 // Allowed directory roots selected by user via native dialogs
 const allowedDirectories = new Set<string>();

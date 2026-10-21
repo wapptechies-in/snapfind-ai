@@ -47,9 +47,9 @@ def main():
 
     if use_cloud:
         endpoints = [
-            ("Render Cloud Health", "https://snapfind-api-sq4a.onrender.com/health", 200),
-            ("Render Cloud API Health", "https://snapfind-api-sq4a.onrender.com/api/v1/health", 200),
-            ("Render Cloud Protected Events", "https://snapfind-api-sq4a.onrender.com/api/v1/events", (200, 401)),
+            ("Render Cloud Health", "https://snapfind-ai.onrender.com/health", 200),
+            ("Render Cloud API Health", "https://snapfind-ai.onrender.com/api/v1/health", 200),
+            ("Render Cloud Protected Events", "https://snapfind-ai.onrender.com/api/v1/events", (200, 401)),
         ]
         all_passed = True
         for name, url, expected in endpoints:
