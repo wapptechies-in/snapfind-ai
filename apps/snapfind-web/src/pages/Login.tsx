@@ -39,8 +39,12 @@ export default function Login() {
     setLoading(true);
 
     try {
-      await login(email, password);
-      navigate("/dashboard");
+      const user = await login(email, password);
+      if (user && user.onboarding_completed === false) {
+        navigate("/onboarding");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err) {
       handleAuthError(err, email);
     } finally {
@@ -57,8 +61,12 @@ export default function Login() {
       if (parts[1]) fallbackEmail = parts[1];
     }
     try {
-      await loginWithGoogle(credential);
-      navigate("/dashboard");
+      const user = await loginWithGoogle(credential);
+      if (user && user.onboarding_completed === false) {
+        navigate("/onboarding");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err) {
       handleAuthError(err, fallbackEmail);
     } finally {

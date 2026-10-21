@@ -22,8 +22,12 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await register(studioName, email, password);
-      navigate("/dashboard");
+      const user = await register(studioName, email, password);
+      if (user && user.onboarding_completed === false) {
+        navigate("/onboarding");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err) {
       const msg = extractErrorMessage(err);
       setError(msg || "Failed to create account. Please check your information.");
@@ -36,8 +40,12 @@ export default function Register() {
     setError(null);
     setLoading(true);
     try {
-      await loginWithGoogle(credential, studioName.trim() || undefined);
-      navigate("/dashboard");
+      const user = await loginWithGoogle(credential, studioName.trim() || undefined);
+      if (user && user.onboarding_completed === false) {
+        navigate("/onboarding");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err: unknown) {
       const msg = extractErrorMessage(err);
       setError(msg || "Google sign-up failed.");

@@ -15,9 +15,9 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: (credential: string, studioName?: string) => Promise<void>;
-  register: (studioName: string, email: string, password: string) => Promise<User>;
+  login: (email: string, password: string) => Promise<User | null>;
+  loginWithGoogle: (credential: string, studioName?: string) => Promise<User | null>;
+  register: (studioName: string, email: string, password: string) => Promise<User | null>;
   logout: () => void;
   isAuthenticated: boolean;
   isAdmin: boolean;
@@ -81,31 +81,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => window.removeEventListener("snapfind:unauthorized", handleUnauthorized);
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<User | null> => {
     const res = await authApi.login({ email, password });
     if (res.access_token) {
       setStoredToken(res.access_token);
       setToken(res.access_token);
       setUser(res.user);
-      if (res.user && res.user.onboarding_completed === false) {
-        window.location.href = "/onboarding";
-      }
+      return res.user;
     }
+    return null;
   };
 
-  const loginWithGoogle = async (credential: string, studioName?: string) => {
+  const loginWithGoogle = async (credential: string, studioName?: string): Promise<User | null> => {
     const res = await authApi.loginWithGoogle(credential, studioName);
     if (res.access_token) {
       setStoredToken(res.access_token);
       setToken(res.access_token);
       setUser(res.user);
-      if (res.user && res.user.onboarding_completed === false) {
-        window.location.href = "/onboarding";
-      }
+      return res.user;
     }
+    return null;
   };
 
-  const register = async (studioName: string, email: string, password: string): Promise<User> => {
+  const register = async (studioName: string, email: string, password: string): Promise<User | null> => {
     const res = await authApi.register({
       studio_name: studioName,
       email,
@@ -115,11 +113,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setStoredToken(res.access_token);
       setToken(res.access_token);
       setUser(res.user);
-      if (res.user && res.user.onboarding_completed === false) {
-        window.location.href = "/onboarding";
-      }
+      return res.user;
     }
-    return res.user;
+    return null;
   };
 
   const logout = () => {
