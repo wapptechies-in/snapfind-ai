@@ -37,8 +37,11 @@ class LocalStorageProvider(StorageProvider):
 
         from app.core.config import get_settings
         st = get_settings()
-        if st.STORAGE_PUBLIC_ENDPOINT_URL and "localhost" not in st.STORAGE_PUBLIC_ENDPOINT_URL and "127.0.0.1" not in st.STORAGE_PUBLIC_ENDPOINT_URL:
+        if st.STORAGE_PUBLIC_ENDPOINT_URL and not any(bad in st.STORAGE_PUBLIC_ENDPOINT_URL for bad in ("localhost", "127.0.0.1", "0.0.0.0")):
             return st.STORAGE_PUBLIC_ENDPOINT_URL.rstrip("/")
+
+        if st.ENVIRONMENT.lower() == "production":
+            return "https://snapfind-ai.onrender.com"
 
         return "http://127.0.0.1:8000"
 

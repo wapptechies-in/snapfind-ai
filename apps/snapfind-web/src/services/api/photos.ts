@@ -6,7 +6,7 @@
 
 import { mockProcessingJobs } from "../../data/mockProcessing";
 import type { Photo, ProcessingJob } from "../../types";
-import { API_BASE_URL, delay, downloadFile, request } from "./client";
+import { API_BASE_URL, delay, downloadFile, getAuthToken, request } from "./client";
 
 export interface UploadInitResult {
   photoId: string;
@@ -39,26 +39,31 @@ function normalizePhotoUrl(url?: string): string | undefined {
     cleanUrl = `${API_BASE_URL}${cleanUrl}`;
   }
 
-  // Force HTTPS on secure hosts to prevent Mixed Content browser blocking
-  if (
-    typeof window !== "undefined" &&
-    window.location.protocol === "https:" &&
-    cleanUrl.startsWith("http://") &&
-    !cleanUrl.includes("localhost") &&
-    !cleanUrl.includes("127.0.0.1")
-  ) {
-    cleanUrl = cleanUrl.replace(/^http:\/\//i, "https://");
-  }
-
   try {
     const parsed = new URL(cleanUrl);
-    if (parsed.hostname === "127.0.0.1" || parsed.hostname === "localhost") {
+    if (
+      parsed.hostname === "127.0.0.1" ||
+      parsed.hostname === "localhost" ||
+      parsed.hostname === "0.0.0.0"
+    ) {
       return `${API_BASE_URL}${parsed.pathname}${parsed.search}${parsed.hash}`;
     }
   } catch {
     if (!cleanUrl.startsWith("http://") && !cleanUrl.startsWith("https://")) {
       return `${API_BASE_URL}/${cleanUrl.replace(/^\/+/, "")}`;
     }
+  }
+
+  // Force HTTPS on secure hosts to prevent Mixed Content browser blocking
+  if (
+    typeof window !== "undefined" &&
+    window.location.protocol === "https:" &&
+    cleanUrl.startsWith("http://") &&
+    !cleanUrl.includes("localhost") &&
+    !cleanUrl.includes("127.0.0.1") &&
+    !cleanUrl.includes("0.0.0.0")
+  ) {
+    cleanUrl = cleanUrl.replace(/^http:\/\//i, "https://");
   }
 
   return cleanUrl;
@@ -135,6 +140,15 @@ export const photosApi = {
         const xhr = new XMLHttpRequest();
         xhr.open("PUT", targetUrl, true);
         xhr.setRequestHeader("Content-Type", mimeType || file.type || "image/jpeg");
+
+        const token = getAuthToken();
+        const isBackendUpload =
+          targetUrl.includes("/storage/upload") ||
+          targetUrl.includes("/api/v1/storage") ||
+          targetUrl.includes("onrender.com");
+        if (token && isBackendUpload) {
+          xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+        }
 
         if (xhr.upload && onProgress) {
           xhr.upload.onprogress = (event) => {

@@ -19,7 +19,11 @@ export function normalizePhotoUrl(url?: string): string | undefined {
 
   try {
     const parsed = new URL(url);
-    if (parsed.hostname === "127.0.0.1" || parsed.hostname === "localhost") {
+    if (
+      parsed.hostname === "127.0.0.1" ||
+      parsed.hostname === "localhost" ||
+      parsed.hostname === "0.0.0.0"
+    ) {
       return `${baseUrl}${parsed.pathname}${parsed.search}${parsed.hash}`;
     }
   } catch {

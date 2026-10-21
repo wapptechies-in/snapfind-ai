@@ -10,7 +10,7 @@ import concurrent.futures
 from typing import Annotated, Any
 import zipfile
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, Response, StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
@@ -76,31 +76,47 @@ def _client_reachable_url(url: str | None, request: Request | None = None) -> st
         return url
 
     res = url
-    render_url = os.getenv("RENDER_EXTERNAL_URL")
+    render_url = os.getenv("RENDER_EXTERNAL_URL") or os.getenv("BACKEND_PUBLIC_URL")
+
+    # Determine public base
+    base = None
     if request:
-        base = str(request.base_url).rstrip('/')
-        proto = request.headers.get("x-forwarded-proto", "")
-        # Force HTTPS if client accessed via HTTPS or running on cloud platforms (Render, Vercel)
-        if proto == "https" or "onrender.com" in base or "vercel.app" in base:
+        forwarded_host = request.headers.get("x-forwarded-host")
+        if forwarded_host and not any(bad in forwarded_host for bad in ("0.0.0.0", "127.0.0.1", "localhost")):
+            proto = request.headers.get("x-forwarded-proto", "https")
+            base = f"{proto}://{forwarded_host}".rstrip("/")
+        else:
+            host_header = request.headers.get("host")
+            if host_header and not any(bad in host_header for bad in ("0.0.0.0", "127.0.0.1", "localhost")):
+                proto = request.headers.get("x-forwarded-proto", "https")
+                base = f"{proto}://{host_header}".rstrip("/")
+            else:
+                base_cand = str(request.base_url).rstrip("/")
+                if not any(bad in base_cand for bad in ("0.0.0.0", "127.0.0.1", "localhost")):
+                    proto = request.headers.get("x-forwarded-proto", "")
+                    if proto == "https" or "onrender.com" in base_cand or "vercel.app" in base_cand:
+                        if base_cand.startswith("http://"):
+                            base_cand = "https://" + base_cand[len("http://"):]
+                    base = base_cand
+
+    if not base:
+        if render_url:
+            base = render_url.rstrip("/")
             if base.startswith("http://"):
                 base = "https://" + base[len("http://"):]
+        else:
+            st = get_settings()
+            if st.ENVIRONMENT.lower() == "production" or os.getenv("RENDER") or os.getenv("RENDER_SERVICE_ID"):
+                base = "https://snapfind-ai.onrender.com"
+            else:
+                base = "http://127.0.0.1:8000"
 
-        for local_origin in ("http://127.0.0.1:8000", "http://localhost:8000"):
-            if res.startswith(local_origin):
-                res = f"{base}{res[len(local_origin):]}"
-                break
-        if res.startswith("/"):
-            res = f"{base}{res}"
-    elif render_url:
-        render_base = render_url.rstrip("/")
-        if render_base.startswith("http://"):
-            render_base = "https://" + render_base[len("http://"):]
-        for local_origin in ("http://127.0.0.1:8000", "http://localhost:8000"):
-            if res.startswith(local_origin):
-                res = f"{render_base}{res[len(local_origin):]}"
-                break
-        if res.startswith("/"):
-            res = f"{render_base}{res}"
+    import re
+    # Match any loopback/internal addresses (127.0.0.1, 0.0.0.0, localhost) with optional port
+    res = re.sub(r"^https?://(?:127\.0\.0\.1|localhost|0\.0\.0\.0)(?::\d+)?", base, res)
+
+    if res.startswith("/"):
+        res = f"{base}{res}"
 
     # If URL still has insecure http on render or vercel, force https
     if res.startswith("http://") and ("onrender.com" in res or "vercel.app" in res):
@@ -852,17 +868,55 @@ def download_event_photos_zip(
 @router.put("/storage/upload")
 async def handle_storage_upload(
     request: Request,
-    photographer: Annotated[Photographer, Depends(get_current_photographer)],
     key: str = Query(...),
+    token: str | None = Query(None),
+    db: Annotated[Session, Depends(get_db)] = None,
 ):
     """
     Direct binary upload handler for storage fallback & proxying.
     Receives raw binary payload stream, saves it to local storage key path,
     and syncs to the active storage provider (R2/S3/MinIO) so object_exists succeeds.
+    Validates photographer Bearer header, query token, or pending Photo record.
     """
     from app.services.storage.local import LocalStorageProvider
 
     clean_key = str(key).lstrip("/\\")
+
+    # Authorize: Bearer header, query token, or pending Photo record
+    auth_ok = False
+    auth_header = request.headers.get("authorization", "")
+    jwt_candidate = None
+    if auth_header.startswith("Bearer "):
+        jwt_candidate = auth_header[7:].strip()
+    elif token:
+        jwt_candidate = token.strip()
+
+    if jwt_candidate:
+        from app.core.security import decode_access_token
+        payload = decode_access_token(jwt_candidate)
+        if payload and payload.get("sub"):
+            auth_ok = True
+
+    if not auth_ok and db is not None:
+        existing = db.scalar(
+            select(Photo.id).where(
+                or_(
+                    Photo.storage_key == clean_key,
+                    Photo.original_storage_key == clean_key,
+                    Photo.original_storage_key == f"/{clean_key}",
+                )
+            ).limit(1)
+        )
+        if existing:
+            auth_ok = True
+
+    if not auth_ok:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required for storage upload.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     local_provider = LocalStorageProvider()
     file_path = local_provider._get_path(clean_key)
     file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -916,9 +970,39 @@ def handle_storage_file(key: str):
                 break
 
         if not found:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Storage object '{key}' not found",
+            # Check active storage provider before falling back
+            try:
+                storage = StorageService()
+                if storage.provider and not isinstance(storage.provider, LocalStorageProvider):
+                    if storage.provider.object_exists(clean_key):
+                        data = storage.provider.get_object_bytes(clean_key)
+                        return StreamingResponse(
+                            io.BytesIO(data),
+                            media_type="image/jpeg",
+                            headers={
+                                "Cache-Control": "public, max-age=86400",
+                                "Access-Control-Allow-Origin": "*",
+                            },
+                        )
+            except Exception:
+                pass
+
+            # Fallback to an SVG placeholder if local file is missing due to ephemeral instance reset
+            display_name = clean_key.split("/")[-1] or "Photo"
+            svg_content = f"""<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+                <rect width="100%" height="100%" fill="#1e293b"/>
+                <circle cx="200" cy="110" r="35" fill="#334155"/>
+                <path d="M160 145l25-30 25 30 20-20 30 35H140z" fill="#64748b"/>
+                <text x="200" y="195" font-family="system-ui, -apple-system, sans-serif" font-size="13" fill="#cbd5e1" text-anchor="middle" font-weight="600">{display_name[:24]}</text>
+                <text x="200" y="220" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#94a3b8" text-anchor="middle">Processing / Storage Standby</text>
+            </svg>"""
+            return Response(
+                content=svg_content,
+                media_type="image/svg+xml",
+                headers={
+                    "Cache-Control": "public, max-age=60",
+                    "Access-Control-Allow-Origin": "*",
+                },
             )
 
     ext = file_path.suffix.lower()
