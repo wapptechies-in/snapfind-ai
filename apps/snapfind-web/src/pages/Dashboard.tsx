@@ -18,20 +18,33 @@ export default function Dashboard() {
   const [qrModalEvent, setQrModalEvent] = useState<SnapEvent | null>(null);
 
   useEffect(() => {
+    let mounted = true;
+    const safetyTimer = setTimeout(() => {
+      if (mounted) setLoading(false);
+    }, 2000);
+
     async function loadData() {
       try {
-        setLoading(true);
         const [statsData, eventsData] = await Promise.all([
           dashboardApi.getStats().catch(() => null),
           eventsApi.list({ sortBy: "date-desc" }).catch(() => []),
         ]);
-        setStats(statsData);
-        setRecentEvents(eventsData || []);
+        if (mounted) {
+          setStats(statsData);
+          setRecentEvents(eventsData || []);
+        }
+      } catch (err) {
+        console.warn("Dashboard data load fallback:", err);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     }
     loadData();
+
+    return () => {
+      mounted = false;
+      clearTimeout(safetyTimer);
+    };
   }, []);
 
   const displayName = user?.display_name || user?.studio_name || "Jebastin";

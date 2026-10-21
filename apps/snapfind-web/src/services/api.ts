@@ -9,6 +9,13 @@
 import type { AuthResponse, DashboardSummary, SnapEvent, User } from "../types";
 
 const getFallbackApiUrl = (): string => {
+  if (typeof window !== "undefined" && window.localStorage) {
+    const saved = localStorage.getItem("snapfind_api_url") || localStorage.getItem("snapfind_desktop_api_url");
+    if (saved && !saved.includes("snapfind-api-sq4a")) {
+      return saved.replace(/\/+$/, "");
+    }
+  }
+
   const envUrl = (import.meta as any)?.env?.VITE_API_URL || (import.meta as any)?.env?.VITE_API_BASE_URL;
   if (envUrl) return envUrl.replace(/\/+$/, "");
 
@@ -25,7 +32,7 @@ const getFallbackApiUrl = (): string => {
   return "https://snapfind-ai.onrender.com";
 };
 
-const API_BASE_URL = getFallbackApiUrl();
+export const API_BASE_URL = getFallbackApiUrl();
 const TOKEN_KEY = "snapfind_token";
 
 export type HealthResponse = {
@@ -66,27 +73,40 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     ...((init?.headers as Record<string, string>) || {}),
   };
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers,
-  });
+  const baseUrl = getFallbackApiUrl();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 6000);
 
-  if (!response.ok) {
-    let errorDetail: string | undefined;
-    try {
-      const errJson = await response.json();
-      errorDetail = errJson.detail || JSON.stringify(errJson);
-    } catch {
-      errorDetail = await response.text();
+  try {
+    const response = await fetch(`${baseUrl}${path}`, {
+      ...init,
+      headers,
+      signal: init?.signal || controller.signal,
+    });
+
+    if (!response.ok) {
+      let errorDetail: string | undefined;
+      try {
+        const errJson = await response.json();
+        errorDetail = errJson.detail || JSON.stringify(errJson);
+      } catch {
+        errorDetail = await response.text();
+      }
+      throw new ApiError(
+        errorDetail || `Request failed with status ${response.status}`,
+        response.status,
+        errorDetail
+      );
     }
-    throw new ApiError(
-      errorDetail || `Request failed with status ${response.status}`,
-      response.status,
-      errorDetail
-    );
-  }
 
-  return (await response.json()) as T;
+    return (await response.json()) as T;
+  } catch (err: unknown) {
+    if (err instanceof ApiError) throw err;
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new ApiError(`Request error: ${msg}`, 0, msg);
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 export const api = {
